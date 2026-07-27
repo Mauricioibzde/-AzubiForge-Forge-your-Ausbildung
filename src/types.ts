@@ -6,7 +6,49 @@ export type ReaderTab = "explain" | "praxis" | "vocab" | "practice" | "ap1";
 export type Confidence = "ok" | "review" | "hard" | "ready";
 export type Theme = "light" | "dark";
 export type ReadingSize = "normal" | "large";
-export type ExamFocusMode = "weak" | "signals" | "drill" | "checklist";
+export type ExamFocusMode = "weak" | "signals" | "drill" | "checklist" | "mock";
+export type MockExamLength = "short" | "full";
+export type MockExamStatus = "active" | "grading" | "finished";
+export type ExerciseCheck = "correct" | "wrong";
+
+export interface MockExamQuestion {
+  id: string;
+  chapterId: string;
+  chapterTitle: string;
+  moduleTitle: string;
+  question: string;
+  answer: string;
+  explanation?: string;
+  style: "ap1" | "mixed";
+}
+
+export interface MockExamResponse {
+  answered?: boolean;
+  notes?: string;
+  selfCheck?: ExerciseCheck;
+}
+
+export interface MockExamAttempt {
+  id: string;
+  length: MockExamLength;
+  status: MockExamStatus;
+  startedAt: string;
+  finishedAt?: string;
+  durationMinutes: number;
+  currentIndex: number;
+  questions: MockExamQuestion[];
+  responses: Record<string, MockExamResponse>;
+}
+
+export interface MockExamHistoryEntry {
+  id: string;
+  length: MockExamLength;
+  finishedAt: string;
+  correct: number;
+  total: number;
+  percent: number;
+  elapsedSeconds: number;
+}
 
 export interface Exercise {
   question: string;
@@ -119,7 +161,6 @@ export interface AzubiForgeData {
   learningSituations?: Record<string, LearningSituation[]>;
 }
 
-export type ExerciseCheck = "correct" | "wrong";
 export type ReviewFocusMode = "flash" | "quiz";
 export type ReadinessLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -140,6 +181,8 @@ export interface AppState {
   exerciseChecks: Record<string, ExerciseCheck>;
   vocabChecks: Record<string, ExerciseCheck>;
   examChecklist: Record<string, boolean>;
+  mockExam: MockExamAttempt | null;
+  mockExamHistory: MockExamHistoryEntry[];
   lastStudiedAt: Record<string, string>;
   studyDates: string[];
   preferences: Preferences;

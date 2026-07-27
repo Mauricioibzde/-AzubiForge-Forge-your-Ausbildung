@@ -111,6 +111,7 @@ export function renderHomeView(ctx: AppContext): string {
         </div>
         <div class="session-focus-actions">
           <a class="button large" href="#exam">${examSummary.weakCount ? "Abrir treino AP1" : "Treinar perguntas AP1"}</a>
+          <a class="button secondary" href="#exam" data-go-exam-mock>Fazer simulado</a>
           <a class="button secondary" href="#review">Revisao ativa</a>
         </div>
       </section>

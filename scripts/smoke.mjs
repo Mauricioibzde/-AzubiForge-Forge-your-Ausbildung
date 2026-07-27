@@ -29,6 +29,19 @@ desktop.on("pageerror", (error) => {
 await desktop.goto(baseUrl, { waitUntil: "networkidle" });
 await desktop.waitForSelector("main h1", { timeout: 10000 });
 
+const desktopChrome = await desktop.evaluate(() => {
+  const sidebar = document.querySelector(".sidebar");
+  return {
+    sidebar: Boolean(sidebar),
+    sidebarVisible: sidebar ? getComputedStyle(sidebar).transform === "none" || getComputedStyle(sidebar).position === "sticky" : false,
+    navHome: Boolean(document.querySelector('.sidebar [data-nav="home"]'))
+  };
+});
+
+if (!desktopChrome.sidebar || !desktopChrome.navHome) {
+  issues.push("desktop: sidebar navigation missing");
+}
+
 const firstChapter = await desktop.evaluate(() => window.AZUBIFORGE_DATA?.chapters?.[0]?.id || "");
 routes.splice(2, 0, ["reader", `/#reader/${firstChapter}`]);
 
@@ -58,16 +71,16 @@ await mobile.waitForSelector("main h1", { timeout: 10000 });
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-home.png`, fullPage: true });
 
 const mobileHome = await mobile.evaluate(() => ({
-  bottomNav: Boolean(document.querySelector(".bottom-nav")),
-  bottomVisible: getComputedStyle(document.querySelector(".bottom-nav")).display !== "none",
-  moreButton: Boolean(document.querySelector("[data-more-nav]")),
+  menuToggle: Boolean(document.querySelector("[data-sidebar-toggle]")),
+  menuVisible: getComputedStyle(document.querySelector("[data-sidebar-toggle]")).display !== "none",
   scrollWidth: document.documentElement.scrollWidth,
   clientWidth: document.documentElement.clientWidth
 }));
 
-await mobile.click("[data-more-nav]");
-const moreOpen = await mobile.evaluate(() => !document.querySelector("[data-more-sheet]")?.hidden);
-await mobile.click(".more-sheet-panel .more-sheet-head [data-more-close]");
+await mobile.click("[data-sidebar-toggle]");
+const sidebarOpen = await mobile.evaluate(() => document.body.classList.contains("sidebar-open"));
+await mobile.click(".sidebar-close");
+const sidebarClosed = await mobile.evaluate(() => !document.body.classList.contains("sidebar-open"));
 
 await mobile.goto(`${baseUrl}/#reader/${firstChapter}`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".mobile-study-dock", { timeout: 10000 });
@@ -80,17 +93,20 @@ await mobile.screenshot({ path: `${screenshotsDir}/mobile-reader.png`, fullPage:
 
 await mobile.goto(`${baseUrl}/#exam`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".exam-shell", { timeout: 10000 });
+await mobile.click('[data-filter-value="mock"]');
+await mobile.waitForSelector(".mock-lobby, .mock-runner, .mock-results", { timeout: 10000 });
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-exam.png`, fullPage: true });
 
 await mobile.goto(`${baseUrl}/#review`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".review-focus", { timeout: 10000 });
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-review.png`, fullPage: true });
 
-console.log(`mobile-home: bottomNav=${mobileHome.bottomVisible} more=${moreOpen}`);
+console.log(`mobile-home: menu=${mobileHome.menuVisible} open=${sidebarOpen} closed=${sidebarClosed}`);
 console.log(`mobile-reader: dock=${mobileReader.dockVisible}`);
 
-if (!mobileHome.bottomVisible) issues.push("mobile-home: bottom nav hidden");
-if (!moreOpen) issues.push("mobile-home: more sheet did not open");
+if (!mobileHome.menuVisible) issues.push("mobile-home: menu toggle hidden");
+if (!sidebarOpen) issues.push("mobile-home: sidebar did not open");
+if (!sidebarClosed) issues.push("mobile-home: sidebar did not close");
 if (!mobileReader.dockVisible) issues.push("mobile-reader: study dock hidden");
 if (mobileHome.scrollWidth > mobileHome.clientWidth + 2) {
   issues.push(`mobile-home: horizontal overflow ${mobileHome.clientWidth}/${mobileHome.scrollWidth}`);
@@ -105,4 +121,3 @@ if (issues.length) {
   console.error(issues.join("\n"));
   process.exitCode = 1;
 }
-

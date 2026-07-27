@@ -18,17 +18,18 @@ import type {
   ExamFocusMode,
   ExerciseCheck,
   GlossaryFilter,
+  MockExamLength,
   ReadingSize,
   ReaderTab,
   RouteName,
   UiState
 } from "./types";
 import {
-  closeMoreSheet,
+  closeSidebar,
   registerConnectivityListeners,
   scrollToPageTop,
   syncChrome,
-  toggleMoreSheet
+  toggleSidebar
 } from "./ui/navigation";
 import { renderCourseView } from "./views/courseView";
 import { renderDocsAiView } from "./views/docsAiView";
@@ -37,8 +38,17 @@ import { renderGlossaryView } from "./views/glossaryView";
 import { renderHomeView } from "./views/homeView";
 import { renderReaderView } from "./views/readerView";
 import { renderReviewView } from "./views/reviewView";
+import {
+  buildMockExamHistoryEntry,
+  createMockExam,
+  formatMockExamTimer,
+  getMockExamRemainingMs,
+  setMockExamResponse,
+  setMockExamSelfCheck
+} from "./domain/mockExam";
 
 const READER_TABS: ReaderTab[] = ["explain", "praxis", "vocab", "practice", "ap1"];
+let mockExamTimerId: number | null = null;
 
 export function startApp(): void {
   const app = document.querySelector<HTMLElement>("#app");
@@ -72,7 +82,7 @@ function createUiState(): UiState {
     practiceFilter: "all",
     glossaryMode: "flash",
     glossaryFocusIndex: 0,
-    examFocusMode: "weak",
+    examFocusMode: "mock",
     examFocusIndex: 0,
     completeGateChapterId: "",
     docsAiFocus: "study-plan",
@@ -94,7 +104,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
   const [route, id, tab] = hash.replace("#", "").split("/") as [RouteName, string | undefined, string | undefined];
   const previousRoute = document.body.dataset.route as RouteName | undefined;
 
-  closeMoreSheet();
+  closeSidebar();
 
   let chapterId: string | undefined;
   if (route === "course") app.innerHTML = renderCourseView(ctx);
@@ -115,8 +125,12 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
     app.innerHTML = renderReaderView(ctx, chapterId);
   } else if (route === "review") app.innerHTML = renderReviewView(ctx);
   else if (route === "glossary") app.innerHTML = renderGlossaryView(ctx);
-  else if (route === "exam") app.innerHTML = renderExamView(ctx);
-  else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
+  else if (route === "exam") {
+    if (ctx.state.mockExam && ctx.state.mockExam.status !== "finished" && ctx.ui.examFocusMode !== "mock") {
+      ctx.ui.examFocusMode = "mock";
+    }
+    app.innerHTML = renderExamView(ctx);
+  } else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
   else app.innerHTML = renderHomeView(ctx);
 
   syncChrome(ctx, route || "home", chapterId);
@@ -124,6 +138,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
 
   if (previousRoute && previousRoute !== route) scrollToPageTop();
   maybeScrollReaderStep(route);
+  syncMockExamTimer(app, ctx, route || "home");
 }
 
 function maybeScrollReaderStep(route: RouteName): void {
@@ -142,14 +157,19 @@ function maybeScrollReaderStep(route: RouteName): void {
 function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void {
   const target = event.target as Element;
 
-  if (target.closest("[data-more-nav]")) {
-    toggleMoreSheet();
+  if (target.closest("[data-go-exam-mock]")) {
+    ctx.ui.examFocusMode = "mock";
+    // hash navigation continues for <a href="#exam">
+  }
+
+  if (target.closest("[data-sidebar-toggle]")) {
+    toggleSidebar();
     return;
   }
 
-  if (target.closest("[data-more-close]")) {
-    closeMoreSheet();
-    // allow hash links inside the sheet to continue navigating
+  if (target.closest("[data-sidebar-close]")) {
+    closeSidebar();
+    // allow hash links inside the sidebar to continue navigating
   }
 
   if (target.closest("[data-dismiss-onboarding]")) {
@@ -304,7 +324,10 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     ctx.state.examChecklist[key] = !ctx.state.examChecklist[key];
     saveState(ctx.state);
     renderRoute(app, ctx);
+    return;
   }
+
+  if (handleMockExamClick(event, app, ctx, target)) return;
 }
 
 function handleInput(event: Event, app: HTMLElement, ctx: AppContext): void {
@@ -333,6 +356,15 @@ function handleInput(event: Event, app: HTMLElement, ctx: AppContext): void {
 
   if (target.matches("[data-note]")) {
     ctx.state.notes[target.dataset.note || ""] = target.value;
+    saveState(ctx.state);
+  }
+
+  if (target.matches("[data-mock-notes]") && ctx.state.mockExam) {
+    const questionId = target.dataset.mockNotes || "";
+    ctx.state.mockExam = setMockExamResponse(ctx.state.mockExam, questionId, {
+      notes: target.value,
+      answered: Boolean(target.value.trim()) || ctx.state.mockExam.responses[questionId]?.answered
+    });
     saveState(ctx.state);
   }
 }
@@ -397,7 +429,7 @@ function maybeAutoAdvance(ctx: AppContext, target?: string): void {
 
 function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext): void {
   if (event.key === "Escape") {
-    closeMoreSheet();
+    closeSidebar();
     return;
   }
 
@@ -426,6 +458,18 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
     event.preventDefault();
     ctx.ui.examFocusIndex += delta;
     renderRoute(app, ctx);
+    return;
+  }
+
+  if (route === "exam" && ctx.ui.examFocusMode === "mock" && ctx.state.mockExam && ctx.state.mockExam.status !== "finished") {
+    event.preventDefault();
+    const attempt = ctx.state.mockExam;
+    const next = Math.max(0, Math.min(attempt.questions.length - 1, attempt.currentIndex + delta));
+    if (next !== attempt.currentIndex) {
+      ctx.state.mockExam = { ...attempt, currentIndex: next };
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
   }
 }
 
@@ -497,6 +541,170 @@ function setVocabCheck(
   saveState(ctx.state);
 }
 
+function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContext, target: Element): boolean {
+  const start = target.closest<HTMLElement>("[data-mock-start]");
+  if (start?.dataset.mockStart) {
+    event.preventDefault();
+    ctx.ui.examFocusMode = "mock";
+    ctx.state.mockExam = createMockExam(ctx.data, start.dataset.mockStart as MockExamLength);
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  const step = target.closest<HTMLElement>("[data-mock-step]");
+  if (step?.dataset.mockStep && ctx.state.mockExam) {
+    const delta = Number(step.dataset.mockStep);
+    const attempt = ctx.state.mockExam;
+    ctx.state.mockExam = {
+      ...attempt,
+      currentIndex: Math.max(0, Math.min(attempt.questions.length - 1, attempt.currentIndex + delta))
+    };
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  const goTo = target.closest<HTMLElement>("[data-mock-goto]");
+  if (goTo?.dataset.mockGoto !== undefined && ctx.state.mockExam) {
+    const index = Number(goTo.dataset.mockGoto);
+    if (Number.isFinite(index)) {
+      ctx.state.mockExam = {
+        ...ctx.state.mockExam,
+        currentIndex: Math.max(0, Math.min(ctx.state.mockExam.questions.length - 1, index))
+      };
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
+    return true;
+  }
+
+  const answered = target.closest<HTMLElement>("[data-mock-answered]");
+  if (answered?.dataset.mockAnswered && ctx.state.mockExam) {
+    const questionId = answered.dataset.mockAnswered;
+    const current = Boolean(ctx.state.mockExam.responses[questionId]?.answered);
+    ctx.state.mockExam = setMockExamResponse(ctx.state.mockExam, questionId, { answered: !current });
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  const grade = target.closest<HTMLElement>("[data-mock-grade]");
+  if (grade?.dataset.mockGrade && grade.dataset.mockQuestion && ctx.state.mockExam) {
+    ctx.state.mockExam = setMockExamSelfCheck(
+      ctx.state.mockExam,
+      grade.dataset.mockQuestion,
+      grade.dataset.mockGrade as ExerciseCheck
+    );
+    // also feed review signals
+    const question = ctx.state.mockExam.questions.find((item) => item.id === grade.dataset.mockQuestion);
+    if (question) {
+      const key = `mock:${question.id}`;
+      ctx.state.exerciseChecks[key] = grade.dataset.mockGrade as ExerciseCheck;
+      if (grade.dataset.mockGrade === "wrong") {
+        const current = ctx.state.confidence[question.chapterId];
+        if (current !== "hard") ctx.state.confidence[question.chapterId] = "review";
+      }
+    }
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  if (target.closest("[data-mock-submit]") && ctx.state.mockExam) {
+    submitMockExam(ctx);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  if (target.closest("[data-mock-finish]") && ctx.state.mockExam) {
+    finishMockExam(ctx);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  if (target.closest("[data-mock-clear]")) {
+    ctx.state.mockExam = null;
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  if (target.closest("[data-mock-abandon]") && ctx.state.mockExam) {
+    const confirmed = window.confirm("Abandonar este simulado? O progresso da prova atual sera perdido.");
+    if (confirmed) {
+      ctx.state.mockExam = null;
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
+    return true;
+  }
+
+  return false;
+}
+
+function submitMockExam(ctx: AppContext): void {
+  const attempt = ctx.state.mockExam;
+  if (!attempt || attempt.status !== "active") return;
+  ctx.state.mockExam = {
+    ...attempt,
+    status: "grading",
+    currentIndex: 0,
+    finishedAt: new Date().toISOString()
+  };
+  saveState(ctx.state);
+}
+
+function finishMockExam(ctx: AppContext): void {
+  const attempt = ctx.state.mockExam;
+  if (!attempt || attempt.status === "finished") return;
+  const finished = {
+    ...attempt,
+    status: "finished" as const,
+    finishedAt: attempt.finishedAt || new Date().toISOString()
+  };
+  ctx.state.mockExam = finished;
+  ctx.state.mockExamHistory = [buildMockExamHistoryEntry(finished), ...ctx.state.mockExamHistory].slice(0, 20);
+  saveState(ctx.state);
+}
+
+function syncMockExamTimer(app: HTMLElement, ctx: AppContext, route: RouteName): void {
+  if (mockExamTimerId !== null) {
+    window.clearInterval(mockExamTimerId);
+    mockExamTimerId = null;
+  }
+
+  const attempt = ctx.state.mockExam;
+  const shouldRun = route === "exam" && ctx.ui.examFocusMode === "mock" && attempt?.status === "active";
+  if (!shouldRun || !attempt) return;
+
+  const tick = (): void => {
+    const current = ctx.state.mockExam;
+    if (!current || current.status !== "active") {
+      if (mockExamTimerId !== null) {
+        window.clearInterval(mockExamTimerId);
+        mockExamTimerId = null;
+      }
+      return;
+    }
+
+    const remaining = getMockExamRemainingMs(current);
+    const timer = app.querySelector<HTMLElement>("[data-mock-timer]");
+    if (timer) {
+      timer.textContent = formatMockExamTimer(remaining);
+      timer.classList.toggle("urgent", remaining <= 5 * 60_000);
+    }
+
+    if (remaining <= 0) {
+      submitMockExam(ctx);
+      renderRoute(app, ctx);
+    }
+  };
+
+  tick();
+  mockExamTimerId = window.setInterval(tick, 1000);
+}
+
 function toggleComplete(ctx: AppContext, chapterId: string, confirmed = false): void {
   const chapter = findChapter(ctx.data, chapterId);
   if (!chapter) return;
@@ -559,14 +767,6 @@ function applyPreferences(ctx: AppContext): void {
       dark ? "Alternar para tema claro" : "Alternar para tema escuro"
     );
   });
-
-  const moreTheme = document.querySelector<HTMLElement>(".more-sheet-panel > button[data-theme-toggle]");
-  if (moreTheme) {
-    moreTheme.innerHTML = `
-      <span>${dark ? "Usar tema claro" : "Usar tema escuro"}</span>
-      <small>Aparencia do app</small>
-    `;
-  }
 }
 
 function restoreTextSelection(app: HTMLElement, selector: string, value: string): void {

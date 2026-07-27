@@ -12,8 +12,6 @@ const ROUTE_TITLES: Record<RouteName, string> = {
   "docs-ai": "Docs AI"
 };
 
-const SECONDARY_ROUTES: RouteName[] = ["review", "glossary", "docs-ai"];
-
 export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string): void {
   document.body.dataset.route = route;
   setActiveNav(route);
@@ -21,11 +19,11 @@ export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string
   updateContextBar(ctx, route, chapterId);
   updateDocumentTitle(ctx, route, chapterId);
   updateConnectivityBanner();
+  closeSidebar();
 }
 
 export function setActiveNav(route: RouteName): void {
   const activeKey = route === "reader" ? "course" : route;
-  const secondaryOpen = SECONDARY_ROUTES.includes(route);
 
   document.querySelectorAll<HTMLElement>("[data-nav]").forEach((link) => {
     const key = link.dataset.nav || "";
@@ -34,27 +32,20 @@ export function setActiveNav(route: RouteName): void {
     if (active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
-
-  document.querySelectorAll<HTMLElement>("[data-more-nav]").forEach((button) => {
-    button.classList.toggle("active", secondaryOpen);
-    button.setAttribute("aria-expanded", String(isMoreSheetOpen()));
-  });
 }
 
 export function updateContinueChip(ctx: AppContext, route: RouteName): void {
-  const chip = document.querySelector<HTMLAnchorElement>("[data-continue-study]");
-  if (!chip) return;
-
   const chapter = findChapter(ctx.data, ctx.state.lastChapterId) || ctx.data.chapters[0];
   const hideOnReader = route === "reader";
   const useful = Boolean(chapter) && !hideOnReader;
 
-  chip.hidden = !useful;
-  if (!chapter) return;
-
-  chip.href = `#reader/${chapter.id}`;
-  chip.textContent = route === "home" ? `Continuar: ${chapter.title}` : "Continuar estudo";
-  chip.title = chapter.title;
+  document.querySelectorAll<HTMLAnchorElement>("[data-continue-study]").forEach((chip) => {
+    chip.hidden = !useful;
+    if (!chapter) return;
+    chip.href = `#reader/${chapter.id}`;
+    chip.textContent = route === "home" ? `Continuar: ${chapter.title}` : "Continuar estudo";
+    chip.title = chapter.title;
+  });
 }
 
 export function updateContextBar(ctx: AppContext, route: RouteName, chapterId?: string): void {
@@ -116,36 +107,48 @@ export function updateContextBar(ctx: AppContext, route: RouteName, chapterId?: 
   bar.hidden = true;
 }
 
-export function openMoreSheet(): void {
-  const sheet = document.querySelector<HTMLElement>("[data-more-sheet]");
-  if (!sheet) return;
-  sheet.hidden = false;
-  document.body.classList.add("more-open");
-  document.querySelectorAll<HTMLElement>("[data-more-nav]").forEach((button) => {
+export function openSidebar(): void {
+  const backdrop = document.querySelector<HTMLElement>(".sidebar-backdrop");
+  document.body.classList.add("sidebar-open");
+  if (backdrop) backdrop.hidden = false;
+  document.querySelectorAll<HTMLElement>("[data-sidebar-toggle]").forEach((button) => {
     button.setAttribute("aria-expanded", "true");
+    button.setAttribute("aria-label", "Fechar menu");
   });
 }
 
-export function closeMoreSheet(): void {
-  const sheet = document.querySelector<HTMLElement>("[data-more-sheet]");
-  if (!sheet) return;
-  sheet.hidden = true;
-  document.body.classList.remove("more-open");
-  document.querySelectorAll<HTMLElement>("[data-more-nav]").forEach((button) => {
+export function closeSidebar(): void {
+  const backdrop = document.querySelector<HTMLElement>(".sidebar-backdrop");
+  document.body.classList.remove("sidebar-open");
+  if (backdrop) backdrop.hidden = true;
+  document.querySelectorAll<HTMLElement>("[data-sidebar-toggle]").forEach((button) => {
     button.setAttribute("aria-expanded", "false");
-    const route = document.body.dataset.route as RouteName | undefined;
-    button.classList.toggle("active", Boolean(route && SECONDARY_ROUTES.includes(route)));
+    button.setAttribute("aria-label", "Abrir menu");
   });
 }
 
-export function toggleMoreSheet(): void {
-  if (isMoreSheetOpen()) closeMoreSheet();
-  else openMoreSheet();
+export function toggleSidebar(): void {
+  if (isSidebarOpen()) closeSidebar();
+  else openSidebar();
 }
 
+export function isSidebarOpen(): boolean {
+  return document.body.classList.contains("sidebar-open");
+}
+
+/** @deprecated use closeSidebar - kept for gradual migration */
+export function closeMoreSheet(): void {
+  closeSidebar();
+}
+
+/** @deprecated use toggleSidebar */
+export function toggleMoreSheet(): void {
+  toggleSidebar();
+}
+
+/** @deprecated use isSidebarOpen */
 export function isMoreSheetOpen(): boolean {
-  const sheet = document.querySelector<HTMLElement>("[data-more-sheet]");
-  return Boolean(sheet && !sheet.hidden);
+  return isSidebarOpen();
 }
 
 export function scrollToPageTop(): void {
