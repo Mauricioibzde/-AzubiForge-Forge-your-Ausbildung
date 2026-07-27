@@ -47,6 +47,16 @@ npm run smoke
 
 `npm run smoke` espera que um servidor esteja ativo em `http://127.0.0.1:5174`. Para testar outro alvo, use `AZUBIFORGE_URL`.
 
+## Deploy (GitHub Pages)
+
+GitHub Pages nao executa Vite. Publicar a pasta `dist/` gerada por `npm run build`.
+
+- `vite.config.ts` usa `base: "./"` para assets relativos no subcaminho do repositorio.
+- Workflow: `.github/workflows/deploy-pages.yml`.
+- Em Settings → Pages, a fonte deve ser **GitHub Actions**.
+
+Se Pages estiver em "Deploy from a branch" na raiz de `main`, o navegador recebe `index.html` apontando para `/src/main.ts` e a app nao carrega.
+
 ## Proximos passos recomendados
 
 - Migrar `data.js` para `src/data/courseContent.ts` quando o conteudo estiver mais estavel.
