@@ -34,6 +34,7 @@ export function exerciseCard(
   index: number,
   options: {
     chapterId?: string;
+    chapterTitle?: string;
     checkKey?: string;
     check?: ExerciseCheck;
   } = {}
@@ -43,6 +44,7 @@ export function exerciseCard(
 
   return `
     <div class="exercise ${check ? `checked-${check}` : ""}">
+      ${options.chapterTitle ? `<span class="card-label">${options.chapterTitle}</span>` : ""}
       <p><strong>${index + 1}. ${exercise.question}</strong></p>
       <details>
         <summary>Antwort anzeigen</summary>

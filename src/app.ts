@@ -74,6 +74,7 @@ function createUiState(): UiState {
     glossaryFocusIndex: 0,
     examFocusMode: "weak",
     examFocusIndex: 0,
+    completeGateChapterId: "",
     docsAiFocus: "study-plan",
     docsAiChapterId: ""
   };
@@ -102,6 +103,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
     if (ctx.ui.readerChapterId !== chapterId) {
       ctx.ui.readerChapterId = chapterId;
       ctx.ui.readerTab = getResumeTab(ctx.state, chapterId);
+      ctx.ui.completeGateChapterId = "";
     }
     if (tab && READER_TABS.includes(tab as ReaderTab)) {
       ctx.ui.readerTab = tab as ReaderTab;
@@ -127,10 +129,11 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
 function maybeScrollReaderStep(route: RouteName): void {
   if (route !== "reader") return;
   window.requestAnimationFrame(() => {
-    const guide = document.querySelector<HTMLElement>(".session-guide");
-    if (!guide) return;
-    const top = guide.getBoundingClientRect().top + window.scrollY - 120;
-    if (window.scrollY > top + 40 || window.scrollY < top - 120) {
+    const content = document.querySelector<HTMLElement>("#session-content")
+      || document.querySelector<HTMLElement>(".article-body");
+    if (!content) return;
+    const top = content.getBoundingClientRect().top + window.scrollY - 96;
+    if (window.scrollY > top + 40 || window.scrollY < top - 160) {
       window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     }
   });
@@ -281,9 +284,25 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     return;
   }
 
+  const cancelComplete = target.closest<HTMLElement>("[data-complete-cancel]");
+  if (cancelComplete?.dataset.completeCancel) {
+    ctx.ui.completeGateChapterId = "";
+    renderRoute(app, ctx);
+    return;
+  }
+
   const completeButton = target.closest<HTMLElement>("[data-complete]");
   if (completeButton?.dataset.complete) {
-    toggleComplete(ctx, completeButton.dataset.complete);
+    toggleComplete(ctx, completeButton.dataset.complete, completeButton.dataset.completeConfirm === "true");
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const checklistItem = target.closest<HTMLElement>("[data-exam-checklist]");
+  if (checklistItem?.dataset.examChecklist !== undefined) {
+    const key = checklistItem.dataset.examChecklist;
+    ctx.state.examChecklist[key] = !ctx.state.examChecklist[key];
+    saveState(ctx.state);
     renderRoute(app, ctx);
   }
 }
@@ -478,7 +497,7 @@ function setVocabCheck(
   saveState(ctx.state);
 }
 
-function toggleComplete(ctx: AppContext, chapterId: string): void {
+function toggleComplete(ctx: AppContext, chapterId: string, confirmed = false): void {
   const chapter = findChapter(ctx.data, chapterId);
   if (!chapter) return;
 
@@ -486,18 +505,15 @@ function toggleComplete(ctx: AppContext, chapterId: string): void {
   if (markingDone) {
     const session = getSessionProgress(ctx.state, chapterId);
     const stats = getChapterExerciseStats(ctx.state, chapterId, getChapterExercises(chapter).length);
-    if (session.percent < 100) {
-      const confirmed = window.confirm(
-        `Voce visitou ${session.completed} de ${session.total} etapas desta sessao. Concluir o capitulo mesmo assim?`
-      );
-      if (!confirmed) return;
-    } else if (stats.answered === 0) {
-      const confirmed = window.confirm(
-        "Voce ainda nao marcou exercicios como Acertei/Errei. Concluir mesmo assim?"
-      );
-      if (!confirmed) return;
+    const needsConfirm = session.percent < 100 || stats.answered === 0;
+    if (needsConfirm && !confirmed && ctx.ui.completeGateChapterId !== chapterId) {
+      ctx.ui.completeGateChapterId = chapterId;
+      return;
     }
+    ctx.ui.completeGateChapterId = "";
     touchStudied(ctx.state, chapterId);
+  } else {
+    ctx.ui.completeGateChapterId = "";
   }
 
   ctx.state.completed = markingDone

@@ -139,6 +139,7 @@ export interface AppState {
   sessionSteps: Record<string, ReaderTab[]>;
   exerciseChecks: Record<string, ExerciseCheck>;
   vocabChecks: Record<string, ExerciseCheck>;
+  examChecklist: Record<string, boolean>;
   lastStudiedAt: Record<string, string>;
   studyDates: string[];
   preferences: Preferences;
@@ -159,6 +160,7 @@ export interface UiState {
   practiceFilter: "all" | "wrong";
   examFocusMode: ExamFocusMode;
   examFocusIndex: number;
+  completeGateChapterId: string;
   docsAiFocus: "study-plan" | "chapter-help" | "review";
   docsAiChapterId: string;
 }

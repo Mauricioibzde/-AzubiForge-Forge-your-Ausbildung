@@ -42,7 +42,7 @@ export function renderExamView(ctx: AppContext): string {
       ${mode === "weak" ? renderWeakMode(ctx) : ""}
       ${mode === "signals" ? renderSignalsMode(ctx) : ""}
       ${mode === "drill" ? renderDrillMode(ctx) : ""}
-      ${mode === "checklist" ? renderChecklistMode() : ""}
+      ${mode === "checklist" ? renderChecklistMode(ctx) : ""}
     </section>
   `;
 }
@@ -201,15 +201,35 @@ function renderDrillCard(
   `;
 }
 
-function renderChecklistMode(): string {
+function renderChecklistMode(ctx: AppContext): string {
+  const checked = EXAM_CHECKLIST.filter((_, index) => ctx.state.examChecklist[String(index)]).length;
   return `
     <section class="panel exam-checklist">
       <span class="card-label">Checklist de prova</span>
       <h2>Antes da AP1, eu consigo...</h2>
-      <ul>
-        ${EXAM_CHECKLIST.map((item) => `<li>${item}</li>`).join("")}
+      <p class="small-note">${checked} de ${EXAM_CHECKLIST.length} itens marcados</p>
+      <ul class="exam-checklist-items">
+        ${EXAM_CHECKLIST.map((item, index) => {
+          const done = Boolean(ctx.state.examChecklist[String(index)]);
+          return `
+            <li>
+              <button
+                class="exam-check-item ${done ? "checked" : ""}"
+                type="button"
+                data-exam-checklist="${index}"
+                aria-pressed="${done}"
+              >
+                <span class="exam-check-mark" aria-hidden="true">${done ? "OK" : ""}</span>
+                <span>${item}</span>
+              </button>
+            </li>
+          `;
+        }).join("")}
       </ul>
-      <p class="small-note">Use esta lista na revisao final. Se marcar "nao" em algum item, volte ao modo Pontos fracos.</p>
+      <p class="small-note">Marque o que ja domina. Itens em aberto apontam de volta aos pontos fracos.</p>
+      ${checked < EXAM_CHECKLIST.length
+        ? `<button class="button secondary" type="button" data-filter-group="exam-focus" data-filter-value="weak">Ver pontos fracos</button>`
+        : `<p class="small-note">Checklist completa. Mantenha o ritmo com perguntas AP1.</p>`}
     </section>
   `;
 }

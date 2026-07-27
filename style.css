@@ -2781,6 +2781,85 @@ body.more-open {
   color: var(--muted);
 }
 
+.resume-hint {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--primary-dark);
+}
+
+.session-gate-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: calc(var(--radius) - 4px);
+  background: rgba(180, 83, 9, 0.12);
+  color: var(--warning);
+  font-size: 0.92rem;
+}
+
+.session-close-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.button.soft-complete {
+  background: transparent;
+  color: var(--primary-dark);
+  border: 1px dashed rgba(15, 107, 95, 0.45);
+}
+
+.exam-checklist-items {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.exam-check-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.exam-check-item.checked {
+  border-color: rgba(15, 107, 95, 0.35);
+  background: rgba(15, 107, 95, 0.08);
+}
+
+.exam-check-item.checked span:last-child {
+  text-decoration: line-through;
+  opacity: 0.78;
+}
+
+.exam-check-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.exam-check-item.checked .exam-check-mark {
+  background: rgba(15, 107, 95, 0.16);
+  border-color: transparent;
+}
+
 .exam-shell {
   display: grid;
   gap: 22px;

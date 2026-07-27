@@ -11,6 +11,7 @@ import {
   getModuleContinueChapter,
   getModuleProgress,
   getReviewQueue,
+  getResumeTab,
   getSessionProgress,
   getStudyStreak,
   getTodayChapter,
@@ -32,6 +33,8 @@ export function renderHomeView(ctx: AppContext): string {
   const module = getChapterModule(ctx.data, chapter.id) || getActiveModule(ctx.data, ctx.state);
   const situation = getChapterLearningSituation(ctx.data, chapter.id);
   const session = getSessionProgress(ctx.state, chapter.id);
+  const resumeTab = getResumeTab(ctx.state, chapter.id);
+  const resumeLabel = READER_STEPS.find((step) => step.id === resumeTab)?.label || "Erklaeren";
   const minutes = getEstimatedSessionMinutes(chapter);
   const review = getReviewQueue(ctx.data, ctx.state).filter((item) => item.id !== chapter.id).slice(0, 3);
   const dueCount = ctx.data.chapters.filter((item) => isReviewDue(ctx.state, item.id)).length;
@@ -153,6 +156,9 @@ export function renderHomeView(ctx: AppContext): string {
             <div style="width: ${session.percent}%"></div>
           </div>
           <p class="small-note">${session.completed} de ${session.total} etapas nesta sessao</p>
+          ${session.completed > 0 && session.percent < 100
+            ? `<p class="resume-hint">Continuar em: <strong>${resumeLabel}</strong></p>`
+            : ""}
         </div>
         <div class="session-focus-actions">
           <a class="button large" href="#reader/${chapter.id}">${ctaLabel}</a>

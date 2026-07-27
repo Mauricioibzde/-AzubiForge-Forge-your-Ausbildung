@@ -92,8 +92,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           </div>
         </section>
 
-        <div class="article-body">
-          ${readerTabs(ctx, chapter)}
+        <div class="article-body" id="session-content">
           ${tabContent(ctx, chapter, ctx.ui.readerTab)}
 
           ${!nextTab ? renderSessionEvidence(ctx, chapter, readiness, session, exerciseStats, vocabStats, done) : ""}
@@ -111,10 +110,12 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
               <div>
                 <span class="card-label">Fechar sessao</span>
                 <p>${readiness.label}. Revise a evidencia acima antes de concluir.</p>
+                ${renderCompleteGateNote(ctx, chapter.id, session, exerciseStats)}
               </div>
-              <button class="button ${done ? "complete" : ""}" type="button" data-complete="${chapter.id}">
-                ${done ? "Concluido" : "Marcar como concluido"}
-              </button>
+              <div class="session-close-actions">
+                ${renderCompleteButton(ctx, chapter.id, done, session, exerciseStats)}
+                ${next ? `<a class="button secondary" href="#reader/${next.id}">Proximo: ${next.title}</a>` : `<a class="button secondary" href="#exam">Treino AP1</a>`}
+              </div>
             `}
           </section>
 
@@ -139,11 +140,10 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           <div class="actions">
             ${previous ? `<a class="button secondary" href="#reader/${previous.id}">Anterior</a>` : ""}
             ${next ? `<a class="button secondary" href="#reader/${next.id}">Proximo capitulo</a>` : ""}
-            <button class="button ${done ? "complete" : ""}" data-complete="${chapter.id}">
-              ${done ? "Concluido" : "Marcar como concluido"}
-            </button>
+            ${renderCompleteButton(ctx, chapter.id, done, session, exerciseStats)}
           </div>
-          ${session.percent < 100 && !done ? `
+          ${renderCompleteGateNote(ctx, chapter.id, session, exerciseStats)}
+          ${session.percent < 100 && !done && ctx.ui.completeGateChapterId !== chapter.id ? `
             <p class="small-note">Dica: complete as ${session.total} etapas antes de marcar como concluido.</p>
           ` : ""}
           ${confidenceControls(ctx.state, chapter)}
@@ -181,9 +181,11 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           <div class="mobile-dock-confidence">
             ${confidenceControls(ctx.state, chapter)}
           </div>
-          <button class="button ${done ? "complete" : ""}" type="button" data-complete="${chapter.id}">
-            ${done ? "Concluido" : "Concluir capitulo"}
-          </button>
+          ${renderCompleteGateNote(ctx, chapter.id, session, exerciseStats)}
+          ${renderCompleteButton(ctx, chapter.id, done, session, exerciseStats)}
+          ${next
+            ? `<a class="button secondary" href="#reader/${next.id}">Proximo: ${next.title}</a>`
+            : `<a class="button secondary" href="#exam">Treino AP1</a>`}
         `}
         <div class="mobile-study-meta">
           <span>${session.completed}/${session.total} · ${readiness.label}</span>
@@ -194,18 +196,51 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
   `;
 }
 
-function readerTabs(ctx: AppContext, chapter: Chapter): string {
+function renderCompleteButton(
+  ctx: AppContext,
+  chapterId: string,
+  done: boolean,
+  session: { completed: number; total: number; percent: number },
+  exerciseStats: { answered: number }
+): string {
+  const gated = ctx.ui.completeGateChapterId === chapterId;
+  if (done) {
+    return `<button class="button complete" type="button" data-complete="${chapterId}">Concluido</button>`;
+  }
+  if (gated) {
+    return `
+      <button class="button" type="button" data-complete="${chapterId}" data-complete-confirm="true">
+        Confirmar conclusao
+      </button>
+      <button class="button secondary" type="button" data-complete-cancel="${chapterId}">Cancelar</button>
+    `;
+  }
+  const soft = session.percent < 100 || exerciseStats.answered === 0;
   return `
-    <div class="reader-tabs" aria-label="Kapitelbereiche">
-      ${READER_STEPS.map((step) => `
-        <button
-          class="${ctx.ui.readerTab === step.id ? "active" : ""} ${getVisitedSteps(ctx.state, chapter.id).includes(step.id) ? "visited" : ""}"
-          type="button"
-          data-reader-tab="${step.id}"
-          data-reader-chapter="${chapter.id}"
-        >${step.label}</button>
-      `).join("")}
-    </div>
+    <button class="button ${soft ? "soft-complete" : ""}" type="button" data-complete="${chapterId}">
+      ${soft ? "Fechar (sessao incompleta)" : "Marcar como concluido"}
+    </button>
+  `;
+}
+
+function renderCompleteGateNote(
+  ctx: AppContext,
+  chapterId: string,
+  session: { completed: number; total: number; percent: number },
+  exerciseStats: { answered: number }
+): string {
+  if (ctx.ui.completeGateChapterId !== chapterId) return "";
+  const reasons: string[] = [];
+  if (session.percent < 100) {
+    reasons.push(`Voce visitou ${session.completed} de ${session.total} etapas da sessao.`);
+  }
+  if (exerciseStats.answered === 0) {
+    reasons.push("Ainda nao marcou exercicios como Acertei/Errei.");
+  }
+  return `
+    <p class="session-gate-note" role="status">
+      ${reasons.join(" ")} Confirme se quiser concluir mesmo assim.
+    </p>
   `;
 }
 

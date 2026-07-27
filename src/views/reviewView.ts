@@ -71,6 +71,7 @@ export function renderReviewView(ctx: AppContext): string {
             <div class="exercise-group">
               ${cards.map((card, cardIndex) => exerciseCard(card, cardIndex, {
                 chapterId: card.chapterId,
+                chapterTitle: card.chapterTitle,
                 checkKey: `review:${card.chapterId}:${cardIndex}`,
                 check: ctx.state.exerciseChecks[`review:${card.chapterId}:${cardIndex}`]
               })).join("")}
@@ -139,7 +140,7 @@ function renderFlashFocus(
 
 function renderQuizFocus(
   ctx: AppContext,
-  card: { question: string; answer: string; explanation?: string; chapterId: string },
+  card: { question: string; answer: string; explanation?: string; chapterId: string; chapterTitle: string },
   index: number,
   total: number
 ): string {
@@ -147,6 +148,7 @@ function renderQuizFocus(
   return `
     <article class="focus-card-big">
       <span class="card-label">Pergunta ${index + 1}/${total}</span>
+      <p class="exam-chapter-tag">${card.chapterTitle}</p>
       <h2>AP1 check</h2>
       <p class="focus-question">${card.question}</p>
       <details class="focus-reveal">

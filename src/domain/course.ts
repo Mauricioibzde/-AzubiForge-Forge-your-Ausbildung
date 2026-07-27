@@ -112,13 +112,17 @@ export function getChapterExercises(chapter: Chapter): Exercise[] {
   return [...exercises.easy, ...exercises.intermediate, ...exercises.ap1Style];
 }
 
-export function getReviewExercises(data: AzubiForgeData, state: AppState): Array<Exercise & { chapterId: string }> {
+export function getReviewExercises(
+  data: AzubiForgeData,
+  state: AppState
+): Array<Exercise & { chapterId: string; chapterTitle: string }> {
   const queue = getReviewQueue(data, state);
   const source = queue.length ? queue : data.chapters.slice(0, 6);
 
   return source.flatMap((chapter) => getChapterExercises(chapter).map((exercise) => ({
     ...exercise,
-    chapterId: chapter.id
+    chapterId: chapter.id,
+    chapterTitle: chapter.title
   })));
 }
 

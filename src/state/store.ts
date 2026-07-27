@@ -25,7 +25,7 @@ export function saveState(state: AppState): void {
 export function exportState(state: AppState): void {
   const payload = {
     app: "AzubiForge",
-    version: 6,
+    version: 7,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -69,6 +69,7 @@ function createFallbackState(data: AzubiForgeData): AppState {
     sessionSteps: {},
     exerciseChecks: {},
     vocabChecks: {},
+    examChecklist: {},
     lastStudiedAt: {},
     studyDates: [],
     preferences: {
@@ -99,10 +100,24 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     sessionSteps: sanitizeSessionSteps(imported.sessionSteps, validChapterIds),
     exerciseChecks: sanitizeExerciseChecks(imported.exerciseChecks),
     vocabChecks: sanitizeExerciseChecks(imported.vocabChecks),
+    examChecklist: sanitizeExamChecklist(imported.examChecklist),
     lastStudiedAt: sanitizeStringRecord(imported.lastStudiedAt, validChapterIds),
     studyDates: sanitizeStudyDates(imported.studyDates),
     preferences: sanitizePreferences(imported.preferences, fallback.preferences)
   };
+}
+
+function sanitizeExamChecklist(value: unknown): Record<string, boolean> {
+  const record: Record<string, boolean> = {};
+  if (!value || typeof value !== "object") return record;
+
+  Object.entries(value).forEach(([key, item]) => {
+    if (/^\d+$/.test(key) && Number(key) < 32) {
+      record[key] = Boolean(item);
+    }
+  });
+
+  return record;
 }
 
 function sanitizeStudyDates(value: unknown): string[] {
