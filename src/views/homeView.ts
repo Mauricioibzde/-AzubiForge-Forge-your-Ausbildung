@@ -6,12 +6,15 @@ import {
   getChapterReadiness,
   getCourseProgress,
   getCourseReadiness,
+  getDailyGoalProgress,
   getEstimatedSessionMinutes,
   getModuleContinueChapter,
   getModuleProgress,
   getReviewQueue,
   getSessionProgress,
+  getStudyStreak,
   getTodayChapter,
+  getTodayStudyCount,
   isReviewDue,
   READER_STEPS
 } from "../domain/course";
@@ -20,6 +23,9 @@ import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock, readin
 export function renderHomeView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
   const readiness = getCourseReadiness(ctx.data, ctx.state);
+  const daily = getDailyGoalProgress(ctx.state);
+  const streak = getStudyStreak(ctx.state);
+  const todayCount = getTodayStudyCount(ctx.state);
   const chapter = getTodayChapter(ctx.data, ctx.state);
   const chapterReadiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const module = getChapterModule(ctx.data, chapter.id) || getActiveModule(ctx.data, ctx.state);
@@ -34,14 +40,31 @@ export function renderHomeView(ctx: AppContext): string {
 
   return `
     <section class="study-home">
+      ${ctx.state.preferences.onboardingDone ? "" : `
+        <section class="onboarding-card rise-in" aria-label="Primeiros passos">
+          <div>
+            <span class="card-label">Bem-vindo</span>
+            <h2>Como estudar no AzubiForge</h2>
+            <ol class="onboarding-steps">
+              <li>Abra a sessao de hoje e siga as 5 etapas.</li>
+              <li>No Wortschatz e nas Uebungen, responda antes de revelar.</li>
+              <li>Marque Acertei/Errei para montar sua revisao.</li>
+              <li>So marque Pronto AP1 quando a evidencia estiver solida.</li>
+            </ol>
+          </div>
+          <button class="button" type="button" data-dismiss-onboarding>Entendi, comecar</button>
+        </section>
+      `}
+
       <section class="study-hero rise-in">
         <p class="eyebrow">Curso offline AP1 FIAE</p>
         <h1>AzubiForge</h1>
         <p class="lead">Forge your Ausbildung. Uma sessao curta, guiada e pratica: leia, aplique, treine vocabulario e feche com AP1.</p>
         <div class="study-hero-meta dual-progress">
+          ${progressBlock(daily, "sessoes hoje")}
           ${progressBlock(progress, "concluidos")}
           ${progressBlock(readiness, "quase prontos")}
-          <p class="small-note">Prontidao media ${readiness.percent}% · ${dueCount} capitulos em revisao</p>
+          <p class="small-note">Streak ${streak} dia(s) · ${todayCount} capitulo(s) tocados hoje · ${dueCount} em revisao</p>
         </div>
       </section>
 

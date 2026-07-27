@@ -55,6 +55,8 @@ function createUiState(): UiState {
     reviewFocusMode: "flash",
     reviewFocusIndex: 0,
     practiceFilter: "all",
+    glossaryMode: "flash",
+    glossaryFocusIndex: 0,
     docsAiFocus: "study-plan",
     docsAiChapterId: ""
   };
@@ -65,9 +67,8 @@ function registerEvents(app: HTMLElement, ctx: AppContext): void {
   document.addEventListener("click", (event) => handleClick(event, app, ctx));
   document.addEventListener("input", (event) => handleInput(event, app, ctx));
   document.addEventListener("change", (event) => void handleChange(event, app, ctx));
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeMoreSheet();
-  });
+  document.addEventListener("keydown", (event) => handleKeydown(event, app, ctx));
+  registerSwipe(app, ctx);
 }
 
 function renderRoute(app: HTMLElement, ctx: AppContext): void {
@@ -127,6 +128,13 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     // allow hash links inside the sheet to continue navigating
   }
 
+  if (target.closest("[data-dismiss-onboarding]")) {
+    ctx.state.preferences.onboardingDone = true;
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return;
+  }
+
   const themeButton = target.closest("[data-theme-toggle]");
   if (themeButton) {
     toggleTheme(ctx);
@@ -162,6 +170,13 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     return;
   }
 
+  const glossaryStep = target.closest<HTMLElement>("[data-glossary-step]");
+  if (glossaryStep?.dataset.glossaryStep) {
+    ctx.ui.glossaryFocusIndex += Number(glossaryStep.dataset.glossaryStep);
+    renderRoute(app, ctx);
+    return;
+  }
+
   const exerciseCheck = target.closest<HTMLElement>("[data-exercise-check]");
   if (exerciseCheck?.dataset.exerciseCheck && exerciseCheck.dataset.checkKey) {
     setExerciseCheck(
@@ -170,6 +185,7 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
       exerciseCheck.dataset.exerciseCheck as ExerciseCheck,
       exerciseCheck.dataset.checkChapter || ""
     );
+    maybeAutoAdvance(ctx, exerciseCheck.dataset.autoAdvance);
     renderRoute(app, ctx);
     return;
   }
@@ -182,6 +198,7 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
       vocabCheck.dataset.vocabCheck as ExerciseCheck,
       vocabCheck.dataset.checkChapter || ""
     );
+    maybeAutoAdvance(ctx, vocabCheck.dataset.autoAdvance);
     renderRoute(app, ctx);
     return;
   }
@@ -299,11 +316,80 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
   if (group === "practice-filter") {
     ctx.ui.practiceFilter = value as UiState["practiceFilter"];
   }
+  if (group === "glossary-mode") {
+    ctx.ui.glossaryMode = value as UiState["glossaryMode"];
+    ctx.ui.glossaryFocusIndex = 0;
+  }
   if (group === "reading-size") {
     ctx.state.preferences.readingSize = value as ReadingSize;
     saveState(ctx.state);
     applyPreferences(ctx);
   }
+}
+
+function maybeAutoAdvance(ctx: AppContext, target?: string): void {
+  if (target === "review") ctx.ui.reviewFocusIndex += 1;
+  if (target === "glossary") ctx.ui.glossaryFocusIndex += 1;
+}
+
+function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext): void {
+  if (event.key === "Escape") {
+    closeMoreSheet();
+    return;
+  }
+
+  const route = (window.location.hash.replace("#", "").split("/")[0] || "home") as RouteName;
+  const tag = (event.target as HTMLElement | null)?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+  const delta = event.key === "ArrowRight" ? 1 : -1;
+
+  if (route === "review") {
+    event.preventDefault();
+    ctx.ui.reviewFocusIndex += delta;
+    renderRoute(app, ctx);
+    return;
+  }
+
+  if (route === "glossary" && ctx.ui.glossaryMode === "flash") {
+    event.preventDefault();
+    ctx.ui.glossaryFocusIndex += delta;
+    renderRoute(app, ctx);
+  }
+}
+
+function registerSwipe(app: HTMLElement, ctx: AppContext): void {
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  document.addEventListener("touchstart", (event) => {
+    const target = event.target as Element | null;
+    if (!target?.closest("[data-swipe-deck]")) return;
+    const touch = event.changedTouches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    tracking = true;
+  }, { passive: true });
+
+  document.addEventListener("touchend", (event) => {
+    if (!tracking) return;
+    tracking = false;
+    const target = event.target as Element | null;
+    const deck = target?.closest<HTMLElement>("[data-swipe-deck]");
+    if (!deck) return;
+
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy)) return;
+
+    const delta = dx < 0 ? 1 : -1;
+    if (deck.dataset.swipeDeck === "review") ctx.ui.reviewFocusIndex += delta;
+    if (deck.dataset.swipeDeck === "glossary") ctx.ui.glossaryFocusIndex += delta;
+    renderRoute(app, ctx);
+  }, { passive: true });
 }
 
 function setExerciseCheck(

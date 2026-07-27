@@ -38,14 +38,15 @@ export function renderReviewView(ctx: AppContext): string {
         </div>
 
         ${deckSize === 0 ? `<p class="empty-state">Nada na fila de foco agora.</p>` : `
-          <div class="focus-stage">
-            ${mode === "flash" ? renderFlashFocus(terms[index], index, deckSize) : renderQuizFocus(ctx, cards[index], index, deckSize)}
+          <div class="focus-stage" data-swipe-deck="review">
+            ${mode === "flash" ? renderFlashFocus(ctx, terms[index], index, deckSize) : renderQuizFocus(ctx, cards[index], index, deckSize)}
           </div>
           <div class="focus-controls">
             <button class="button secondary" type="button" data-review-step="-1">Anterior</button>
             <span class="focus-count">${index + 1} / ${deckSize}</span>
             <button class="button" type="button" data-review-step="1">Proximo</button>
           </div>
+          <p class="small-note">Deslize o card no celular ou use as setas do teclado.</p>
         `}
       </section>
 
@@ -97,12 +98,15 @@ function focusModeButton(value: ReviewFocusMode, label: string, current: ReviewF
 }
 
 function renderFlashFocus(
+  ctx: AppContext,
   term: { word: string; translation: string; explanation: string },
   index: number,
   total: number
 ): string {
+  const key = `review-vocab:${term.word.toLowerCase()}`;
+  const check = ctx.state.vocabChecks[key];
   return `
-    <article class="focus-card-big">
+    <article class="focus-card-big ${check ? `checked-${check}` : ""}">
       <span class="card-label">Flashcard ${index + 1}/${total}</span>
       <h2>${term.word}</h2>
       <p class="focus-prompt">Explique em voz alta antes de revelar.</p>
@@ -110,6 +114,24 @@ function renderFlashFocus(
         <summary>Revelar significado</summary>
         <strong>${term.translation}</strong>
         <p>${term.explanation}</p>
+        <div class="self-check-actions">
+          <button
+            class="button secondary ${check === "correct" ? "active-check" : ""}"
+            type="button"
+            data-vocab-check="correct"
+            data-check-key="${key}"
+            data-check-chapter=""
+            data-auto-advance="review"
+          >Acertei</button>
+          <button
+            class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
+            type="button"
+            data-vocab-check="wrong"
+            data-check-key="${key}"
+            data-check-chapter=""
+            data-auto-advance="review"
+          >Errei</button>
+        </div>
       </details>
     </article>
   `;
@@ -139,6 +161,7 @@ function renderQuizFocus(
               data-exercise-check="correct"
               data-check-key="${checkKey}"
               data-check-chapter="${card.chapterId}"
+              data-auto-advance="review"
             >Acertei</button>
             <button
               class="button secondary ${ctx.state.exerciseChecks[checkKey] === "wrong" ? "active-check wrong" : ""}"
@@ -146,6 +169,7 @@ function renderQuizFocus(
               data-exercise-check="wrong"
               data-check-key="${checkKey}"
               data-check-chapter="${card.chapterId}"
+              data-auto-advance="review"
             >Errei / revisar</button>
           </div>
         </div>

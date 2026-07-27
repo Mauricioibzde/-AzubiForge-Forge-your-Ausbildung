@@ -2619,3 +2619,51 @@ body.more-open {
     bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* --- Onboarding + glossary flash --- */
+
+.onboarding-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 22px 24px;
+  border: 1px solid rgba(15, 107, 95, 0.28);
+  border-radius: calc(var(--radius) + 4px);
+  background:
+    linear-gradient(135deg, rgba(15, 107, 95, 0.1), rgba(255, 255, 255, 0.85)),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.onboarding-steps {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.onboarding-steps li {
+  margin: 0 0 6px;
+}
+
+.glossary-flash .focus-card-big.checked-correct {
+  border-color: rgba(31, 122, 77, 0.35);
+}
+
+.glossary-flash .focus-card-big.checked-wrong {
+  border-color: rgba(183, 121, 31, 0.45);
+}
+
+.focus-stage {
+  touch-action: pan-y;
+}
+
+@media (max-width: 820px) {
+  .onboarding-card {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-card .button {
+    width: 100%;
+  }
+}

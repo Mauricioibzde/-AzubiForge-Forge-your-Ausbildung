@@ -25,7 +25,7 @@ export function saveState(state: AppState): void {
 export function exportState(state: AppState): void {
   const payload = {
     app: "AzubiForge",
-    version: 5,
+    version: 6,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -70,9 +70,12 @@ function createFallbackState(data: AzubiForgeData): AppState {
     exerciseChecks: {},
     vocabChecks: {},
     lastStudiedAt: {},
+    studyDates: [],
     preferences: {
       theme: "light",
-      readingSize: "normal"
+      readingSize: "normal",
+      onboardingDone: false,
+      dailyGoalSessions: 1
     }
   };
 }
@@ -97,8 +100,14 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     exerciseChecks: sanitizeExerciseChecks(imported.exerciseChecks),
     vocabChecks: sanitizeExerciseChecks(imported.vocabChecks),
     lastStudiedAt: sanitizeStringRecord(imported.lastStudiedAt, validChapterIds),
+    studyDates: sanitizeStudyDates(imported.studyDates),
     preferences: sanitizePreferences(imported.preferences, fallback.preferences)
   };
+}
+
+function sanitizeStudyDates(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && /^\d{4}-\d{2}-\d{2}$/.test(item)).slice(-120);
 }
 
 function sanitizeExerciseChecks(value: unknown): Record<string, ExerciseCheck> {
@@ -172,6 +181,12 @@ function sanitizePreferences(value: unknown, fallback: Preferences): Preferences
     theme: preferences.theme === "dark" || preferences.theme === "light" ? preferences.theme : fallback.theme,
     readingSize: preferences.readingSize === "large" || preferences.readingSize === "normal"
       ? preferences.readingSize
-      : fallback.readingSize
+      : fallback.readingSize,
+    onboardingDone: typeof preferences.onboardingDone === "boolean"
+      ? preferences.onboardingDone
+      : fallback.onboardingDone,
+    dailyGoalSessions: typeof preferences.dailyGoalSessions === "number" && preferences.dailyGoalSessions > 0
+      ? Math.min(5, Math.round(preferences.dailyGoalSessions))
+      : fallback.dailyGoalSessions
   };
 }

@@ -125,6 +125,8 @@ export type ReadinessLevel = 0 | 1 | 2 | 3 | 4 | 5;
 export interface Preferences {
   theme: Theme;
   readingSize: ReadingSize;
+  onboardingDone: boolean;
+  dailyGoalSessions: number;
 }
 
 export interface AppState {
@@ -137,6 +139,7 @@ export interface AppState {
   exerciseChecks: Record<string, ExerciseCheck>;
   vocabChecks: Record<string, ExerciseCheck>;
   lastStudiedAt: Record<string, string>;
+  studyDates: string[];
   preferences: Preferences;
 }
 
@@ -145,6 +148,8 @@ export interface UiState {
   courseFilter: CourseFilter;
   glossaryQuery: string;
   glossaryFilter: GlossaryFilter;
+  glossaryMode: "list" | "flash";
+  glossaryFocusIndex: number;
   globalQuery: string;
   readerTab: ReaderTab;
   readerChapterId: string;

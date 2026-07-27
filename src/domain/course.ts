@@ -296,6 +296,51 @@ export function getVocabStats(state: AppState, chapterId: string, total: number)
 
 export function touchStudied(state: AppState, chapterId: string): void {
   state.lastStudiedAt[chapterId] = new Date().toISOString();
+  const today = todayKey();
+  if (!state.studyDates.includes(today)) {
+    state.studyDates = [...state.studyDates, today].slice(-120);
+  }
+}
+
+export function todayKey(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
+}
+
+export function getTodayStudyCount(state: AppState): number {
+  const today = todayKey();
+  return Object.values(state.lastStudiedAt).filter((stamp) => stamp.startsWith(today)).length;
+}
+
+export function getStudyStreak(state: AppState): number {
+  const days = new Set(state.studyDates);
+  let streak = 0;
+  const cursor = new Date();
+
+  for (let index = 0; index < 120; index += 1) {
+    const key = todayKey(cursor);
+    if (!days.has(key)) {
+      if (index === 0) {
+        // allow streak to survive if user has not studied yet today
+        cursor.setDate(cursor.getDate() - 1);
+        continue;
+      }
+      break;
+    }
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
+export function getDailyGoalProgress(state: AppState): Progress {
+  const goal = Math.max(1, state.preferences.dailyGoalSessions || 1);
+  const done = Math.min(goal, getTodayStudyCount(state));
+  return {
+    completed: done,
+    total: goal,
+    percent: percentage(done, goal)
+  };
 }
 
 export function getDaysSinceStudied(state: AppState, chapterId: string): number {
