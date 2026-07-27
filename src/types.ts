@@ -204,6 +204,8 @@ export interface UiState {
   examFocusMode: ExamFocusMode;
   examFocusIndex: number;
   completeGateChapterId: string;
+  confidenceGateChapterId: string;
+  confidenceGateMessage: string;
   docsAiFocus: "study-plan" | "chapter-help" | "review";
   docsAiChapterId: string;
 }

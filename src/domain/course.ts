@@ -127,14 +127,62 @@ export function getReviewExercises(
 }
 
 export function getVocabularyPreview(data: AzubiForgeData, state: AppState): GlossaryTerm[] {
-  const queueText = getReviewQueue(data, state)
-    .slice(0, 6)
-    .map((chapter) => `${chapter.title} ${chapter.description} ${chapter.ihk} ${chapter.summary}`)
-    .join(" ")
-    .toLowerCase();
-  const matched = data.glossary.filter((term) => queueText.includes(term.word.toLowerCase()));
+  return getReviewVocabularyDeck(data, state).map((item) => ({
+    word: item.word,
+    translation: item.translation,
+    explanation: item.explanation
+  }));
+}
 
-  return [...matched, ...data.glossary.filter((term) => !matched.includes(term))];
+export interface ReviewVocabItem {
+  word: string;
+  translation: string;
+  explanation: string;
+  chapterId: string;
+  index: number;
+}
+
+export function getReviewVocabularyDeck(data: AzubiForgeData, state: AppState, limit = 18): ReviewVocabItem[] {
+  const queue = getReviewQueue(data, state);
+  const source = queue.length ? queue : data.chapters.slice(0, 6);
+  const items: ReviewVocabItem[] = [];
+  const seen = new Set<string>();
+
+  source.forEach((chapter) => {
+    getChapterVocabulary(data, chapter).forEach((row, index) => {
+      const dedupe = `${chapter.id}:${row.de.toLowerCase()}`;
+      if (seen.has(dedupe)) return;
+      seen.add(dedupe);
+      items.push({
+        word: row.de,
+        translation: row.pt,
+        explanation: row.explanation,
+        chapterId: chapter.id,
+        index
+      });
+    });
+  });
+
+  if (items.length < limit) {
+    data.chapters.forEach((chapter) => {
+      if (items.length >= limit) return;
+      getChapterVocabulary(data, chapter).forEach((row, index) => {
+        if (items.length >= limit) return;
+        const dedupe = `${chapter.id}:${row.de.toLowerCase()}`;
+        if (seen.has(dedupe)) return;
+        seen.add(dedupe);
+        items.push({
+          word: row.de,
+          translation: row.pt,
+          explanation: row.explanation,
+          chapterId: chapter.id,
+          index
+        });
+      });
+    });
+  }
+
+  return items.slice(0, limit);
 }
 
 export function getChapterVocabulary(data: AzubiForgeData, chapter: Chapter): VocabularyRow[] {
@@ -216,6 +264,12 @@ export function getNextSessionTab(state: AppState, chapterId: string, current: R
 
   const visited = new Set(getVisitedSteps(state, chapterId));
   return READER_STEPS.find((step) => !visited.has(step.id))?.id || null;
+}
+
+export function getPrevSessionTab(current: ReaderTab): ReaderTab | null {
+  const currentIndex = READER_STEPS.findIndex((step) => step.id === current);
+  if (currentIndex > 0) return READER_STEPS[currentIndex - 1].id;
+  return null;
 }
 
 export function getActiveModule(data: AzubiForgeData, state: AppState): Module {
@@ -448,7 +502,15 @@ export function canMarkReady(data: AzubiForgeData, state: AppState, chapterId: s
 
 function chapterIdFromCheckKey(key: string): string {
   const parts = key.split(":");
-  if (parts[0] === "review" || parts[0] === "focus" || parts[0] === "vocab") return parts[1] || "";
+  if (
+    parts[0] === "review"
+    || parts[0] === "focus"
+    || parts[0] === "vocab"
+    || parts[0] === "exam"
+    || parts[0] === "mock"
+  ) {
+    return parts[1] || "";
+  }
   return parts[0] || "";
 }
 

@@ -3046,6 +3046,23 @@ summary {
   box-shadow: var(--shadow);
 }
 
+.home-search {
+  display: grid;
+  gap: 10px;
+}
+
+.home-search-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.home-search .global-results {
+  margin-top: 4px;
+}
+
 .exam-coach-copy {
   display: grid;
   gap: 10px;

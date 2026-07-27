@@ -66,9 +66,13 @@ export function readinessBadge(readiness: Readiness): string {
   return `<span class="readiness-badge level-${readiness.level}">${readiness.label}</span>`;
 }
 
-export function confidenceControls(state: AppState, chapter: Chapter): string {
+export function confidenceControls(
+  state: AppState,
+  chapter: Chapter,
+  options: { gateMessage?: string } = {}
+): string {
   const current = state.confidence[chapter.id] || "";
-  const options: Array<[Confidence, string]> = [
+  const optionsList: Array<[Confidence, string]> = [
     ["ok", "Entendi"],
     ["review", "Preciso revisar"],
     ["hard", "Dificil"],
@@ -79,7 +83,7 @@ export function confidenceControls(state: AppState, chapter: Chapter): string {
     <section class="confidence-box">
       <span class="small-note">Confianca</span>
       <div class="confidence-actions">
-        ${options.map(([value, label]) => `
+        ${optionsList.map(([value, label]) => `
           <button
             class="${current === value ? "active" : ""}"
             type="button"
@@ -88,6 +92,10 @@ export function confidenceControls(state: AppState, chapter: Chapter): string {
           >${label}</button>
         `).join("")}
       </div>
+      ${options.gateMessage ? `
+        <p class="session-gate-note" role="status">${options.gateMessage}</p>
+        <button class="button secondary" type="button" data-confidence-gate-cancel="${chapter.id}">Entendi</button>
+      ` : ""}
     </section>
   `;
 }

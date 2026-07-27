@@ -5,6 +5,8 @@ import {
   findChapter,
   getChapterExercises,
   getChapterExerciseStats,
+  getNextSessionTab,
+  getPrevSessionTab,
   getResumeTab,
   getSessionProgress,
   isCompleted,
@@ -85,6 +87,8 @@ function createUiState(): UiState {
     examFocusMode: "mock",
     examFocusIndex: 0,
     completeGateChapterId: "",
+    confidenceGateChapterId: "",
+    confidenceGateMessage: "",
     docsAiFocus: "study-plan",
     docsAiChapterId: ""
   };
@@ -114,6 +118,8 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
       ctx.ui.readerChapterId = chapterId;
       ctx.ui.readerTab = getResumeTab(ctx.state, chapterId);
       ctx.ui.completeGateChapterId = "";
+      ctx.ui.confidenceGateChapterId = "";
+      ctx.ui.confidenceGateMessage = "";
     }
     if (tab && READER_TABS.includes(tab as ReaderTab)) {
       ctx.ui.readerTab = tab as ReaderTab;
@@ -297,6 +303,14 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     return;
   }
 
+  const confidenceGateCancel = target.closest<HTMLElement>("[data-confidence-gate-cancel]");
+  if (confidenceGateCancel) {
+    ctx.ui.confidenceGateChapterId = "";
+    ctx.ui.confidenceGateMessage = "";
+    renderRoute(app, ctx);
+    return;
+  }
+
   const filterButton = target.closest<HTMLElement>("[data-filter-group]");
   if (filterButton?.dataset.filterGroup && filterButton.dataset.filterValue) {
     applyFilter(ctx, filterButton.dataset.filterGroup, filterButton.dataset.filterValue);
@@ -470,6 +484,23 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
       saveState(ctx.state);
       renderRoute(app, ctx);
     }
+    return;
+  }
+
+  if (route === "reader") {
+    event.preventDefault();
+    const chapterId = ctx.ui.readerChapterId || ctx.state.lastChapterId;
+    if (!chapterId) return;
+    if (delta > 0) {
+      const nextTab = getNextSessionTab(ctx.state, chapterId, ctx.ui.readerTab);
+      if (!nextTab) return;
+      ctx.ui.readerTab = nextTab;
+    } else {
+      const prevTab = getPrevSessionTab(ctx.ui.readerTab);
+      if (!prevTab) return;
+      ctx.ui.readerTab = prevTab;
+    }
+    renderRoute(app, ctx);
   }
 }
 
@@ -596,15 +627,18 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
       grade.dataset.mockQuestion,
       grade.dataset.mockGrade as ExerciseCheck
     );
-    // also feed review signals
     const question = ctx.state.mockExam.questions.find((item) => item.id === grade.dataset.mockQuestion);
     if (question) {
-      const key = `mock:${question.id}`;
+      const key = `mock:${question.chapterId}:${question.id}`;
       ctx.state.exerciseChecks[key] = grade.dataset.mockGrade as ExerciseCheck;
       if (grade.dataset.mockGrade === "wrong") {
         const current = ctx.state.confidence[question.chapterId];
         if (current !== "hard") ctx.state.confidence[question.chapterId] = "review";
       }
+    }
+    const attempt = ctx.state.mockExam;
+    if (attempt.currentIndex < attempt.questions.length - 1) {
+      ctx.state.mockExam = { ...attempt, currentIndex: attempt.currentIndex + 1 };
     }
     saveState(ctx.state);
     renderRoute(app, ctx);
@@ -736,11 +770,14 @@ function setConfidence(ctx: AppContext, chapterId: string, value: Confidence): v
   if (value === "ready") {
     const gate = canMarkReady(ctx.data, ctx.state, chapterId);
     if (!gate.ok) {
-      window.alert(gate.message);
+      ctx.ui.confidenceGateChapterId = chapterId;
+      ctx.ui.confidenceGateMessage = gate.message;
       return;
     }
   }
 
+  ctx.ui.confidenceGateChapterId = "";
+  ctx.ui.confidenceGateMessage = "";
   ctx.state.confidence[chapterId] = value;
   touchStudied(ctx.state, chapterId);
   if (value === "ready" && !isCompleted(ctx.state, chapterId)) {

@@ -146,7 +146,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           ${session.percent < 100 && !done && ctx.ui.completeGateChapterId !== chapter.id ? `
             <p class="small-note">Dica: complete as ${session.total} etapas antes de marcar como concluido.</p>
           ` : ""}
-          ${confidenceControls(ctx.state, chapter)}
+          ${confidenceControls(ctx.state, chapter, confidenceGateOptions(ctx, chapter.id))}
           <details class="reader-more-tools">
             <summary>Ferramentas de leitura</summary>
             <div class="reader-tools">
@@ -179,7 +179,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           </button>
         ` : `
           <div class="mobile-dock-confidence">
-            ${confidenceControls(ctx.state, chapter)}
+            ${confidenceControls(ctx.state, chapter, confidenceGateOptions(ctx, chapter.id))}
           </div>
           ${renderCompleteGateNote(ctx, chapter.id, session, exerciseStats)}
           ${renderCompleteButton(ctx, chapter.id, done, session, exerciseStats)}
@@ -419,7 +419,7 @@ function ap1Tab(ctx: AppContext, chapter: Chapter): string {
         "Ich kann ein Praxisbeispiel nennen.",
         "Ich kann eine kurze AP1-Antwort formulieren."
       ])}
-      ${confidenceControls(ctx.state, chapter)}
+      ${confidenceControls(ctx.state, chapter, confidenceGateOptions(ctx, chapter.id))}
     </section>
   `;
 }
@@ -523,7 +523,12 @@ function renderSessionEvidence(
           ${gaps.map((gap) => `<li>${gap}</li>`).join("")}
         </ul>
       ` : `<p class="small-note">Boa evidencia. Voce pode marcar confianca e concluir com mais seguranca.</p>`}
-      ${confidenceControls(ctx.state, chapter)}
+      ${confidenceControls(ctx.state, chapter, confidenceGateOptions(ctx, chapter.id))}
     </section>
   `;
+}
+
+function confidenceGateOptions(ctx: AppContext, chapterId: string): { gateMessage?: string } {
+  if (ctx.ui.confidenceGateChapterId !== chapterId || !ctx.ui.confidenceGateMessage) return {};
+  return { gateMessage: ctx.ui.confidenceGateMessage };
 }

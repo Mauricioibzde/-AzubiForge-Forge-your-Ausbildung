@@ -73,7 +73,7 @@ export function renderHomeView(ctx: AppContext): string {
           <div class="daily-goal-controls" aria-label="Meta diaria">
             <span class="small-note">Meta diaria</span>
             <div class="segmented-control compact">
-              ${[1, 2, 3].map((goal) => `
+              ${[1, 2, 3, 4, 5].map((goal) => `
                 <button
                   class="${ctx.state.preferences.dailyGoalSessions === goal ? "active" : ""}"
                   type="button"
@@ -84,6 +84,20 @@ export function renderHomeView(ctx: AppContext): string {
           </div>
           <p class="small-note">Streak ${streak} dia(s) · ${todayCount} capitulo(s) tocados hoje · ${dueCount} em revisao</p>
         </div>
+      </section>
+
+      <section class="home-search rise-in" style="animation-delay: 20ms" aria-label="Busca offline">
+        <label class="home-search-label" for="global-search-input">Buscar no curso</label>
+        <input
+          id="global-search-input"
+          class="search-input"
+          type="search"
+          placeholder="DNS, Firewall, SQL, Router..."
+          aria-label="Busca global"
+          data-global-search
+          value="${escapeAttribute(ctx.ui.globalQuery)}"
+        >
+        ${ctx.ui.globalQuery ? renderGlobalResults(ctx) : ""}
       </section>
 
       <section class="exam-coach rise-in" style="animation-delay: 40ms" aria-label="Coach AP1">
@@ -214,21 +228,8 @@ export function renderHomeView(ctx: AppContext): string {
       </section>
 
       <details class="tools-drawer rise-in" style="animation-delay: 180ms">
-        <summary>Busca e backup offline</summary>
+        <summary>Backup offline</summary>
         <div class="tools-drawer-body">
-          <section class="panel soft-panel" aria-label="Busca global">
-            <span class="card-label">Busca offline</span>
-            <h2>Encontrar conteudo</h2>
-            <input
-              class="search-input"
-              type="search"
-              placeholder="Buscar por DNS, Firewall, SQL..."
-              aria-label="Busca global"
-              data-global-search
-              value="${escapeAttribute(ctx.ui.globalQuery)}"
-            >
-            ${ctx.ui.globalQuery ? renderGlobalResults(ctx) : ""}
-          </section>
           <section class="panel soft-panel" aria-label="Dados locais">
             <span class="card-label">Dados locais</span>
             <h2>Backup offline</h2>

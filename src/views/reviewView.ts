@@ -1,12 +1,18 @@
 import type { AppContext } from "../appContext";
-import { getReviewExercises, getReviewQueue, getVocabularyPreview } from "../domain/course";
+import {
+  getReviewExercises,
+  getReviewQueue,
+  getReviewVocabularyDeck,
+  vocabCheckKey,
+  type ReviewVocabItem
+} from "../domain/course";
 import type { ReviewFocusMode } from "../types";
 import { chapterCard, exerciseCard } from "../ui/components";
 
 export function renderReviewView(ctx: AppContext): string {
   const queue = getReviewQueue(ctx.data, ctx.state).slice(0, 8);
   const cards = getReviewExercises(ctx.data, ctx.state).slice(0, 10);
-  const terms = getVocabularyPreview(ctx.data, ctx.state).slice(0, 18);
+  const terms = getReviewVocabularyDeck(ctx.data, ctx.state, 18);
   const mode = ctx.ui.reviewFocusMode;
   const deckSize = mode === "flash" ? terms.length : cards.length;
   const index = deckSize ? ((ctx.ui.reviewFocusIndex % deckSize) + deckSize) % deckSize : 0;
@@ -100,11 +106,11 @@ function focusModeButton(value: ReviewFocusMode, label: string, current: ReviewF
 
 function renderFlashFocus(
   ctx: AppContext,
-  term: { word: string; translation: string; explanation: string },
+  term: ReviewVocabItem,
   index: number,
   total: number
 ): string {
-  const key = `review-vocab:${term.word.toLowerCase()}`;
+  const key = vocabCheckKey(term.chapterId, term.index);
   const check = ctx.state.vocabChecks[key];
   return `
     <article class="focus-card-big ${check ? `checked-${check}` : ""}">
@@ -121,7 +127,7 @@ function renderFlashFocus(
             type="button"
             data-vocab-check="correct"
             data-check-key="${key}"
-            data-check-chapter=""
+            data-check-chapter="${term.chapterId}"
             data-auto-advance="review"
           >Acertei</button>
           <button
@@ -129,10 +135,11 @@ function renderFlashFocus(
             type="button"
             data-vocab-check="wrong"
             data-check-key="${key}"
-            data-check-chapter=""
+            data-check-chapter="${term.chapterId}"
             data-auto-advance="review"
           >Errei</button>
         </div>
+        <a class="text-link" href="#reader/${term.chapterId}/vocab">Abrir Wortschatz</a>
       </details>
     </article>
   `;
