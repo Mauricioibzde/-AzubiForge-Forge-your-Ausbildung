@@ -70,6 +70,17 @@ export function getSuggestedChapter(data: AzubiForgeData, state: AppState): Chap
 
 export function getReviewQueue(data: AzubiForgeData, state: AppState): Chapter[] {
   const priority = { hard: 0, review: 1, ok: 2, ready: 3 };
+  const wrongChapterIds = new Set(
+    Object.entries(state.exerciseChecks)
+      .filter(([, value]) => value === "wrong")
+      .map(([key]) => {
+        const parts = key.split(":");
+        if (parts[0] === "review" || parts[0] === "focus") return parts[1];
+        return parts[0];
+      })
+      .filter(Boolean)
+  );
+  const fromMistakes = data.chapters.filter((chapter) => wrongChapterIds.has(chapter.id));
   const marked = data.chapters
     .filter((chapter) => state.confidence[chapter.id] === "hard" || state.confidence[chapter.id] === "review")
     .sort((a, b) => priority[state.confidence[a.id]] - priority[state.confidence[b.id]]);
@@ -78,7 +89,7 @@ export function getReviewQueue(data: AzubiForgeData, state: AppState): Chapter[]
     .filter((chapter) => isCompleted(state, chapter.id) && state.confidence[chapter.id] !== "ready")
     .slice(0, 4);
 
-  return uniqueChapters([...marked, ...open, ...recall]);
+  return uniqueChapters([...fromMistakes, ...marked, ...open, ...recall]);
 }
 
 export function getTodayChapter(data: AzubiForgeData, state: AppState): Chapter {
@@ -223,6 +234,33 @@ export function getChapterPathStatus(
 
 export function getEstimatedSessionMinutes(chapter: Chapter): number {
   return Math.max(12, Math.min(35, getReadingMinutes(chapter) + 8));
+}
+
+export function exerciseCheckKey(chapterId: string, index: number): string {
+  return `${chapterId}:${index}`;
+}
+
+export function getChapterExerciseStats(state: AppState, chapterId: string, total: number): {
+  correct: number;
+  wrong: number;
+  answered: number;
+  total: number;
+} {
+  let correct = 0;
+  let wrong = 0;
+
+  for (let index = 0; index < total; index += 1) {
+    const value = state.exerciseChecks[exerciseCheckKey(chapterId, index)];
+    if (value === "correct") correct += 1;
+    if (value === "wrong") wrong += 1;
+  }
+
+  return {
+    correct,
+    wrong,
+    answered: correct + wrong,
+    total
+  };
 }
 
 function percentage(value: number, total: number): number {

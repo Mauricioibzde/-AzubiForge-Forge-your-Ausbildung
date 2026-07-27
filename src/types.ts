@@ -118,6 +118,9 @@ export interface AzubiForgeData {
   learningSituations?: Record<string, LearningSituation[]>;
 }
 
+export type ExerciseCheck = "correct" | "wrong";
+export type ReviewFocusMode = "flash" | "quiz";
+
 export interface Preferences {
   theme: Theme;
   readingSize: ReadingSize;
@@ -130,6 +133,7 @@ export interface AppState {
   confidence: Record<string, Confidence>;
   collapsedModules: Record<string, boolean>;
   sessionSteps: Record<string, ReaderTab[]>;
+  exerciseChecks: Record<string, ExerciseCheck>;
   preferences: Preferences;
 }
 
@@ -141,6 +145,8 @@ export interface UiState {
   globalQuery: string;
   readerTab: ReaderTab;
   readerChapterId: string;
+  reviewFocusMode: ReviewFocusMode;
+  reviewFocusIndex: number;
   docsAiFocus: "study-plan" | "chapter-help" | "review";
   docsAiChapterId: string;
 }

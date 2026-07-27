@@ -1,8 +1,9 @@
-import type { AppState, AzubiForgeData, Confidence, Preferences, ReaderTab } from "../types";
+import type { AppState, AzubiForgeData, Confidence, ExerciseCheck, Preferences, ReaderTab } from "../types";
 
 const STORAGE_KEY = "azubiforge.progress.v1";
 const CONFIDENCE_VALUES = new Set<Confidence>(["ok", "review", "hard", "ready"]);
 const READER_TAB_VALUES = new Set<ReaderTab>(["explain", "praxis", "vocab", "practice", "ap1"]);
+const EXERCISE_CHECK_VALUES = new Set<ExerciseCheck>(["correct", "wrong"]);
 
 export function loadState(data: AzubiForgeData): AppState {
   const fallback = createFallbackState(data);
@@ -24,7 +25,7 @@ export function saveState(state: AppState): void {
 export function exportState(state: AppState): void {
   const payload = {
     app: "AzubiForge",
-    version: 3,
+    version: 4,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -66,6 +67,7 @@ function createFallbackState(data: AzubiForgeData): AppState {
     confidence: {},
     collapsedModules: {},
     sessionSteps: {},
+    exerciseChecks: {},
     preferences: {
       theme: "light",
       readingSize: "normal"
@@ -90,8 +92,22 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     confidence: sanitizeConfidence(imported.confidence, validChapterIds),
     collapsedModules: sanitizeBooleanRecord(imported.collapsedModules, validModuleIds),
     sessionSteps: sanitizeSessionSteps(imported.sessionSteps, validChapterIds),
+    exerciseChecks: sanitizeExerciseChecks(imported.exerciseChecks),
     preferences: sanitizePreferences(imported.preferences, fallback.preferences)
   };
+}
+
+function sanitizeExerciseChecks(value: unknown): Record<string, ExerciseCheck> {
+  const record: Record<string, ExerciseCheck> = {};
+  if (!value || typeof value !== "object") return record;
+
+  Object.entries(value).forEach(([key, item]) => {
+    if (typeof key === "string" && EXERCISE_CHECK_VALUES.has(item as ExerciseCheck)) {
+      record[key] = item as ExerciseCheck;
+    }
+  });
+
+  return record;
 }
 
 function sanitizeSessionSteps(value: unknown, validKeys: Set<string>): Record<string, ReaderTab[]> {

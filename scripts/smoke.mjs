@@ -14,35 +14,35 @@ const routes = [
 await mkdir(screenshotsDir, { recursive: true });
 
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const issues = [];
 
-page.on("console", (message) => {
+desktop.on("console", (message) => {
   if (message.type() === "error") issues.push(`console: ${message.text()}`);
 });
 
-page.on("pageerror", (error) => {
+desktop.on("pageerror", (error) => {
   issues.push(`pageerror: ${error.message}`);
 });
 
-await page.goto(baseUrl, { waitUntil: "networkidle" });
-await page.waitForSelector("main h1", { timeout: 10000 });
+await desktop.goto(baseUrl, { waitUntil: "networkidle" });
+await desktop.waitForSelector("main h1", { timeout: 10000 });
 
-const firstChapter = await page.evaluate(() => window.AZUBIFORGE_DATA?.chapters?.[0]?.id || "");
+const firstChapter = await desktop.evaluate(() => window.AZUBIFORGE_DATA?.chapters?.[0]?.id || "");
 routes.splice(2, 0, ["reader", `/#reader/${firstChapter}`]);
 
 for (const [name, path] of routes) {
-  await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
-  await page.waitForSelector("main h1", { timeout: 10000 });
+  await desktop.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
+  await desktop.waitForSelector("main h1", { timeout: 10000 });
 
-  const metrics = await page.evaluate(() => ({
+  const metrics = await desktop.evaluate(() => ({
     heading: document.querySelector("main h1")?.textContent?.trim() || "",
     scrollWidth: document.documentElement.scrollWidth,
     clientWidth: document.documentElement.clientWidth,
     textLength: document.querySelector("main")?.textContent?.trim().length || 0
   }));
 
-  await page.screenshot({ path: `${screenshotsDir}/${name}.png`, fullPage: true });
+  await desktop.screenshot({ path: `${screenshotsDir}/${name}.png`, fullPage: true });
   console.log(`${name}: ${metrics.heading} (${metrics.textLength} chars)`);
 
   if (!metrics.textLength) issues.push(`${name}: empty main content`);
@@ -51,9 +51,47 @@ for (const [name, path] of routes) {
   }
 }
 
+const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
+await mobile.goto(baseUrl, { waitUntil: "networkidle" });
+await mobile.waitForSelector("main h1", { timeout: 10000 });
+await mobile.screenshot({ path: `${screenshotsDir}/mobile-home.png`, fullPage: true });
+
+const mobileHome = await mobile.evaluate(() => ({
+  bottomNav: Boolean(document.querySelector(".bottom-nav")),
+  bottomVisible: getComputedStyle(document.querySelector(".bottom-nav")).display !== "none",
+  scrollWidth: document.documentElement.scrollWidth,
+  clientWidth: document.documentElement.clientWidth
+}));
+
+await mobile.goto(`${baseUrl}/#reader/${firstChapter}`, { waitUntil: "networkidle" });
+await mobile.waitForSelector(".mobile-study-dock", { timeout: 10000 });
+const mobileReader = await mobile.evaluate(() => ({
+  dockVisible: getComputedStyle(document.querySelector(".mobile-study-dock")).display !== "none",
+  scrollWidth: document.documentElement.scrollWidth,
+  clientWidth: document.documentElement.clientWidth
+}));
+await mobile.screenshot({ path: `${screenshotsDir}/mobile-reader.png`, fullPage: true });
+
+await mobile.goto(`${baseUrl}/#review`, { waitUntil: "networkidle" });
+await mobile.waitForSelector(".review-focus", { timeout: 10000 });
+await mobile.screenshot({ path: `${screenshotsDir}/mobile-review.png`, fullPage: true });
+
+console.log(`mobile-home: bottomNav=${mobileHome.bottomVisible}`);
+console.log(`mobile-reader: dock=${mobileReader.dockVisible}`);
+
+if (!mobileHome.bottomVisible) issues.push("mobile-home: bottom nav hidden");
+if (!mobileReader.dockVisible) issues.push("mobile-reader: study dock hidden");
+if (mobileHome.scrollWidth > mobileHome.clientWidth + 2) {
+  issues.push(`mobile-home: horizontal overflow ${mobileHome.clientWidth}/${mobileHome.scrollWidth}`);
+}
+if (mobileReader.scrollWidth > mobileReader.clientWidth + 2) {
+  issues.push(`mobile-reader: horizontal overflow ${mobileReader.clientWidth}/${mobileReader.scrollWidth}`);
+}
+
 await browser.close();
 
 if (issues.length) {
   console.error(issues.join("\n"));
   process.exitCode = 1;
 }
+

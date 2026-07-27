@@ -1,6 +1,7 @@
 import type { AppContext } from "../appContext";
 import {
   findChapter,
+  getChapterExerciseStats,
   getChapterIndex,
   getChapterLearningSituation,
   getChapterModule,
@@ -11,6 +12,7 @@ import {
   getSessionProgress,
   getVisitedSteps,
   isCompleted,
+  exerciseCheckKey,
   READER_STEPS
 } from "../domain/course";
 import type { Chapter, ChapterFullContent, ContentBlock, Diagram, ReaderTab } from "../types";
@@ -82,7 +84,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           ${readerTabs(ctx, chapter)}
           ${tabContent(ctx, chapter, ctx.ui.readerTab)}
 
-          <section class="session-next-bar">
+          <section class="session-next-bar desktop-session-bar">
             ${nextTab ? `
               <div>
                 <span class="card-label">Proximo passo</span>
@@ -110,7 +112,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
             <textarea
               class="notes-input"
               data-note="${chapter.id}"
-              rows="7"
+              rows="5"
               placeholder="Escreva suas observacoes, termos em alemao ou duvidas deste capitulo..."
             >${escapeHtml(note)}</textarea>
           </section>
@@ -131,24 +133,46 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
             <p class="small-note">Dica: complete as ${session.total} etapas antes de marcar como concluido.</p>
           ` : ""}
           ${confidenceControls(ctx.state, chapter)}
-          <div class="reader-tools">
-            <span class="small-note">Leitura</span>
-            <div class="segmented-control compact" aria-label="Tamanho do texto">
-              ${sizeSegment("normal", "Normal", ctx.state.preferences.readingSize)}
-              ${sizeSegment("large", "Grande", ctx.state.preferences.readingSize)}
+          <details class="reader-more-tools">
+            <summary>Ferramentas de leitura</summary>
+            <div class="reader-tools">
+              <span class="small-note">Tamanho do texto</span>
+              <div class="segmented-control compact" aria-label="Tamanho do texto">
+                ${sizeSegment("normal", "Normal", ctx.state.preferences.readingSize)}
+                ${sizeSegment("large", "Grande", ctx.state.preferences.readingSize)}
+              </div>
+              <button class="button secondary" type="button" data-print-chapter>Imprimir capitulo</button>
             </div>
-            <button class="button secondary" type="button" data-print-chapter>Imprimir capitulo</button>
-          </div>
+          </details>
         </div>
 
-        <nav class="panel chapter-mini-list" aria-label="Capitulos">
-          ${ctx.data.chapters.slice(Math.max(0, index - 6), index + 7).map((item) => `
-            <a class="${item.id === chapter.id ? "active" : ""}" href="#reader/${item.id}">
-              ${isCompleted(ctx.state, item.id) ? "OK " : ""}${item.title}
-            </a>
-          `).join("")}
-        </nav>
+        <details class="panel chapter-mini-wrap">
+          <summary>Capitulos proximos</summary>
+          <nav class="chapter-mini-list" aria-label="Capitulos">
+            ${ctx.data.chapters.slice(Math.max(0, index - 6), index + 7).map((item) => `
+              <a class="${item.id === chapter.id ? "active" : ""}" href="#reader/${item.id}">
+                ${isCompleted(ctx.state, item.id) ? "OK " : ""}${item.title}
+              </a>
+            `).join("")}
+          </nav>
+        </details>
       </aside>
+
+      <div class="mobile-study-dock" aria-label="Acoes da sessao">
+        ${nextTab ? `
+          <button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">
+            Avancar: ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proximo"}
+          </button>
+        ` : `
+          <button class="button ${done ? "complete" : ""}" type="button" data-complete="${chapter.id}">
+            ${done ? "Concluido" : "Concluir capitulo"}
+          </button>
+        `}
+        <div class="mobile-study-meta">
+          <span>${session.completed}/${session.total}</span>
+          <a class="text-link" href="#course">Trilha</a>
+        </div>
+      </div>
     </section>
   `;
 }
@@ -171,7 +195,7 @@ function readerTabs(ctx: AppContext, chapter: Chapter): string {
 function tabContent(ctx: AppContext, chapter: Chapter, tab: ReaderTab): string {
   if (tab === "praxis") return praxisTab(ctx, chapter);
   if (tab === "vocab") return vocabTab(ctx, chapter);
-  if (tab === "practice") return practiceTab(chapter);
+  if (tab === "practice") return practiceTab(ctx, chapter);
   if (tab === "ap1") return ap1Tab(ctx, chapter);
   return explainTab(chapter);
 }
@@ -273,16 +297,25 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
   `;
 }
 
-function practiceTab(chapter: Chapter): string {
+function practiceTab(ctx: AppContext, chapter: Chapter): string {
   const content = chapter.fullContent;
   const exercises = content
     ? [...content.exercises.easy, ...content.exercises.intermediate, ...content.exercises.ap1Style]
     : chapter.exercises;
+  const stats = getChapterExerciseStats(ctx.state, chapter.id, exercises.length);
 
   return `
     <section class="chapter-section">
-      <h2>Uebungen</h2>
-      ${exercises.map((exercise, index) => exerciseCard(exercise, index)).join("")}
+      <div class="practice-head">
+        <h2>Uebungen</h2>
+        <p class="small-note">${stats.answered} respondidas · ${stats.correct} corretas · ${stats.wrong} para revisar</p>
+      </div>
+      <p>Responda mentalmente, abra a solucao e marque se acertou. Erros entram na revisao.</p>
+      ${exercises.map((exercise, index) => exerciseCard(exercise, index, {
+        chapterId: chapter.id,
+        checkKey: exerciseCheckKey(chapter.id, index),
+        check: ctx.state.exerciseChecks[exerciseCheckKey(chapter.id, index)]
+      })).join("")}
     </section>
   `;
 }

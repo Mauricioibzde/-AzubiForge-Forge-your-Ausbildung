@@ -2,9 +2,11 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="AzubiForge: estudo offline para AP1 FIAE.">
   <meta name="theme-color" content="#eef3f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>AzubiForge - Forge your Ausbildung</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +26,7 @@
         </span>
       </a>
 
-      <nav class="nav" aria-label="Navegacao principal">
+      <nav class="nav top-nav" aria-label="Navegacao principal">
         <a href="#home" data-nav="home">Hoje</a>
         <a href="#course" data-nav="course">Trilha</a>
         <a href="#review" data-nav="review">Revisao</a>
@@ -39,6 +41,29 @@
 
     <main id="app" class="page" tabindex="-1"></main>
   </div>
+
+  <nav class="bottom-nav" aria-label="Navegacao mobile">
+    <a href="#home" data-nav="home">
+      <span class="bottom-nav-icon" aria-hidden="true">H</span>
+      <span>Hoje</span>
+    </a>
+    <a href="#course" data-nav="course">
+      <span class="bottom-nav-icon" aria-hidden="true">T</span>
+      <span>Trilha</span>
+    </a>
+    <a href="#review" data-nav="review">
+      <span class="bottom-nav-icon" aria-hidden="true">R</span>
+      <span>Revisao</span>
+    </a>
+    <a href="#glossary" data-nav="glossary">
+      <span class="bottom-nav-icon" aria-hidden="true">G</span>
+      <span>Glossario</span>
+    </a>
+    <a href="#docs-ai" data-nav="docs-ai">
+      <span class="bottom-nav-icon" aria-hidden="true">AI</span>
+      <span>Docs</span>
+    </a>
+  </nav>
 
   <script type="module" src="/src/main.ts"></script>
 </body>

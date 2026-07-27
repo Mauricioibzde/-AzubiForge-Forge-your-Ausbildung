@@ -8,7 +8,7 @@ import {
   markVisitedStep
 } from "./domain/course";
 import { exportState, importState, loadState, saveState } from "./state/store";
-import type { Confidence, CourseFilter, GlossaryFilter, ReadingSize, ReaderTab, RouteName, UiState } from "./types";
+import type { Confidence, CourseFilter, ExerciseCheck, GlossaryFilter, ReadingSize, ReaderTab, RouteName, UiState } from "./types";
 import { renderCourseView } from "./views/courseView";
 import { renderDocsAiView } from "./views/docsAiView";
 import { renderGlossaryView } from "./views/glossaryView";
@@ -42,6 +42,8 @@ function createUiState(): UiState {
     globalQuery: "",
     readerTab: "explain",
     readerChapterId: "",
+    reviewFocusMode: "flash",
+    reviewFocusIndex: 0,
     docsAiFocus: "study-plan",
     docsAiChapterId: ""
   };
@@ -77,6 +79,19 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
   else app.innerHTML = renderHomeView(ctx);
 
   app.focus({ preventScroll: true });
+  maybeScrollReaderStep(route);
+}
+
+function maybeScrollReaderStep(route: RouteName): void {
+  if (route !== "reader") return;
+  window.requestAnimationFrame(() => {
+    const guide = document.querySelector<HTMLElement>(".session-guide");
+    if (!guide) return;
+    const top = guide.getBoundingClientRect().top + window.scrollY - 76;
+    if (window.scrollY > top + 40 || window.scrollY < top - 120) {
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+  });
 }
 
 function setActiveNav(route: RouteName): void {
@@ -113,6 +128,25 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
   const nextButton = target.closest<HTMLElement>("[data-session-next]");
   if (nextButton?.dataset.nextTab) {
     ctx.ui.readerTab = nextButton.dataset.nextTab as ReaderTab;
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const reviewStep = target.closest<HTMLElement>("[data-review-step]");
+  if (reviewStep?.dataset.reviewStep) {
+    ctx.ui.reviewFocusIndex += Number(reviewStep.dataset.reviewStep);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const exerciseCheck = target.closest<HTMLElement>("[data-exercise-check]");
+  if (exerciseCheck?.dataset.exerciseCheck && exerciseCheck.dataset.checkKey) {
+    setExerciseCheck(
+      ctx,
+      exerciseCheck.dataset.checkKey,
+      exerciseCheck.dataset.exerciseCheck as ExerciseCheck,
+      exerciseCheck.dataset.checkChapter || ""
+    );
     renderRoute(app, ctx);
     return;
   }
@@ -214,11 +248,29 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
   if (group === "course") ctx.ui.courseFilter = value as CourseFilter;
   if (group === "glossary") ctx.ui.glossaryFilter = value as GlossaryFilter;
   if (group === "docs-ai-focus") ctx.ui.docsAiFocus = value as UiState["docsAiFocus"];
+  if (group === "review-focus") {
+    ctx.ui.reviewFocusMode = value as UiState["reviewFocusMode"];
+    ctx.ui.reviewFocusIndex = 0;
+  }
   if (group === "reading-size") {
     ctx.state.preferences.readingSize = value as ReadingSize;
     saveState(ctx.state);
     applyPreferences(ctx);
   }
+}
+
+function setExerciseCheck(
+  ctx: AppContext,
+  key: string,
+  value: ExerciseCheck,
+  chapterId: string
+): void {
+  ctx.state.exerciseChecks[key] = value;
+  if (value === "wrong" && chapterId && findChapter(ctx.data, chapterId)) {
+    const current = ctx.state.confidence[chapterId];
+    if (current !== "hard") ctx.state.confidence[chapterId] = "review";
+  }
+  saveState(ctx.state);
 }
 
 function toggleComplete(ctx: AppContext, chapterId: string): void {
