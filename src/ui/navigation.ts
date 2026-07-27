@@ -2,11 +2,22 @@ import type { AppContext } from "../appContext";
 import { findChapter, getChapterModule } from "../domain/course";
 import type { RouteName } from "../types";
 
+const ROUTE_TITLES: Record<RouteName, string> = {
+  home: "Hoje",
+  course: "Trilha",
+  reader: "Capitulo",
+  review: "Revisao",
+  glossary: "Glossario",
+  "docs-ai": "Docs AI"
+};
+
 export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string): void {
   document.body.dataset.route = route;
   setActiveNav(route);
   updateContinueChip(ctx, route);
   updateContextBar(ctx, route, chapterId);
+  updateDocumentTitle(ctx, route, chapterId);
+  updateConnectivityBanner();
 }
 
 export function setActiveNav(route: RouteName): void {
@@ -123,4 +134,25 @@ export function isMoreSheetOpen(): boolean {
 
 export function scrollToPageTop(): void {
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+export function updateDocumentTitle(ctx: AppContext, route: RouteName, chapterId?: string): void {
+  if (route === "reader" && chapterId) {
+    const chapter = findChapter(ctx.data, chapterId);
+    document.title = chapter ? `${chapter.title} · AzubiForge` : "AzubiForge";
+    return;
+  }
+  document.title = `${ROUTE_TITLES[route] || "AzubiForge"} · AzubiForge`;
+}
+
+export function updateConnectivityBanner(): void {
+  const banner = document.querySelector<HTMLElement>("[data-connectivity-banner]");
+  if (!banner) return;
+  banner.hidden = navigator.onLine;
+}
+
+export function registerConnectivityListeners(): void {
+  window.addEventListener("online", updateConnectivityBanner);
+  window.addEventListener("offline", updateConnectivityBanner);
+  updateConnectivityBanner();
 }

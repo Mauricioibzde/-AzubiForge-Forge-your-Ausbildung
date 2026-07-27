@@ -15,6 +15,7 @@ import { exportState, importState, loadState, saveState } from "./state/store";
 import type { Confidence, CourseFilter, ExerciseCheck, GlossaryFilter, ReadingSize, ReaderTab, RouteName, UiState } from "./types";
 import {
   closeMoreSheet,
+  registerConnectivityListeners,
   scrollToPageTop,
   syncChrome,
   toggleMoreSheet
@@ -39,6 +40,7 @@ export function startApp(): void {
 
   applyPreferences(ctx);
   registerEvents(app, ctx);
+  registerConnectivityListeners();
   registerServiceWorker();
   renderRoute(app, ctx);
 }
@@ -132,6 +134,17 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     ctx.state.preferences.onboardingDone = true;
     saveState(ctx.state);
     renderRoute(app, ctx);
+    return;
+  }
+
+  const goalButton = target.closest<HTMLElement>("[data-daily-goal]");
+  if (goalButton?.dataset.dailyGoal) {
+    const next = Number(goalButton.dataset.dailyGoal);
+    if (Number.isFinite(next) && next >= 1 && next <= 5) {
+      ctx.state.preferences.dailyGoalSessions = next;
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
     return;
   }
 

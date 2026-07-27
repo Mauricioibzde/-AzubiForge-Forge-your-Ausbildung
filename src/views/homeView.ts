@@ -64,9 +64,33 @@ export function renderHomeView(ctx: AppContext): string {
           ${progressBlock(daily, "sessoes hoje")}
           ${progressBlock(progress, "concluidos")}
           ${progressBlock(readiness, "quase prontos")}
+          <div class="daily-goal-controls" aria-label="Meta diaria">
+            <span class="small-note">Meta diaria</span>
+            <div class="segmented-control compact">
+              ${[1, 2, 3].map((goal) => `
+                <button
+                  class="${ctx.state.preferences.dailyGoalSessions === goal ? "active" : ""}"
+                  type="button"
+                  data-daily-goal="${goal}"
+                >${goal}</button>
+              `).join("")}
+            </div>
+          </div>
           <p class="small-note">Streak ${streak} dia(s) · ${todayCount} capitulo(s) tocados hoje · ${dueCount} em revisao</p>
         </div>
       </section>
+
+      ${progress.percent === 100 ? `
+        <section class="completion-card rise-in">
+          <span class="card-label">Trilha avancada</span>
+          <h2>Voce concluiu todos os capitulos registrados.</h2>
+          <p>Agora o foco e revisao ativa, termos fracos e subir a prontidao AP1 dos temas marcados como revisar.</p>
+          <div class="session-focus-actions">
+            <a class="button" href="#review">Abrir revisao</a>
+            <a class="button secondary" href="#glossary">Treinar glossario</a>
+          </div>
+        </section>
+      ` : ""}
 
       <section class="session-focus rise-in" style="animation-delay: 80ms">
         <div class="session-focus-copy">

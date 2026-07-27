@@ -12,6 +12,7 @@ import {
   getReadingMinutes,
   getSessionProgress,
   getVisitedSteps,
+  getVocabStats,
   isCompleted,
   exerciseCheckKey,
   READER_STEPS
@@ -41,10 +42,12 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
   const currentStep = READER_STEPS.find((step) => step.id === ctx.ui.readerTab) || READER_STEPS[0];
   const minutes = getEstimatedSessionMinutes(chapter);
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
+  const vocabRows = getChapterVocabulary(ctx.data, chapter);
   const exerciseTotal = (chapter.fullContent
     ? [...chapter.fullContent.exercises.easy, ...chapter.fullContent.exercises.intermediate, ...chapter.fullContent.exercises.ap1Style]
     : chapter.exercises).length;
   const exerciseStats = getChapterExerciseStats(ctx.state, chapter.id, exerciseTotal);
+  const vocabStats = getVocabStats(ctx.state, chapter.id, vocabRows.length);
 
   return `
     <section class="reader">
@@ -93,6 +96,8 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           ${readerTabs(ctx, chapter)}
           ${tabContent(ctx, chapter, ctx.ui.readerTab)}
 
+          ${!nextTab ? renderSessionEvidence(ctx, chapter, readiness, session, exerciseStats, vocabStats, done) : ""}
+
           <section class="session-next-bar desktop-session-bar">
             ${nextTab ? `
               <div>
@@ -104,8 +109,8 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
               </button>
             ` : `
               <div>
-                <span class="card-label">Sessao completa</span>
-                <p>Marque a confianca e conclua o capitulo.</p>
+                <span class="card-label">Fechar sessao</span>
+                <p>${readiness.label}. Revise a evidencia acima antes de concluir.</p>
               </div>
               <button class="button ${done ? "complete" : ""}" type="button" data-complete="${chapter.id}">
                 ${done ? "Concluido" : "Marcar como concluido"}
@@ -428,5 +433,62 @@ function sizeSegment(value: string, label: string, current: string): string {
       data-filter-group="reading-size"
       data-filter-value="${value}"
     >${label}</button>
+  `;
+}
+
+function renderSessionEvidence(
+  ctx: AppContext,
+  chapter: Chapter,
+  readiness: ReturnType<typeof getChapterReadiness>,
+  session: { completed: number; total: number; percent: number },
+  exerciseStats: { correct: number; wrong: number; answered: number; total: number },
+  vocabStats: { correct: number; wrong: number; answered: number; total: number },
+  done: boolean
+): string {
+  const confidence = ctx.state.confidence[chapter.id];
+  const gaps = [
+    session.percent < 100 ? "Etapas da sessao incompletas" : "",
+    exerciseStats.answered === 0 ? "Nenhum exercicio autoavaliado" : "",
+    exerciseStats.wrong > 0 ? `${exerciseStats.wrong} erro(s) em exercicios` : "",
+    vocabStats.answered === 0 ? "Vocabulario ainda sem recall" : "",
+    vocabStats.wrong > 0 ? `${vocabStats.wrong} termo(s) fracos` : "",
+    !confidence ? "Confianca nao marcada" : ""
+  ].filter(Boolean);
+
+  return `
+    <section class="session-evidence" aria-label="Evidencia da sessao">
+      <div class="session-evidence-head">
+        <div>
+          <span class="card-label">Evidencia de aprendizado</span>
+          <h2>${readiness.label}</h2>
+          <p>Use isto para decidir se conclui ou se ainda precisa revisar.</p>
+        </div>
+        ${readinessBadge(readiness)}
+      </div>
+      <div class="evidence-grid">
+        <article>
+          <span>Sessao</span>
+          <strong>${session.completed}/${session.total}</strong>
+        </article>
+        <article>
+          <span>Exercicios</span>
+          <strong>${exerciseStats.correct} ok · ${exerciseStats.wrong} erro</strong>
+        </article>
+        <article>
+          <span>Wortschatz</span>
+          <strong>${vocabStats.correct} ok · ${vocabStats.wrong} erro</strong>
+        </article>
+        <article>
+          <span>Status</span>
+          <strong>${done ? "Concluido" : "Em aberto"}</strong>
+        </article>
+      </div>
+      ${gaps.length ? `
+        <ul class="evidence-gaps">
+          ${gaps.map((gap) => `<li>${gap}</li>`).join("")}
+        </ul>
+      ` : `<p class="small-note">Boa evidencia. Voce pode marcar confianca e concluir com mais seguranca.</p>`}
+      ${confidenceControls(ctx.state, chapter)}
+    </section>
   `;
 }
