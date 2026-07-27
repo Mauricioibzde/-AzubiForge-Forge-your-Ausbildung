@@ -1,6 +1,12 @@
 import type { AppContext } from "./appContext";
 import { getCourseData } from "./data/courseData";
-import { findChapter, isCompleted } from "./domain/course";
+import {
+  findChapter,
+  getResumeTab,
+  getSessionProgress,
+  isCompleted,
+  markVisitedStep
+} from "./domain/course";
 import { exportState, importState, loadState, saveState } from "./state/store";
 import type { Confidence, CourseFilter, GlossaryFilter, ReadingSize, ReaderTab, RouteName, UiState } from "./types";
 import { renderCourseView } from "./views/courseView";
@@ -35,6 +41,7 @@ function createUiState(): UiState {
     glossaryFilter: "all",
     globalQuery: "",
     readerTab: "explain",
+    readerChapterId: "",
     docsAiFocus: "study-plan",
     docsAiChapterId: ""
   };
@@ -56,7 +63,12 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
   if (route === "course") app.innerHTML = renderCourseView(ctx);
   else if (route === "reader") {
     const chapterId = id || ctx.state.lastChapterId || ctx.data.chapters[0].id;
+    if (ctx.ui.readerChapterId !== chapterId) {
+      ctx.ui.readerChapterId = chapterId;
+      ctx.ui.readerTab = getResumeTab(ctx.state, chapterId);
+    }
     ctx.state.lastChapterId = chapterId;
+    markVisitedStep(ctx.state, chapterId, ctx.ui.readerTab);
     saveState(ctx.state);
     app.innerHTML = renderReaderView(ctx, chapterId);
   } else if (route === "review") app.innerHTML = renderReviewView(ctx);
@@ -95,6 +107,13 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
 
   if (target.closest("[data-copy-docs-ai]")) {
     copyDocsAiPrompt(app);
+    return;
+  }
+
+  const nextButton = target.closest<HTMLElement>("[data-session-next]");
+  if (nextButton?.dataset.nextTab) {
+    ctx.ui.readerTab = nextButton.dataset.nextTab as ReaderTab;
+    renderRoute(app, ctx);
     return;
   }
 
@@ -205,9 +224,20 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
 function toggleComplete(ctx: AppContext, chapterId: string): void {
   if (!findChapter(ctx.data, chapterId)) return;
 
-  ctx.state.completed = isCompleted(ctx.state, chapterId)
-    ? ctx.state.completed.filter((id) => id !== chapterId)
-    : [...ctx.state.completed, chapterId];
+  const markingDone = !isCompleted(ctx.state, chapterId);
+  if (markingDone) {
+    const session = getSessionProgress(ctx.state, chapterId);
+    if (session.percent < 100) {
+      const confirmed = window.confirm(
+        `Voce visitou ${session.completed} de ${session.total} etapas desta sessao. Concluir o capitulo mesmo assim?`
+      );
+      if (!confirmed) return;
+    }
+  }
+
+  ctx.state.completed = markingDone
+    ? [...ctx.state.completed, chapterId]
+    : ctx.state.completed.filter((id) => id !== chapterId);
   saveState(ctx.state);
 }
 

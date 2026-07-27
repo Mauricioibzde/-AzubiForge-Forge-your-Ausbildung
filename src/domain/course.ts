@@ -7,8 +7,18 @@ import type {
   LearningSituation,
   Module,
   Progress,
+  ReaderTab,
+  SessionStep,
   VocabularyRow
 } from "../types";
+
+export const READER_STEPS: SessionStep[] = [
+  { id: "explain", label: "Erklaeren", hint: "Entenda a ideia principal." },
+  { id: "praxis", label: "Praxisfall", hint: "Ligue o tema ao trabalho." },
+  { id: "vocab", label: "Wortschatz", hint: "Fixe os termos em alemao." },
+  { id: "practice", label: "Uebungen", hint: "Treine com exercicios." },
+  { id: "ap1", label: "AP1-Check", hint: "Feche com foco de prova." }
+];
 
 export function findChapter(data: AzubiForgeData, chapterId: string): Chapter | undefined {
   return data.chapters.find((chapter) => chapter.id === chapterId);
@@ -143,6 +153,76 @@ export function getReadingMinutes(chapter: Chapter): number {
 
 export function getNotesCount(state: AppState): number {
   return Object.values(state.notes).filter((note) => note.trim()).length;
+}
+
+export function getVisitedSteps(state: AppState, chapterId: string): ReaderTab[] {
+  return state.sessionSteps[chapterId] || [];
+}
+
+export function markVisitedStep(state: AppState, chapterId: string, tab: ReaderTab): boolean {
+  const current = getVisitedSteps(state, chapterId);
+  if (current.includes(tab)) return false;
+
+  state.sessionSteps[chapterId] = [...current, tab];
+  return true;
+}
+
+export function getSessionProgress(state: AppState, chapterId: string): Progress {
+  const visited = new Set(getVisitedSteps(state, chapterId));
+  const completed = READER_STEPS.filter((step) => visited.has(step.id)).length;
+
+  return {
+    completed,
+    total: READER_STEPS.length,
+    percent: percentage(completed, READER_STEPS.length)
+  };
+}
+
+export function getResumeTab(state: AppState, chapterId: string): ReaderTab {
+  const visited = new Set(getVisitedSteps(state, chapterId));
+  const next = READER_STEPS.find((step) => !visited.has(step.id));
+  return next?.id || "ap1";
+}
+
+export function getNextSessionTab(state: AppState, chapterId: string, current: ReaderTab): ReaderTab | null {
+  const currentIndex = READER_STEPS.findIndex((step) => step.id === current);
+  if (currentIndex >= 0 && currentIndex < READER_STEPS.length - 1) {
+    return READER_STEPS[currentIndex + 1].id;
+  }
+
+  const visited = new Set(getVisitedSteps(state, chapterId));
+  return READER_STEPS.find((step) => !visited.has(step.id))?.id || null;
+}
+
+export function getActiveModule(data: AzubiForgeData, state: AppState): Module {
+  const focus = getTodayChapter(data, state);
+  return getChapterModule(data, focus.id) || data.modules[0];
+}
+
+export function getModuleContinueChapter(data: AzubiForgeData, state: AppState, module: Module): Chapter {
+  const chapters = module.chapterIds
+    .map((id) => findChapter(data, id))
+    .filter((chapter): chapter is Chapter => Boolean(chapter));
+  const open = chapters.find((chapter) => !isCompleted(state, chapter.id));
+  return open || chapters[chapters.length - 1] || getSuggestedChapter(data, state);
+}
+
+export type PathStatus = "done" | "current" | "open";
+
+export function getChapterPathStatus(
+  data: AzubiForgeData,
+  state: AppState,
+  chapterId: string,
+  module: Module
+): PathStatus {
+  if (isCompleted(state, chapterId)) return "done";
+  const continueChapter = getModuleContinueChapter(data, state, module);
+  if (continueChapter.id === chapterId) return "current";
+  return "open";
+}
+
+export function getEstimatedSessionMinutes(chapter: Chapter): number {
+  return Math.max(12, Math.min(35, getReadingMinutes(chapter) + 8));
 }
 
 function percentage(value: number, total: number): number {

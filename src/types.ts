@@ -129,6 +129,7 @@ export interface AppState {
   notes: Record<string, string>;
   confidence: Record<string, Confidence>;
   collapsedModules: Record<string, boolean>;
+  sessionSteps: Record<string, ReaderTab[]>;
   preferences: Preferences;
 }
 
@@ -139,8 +140,15 @@ export interface UiState {
   glossaryFilter: GlossaryFilter;
   globalQuery: string;
   readerTab: ReaderTab;
+  readerChapterId: string;
   docsAiFocus: "study-plan" | "chapter-help" | "review";
   docsAiChapterId: string;
+}
+
+export interface SessionStep {
+  id: ReaderTab;
+  label: string;
+  hint: string;
 }
 
 export interface Progress {

@@ -1,33 +1,41 @@
 import type { AppContext } from "../appContext";
 import {
   findChapter,
+  getActiveModule,
   getChapterModule,
+  getChapterPathStatus,
   getCourseProgress,
+  getModuleContinueChapter,
   getModuleProgress,
   getSuggestedChapter,
   isCompleted
 } from "../domain/course";
 import type { Chapter, LearningSituation, Module } from "../types";
-import { chapterCard } from "../ui/components";
-import { escapeAttribute, inlineProgress, progressBlock } from "../ui/html";
+import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock } from "../ui/html";
 
 export function renderCourseView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
   const next = getSuggestedChapter(ctx.data, ctx.state);
+  const activeModule = getActiveModule(ctx.data, ctx.state);
+  const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, activeModule);
   const filtered = getFilteredChapters(ctx);
 
   return `
-    <section>
-      <div class="section-head">
+    <section class="course-shell">
+      <div class="section-head course-hero">
         <div>
-          <p class="eyebrow">Curso AP1</p>
+          <p class="eyebrow">Trilha AP1</p>
           <h1>${ctx.data.course.title}</h1>
           <p>${ctx.data.course.description}</p>
           ${renderCourseBasis(ctx)}
         </div>
-        <div class="panel">
+        <div class="panel continue-panel">
           ${progressBlock(progress)}
-          <p class="small-note">Sugestao: ${next.title}</p>
+          <span class="card-label">Continuar daqui</span>
+          <h2>${continueChapter.title}</h2>
+          <p class="small-note">${activeModule.subtitle}</p>
+          <a class="button" href="#reader/${continueChapter.id}">Retomar capitulo</a>
+          <p class="small-note">Sugestao geral: ${next.title}</p>
         </div>
       </div>
 
@@ -50,7 +58,7 @@ export function renderCourseView(ctx: AppContext): string {
         <p class="small-note">${filtered.length} de ${ctx.data.chapters.length} capitulos exibidos</p>
       </div>
 
-      ${renderModules(ctx, filtered)}
+      ${renderModules(ctx, filtered, activeModule.id)}
     </section>
   `;
 }
@@ -80,19 +88,24 @@ function segment(value: string, label: string, current: string): string {
   `;
 }
 
-function renderModules(ctx: AppContext, filtered: Chapter[]): string {
+function renderModules(ctx: AppContext, filtered: Chapter[], activeModuleId: string): string {
   if (!filtered.length) return `<p class="empty-state">Nenhum capitulo encontrado.</p>`;
 
   const filteredIds = new Set(filtered.map((chapter) => chapter.id));
 
   return `
     <div class="module-list">
-      ${ctx.data.modules.map((module) => renderModule(ctx, module, filteredIds)).join("")}
+      ${ctx.data.modules.map((module) => renderModule(ctx, module, filteredIds, activeModuleId)).join("")}
     </div>
   `;
 }
 
-function renderModule(ctx: AppContext, module: Module, filteredIds: Set<string>): string {
+function renderModule(
+  ctx: AppContext,
+  module: Module,
+  filteredIds: Set<string>,
+  activeModuleId: string
+): string {
   const visibleChapters = module.chapterIds
     .map((id) => findChapter(ctx.data, id))
     .filter((chapter): chapter is Chapter => Boolean(chapter && filteredIds.has(chapter.id)));
@@ -101,34 +114,66 @@ function renderModule(ctx: AppContext, module: Module, filteredIds: Set<string>)
 
   const visibleIds = new Set(visibleChapters.map((chapter) => chapter.id));
   const progress = getModuleProgress(ctx.data, ctx.state, module);
+  const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
   const situations = ctx.data.learningSituations?.[module.id] || [{
     id: `${module.id}-main`,
     title: module.subtitle,
     description: module.description,
     chapterIds: module.chapterIds
   }];
-  const collapsed = Boolean(ctx.state.collapsedModules[module.id]) && !ctx.ui.courseQuery.trim();
+  const isActive = module.id === activeModuleId;
+  const collapsed = Boolean(ctx.state.collapsedModules[module.id]) && !ctx.ui.courseQuery.trim() && !isActive;
 
   return `
-    <section class="module-section ${collapsed ? "collapsed" : ""}" id="${module.id}">
+    <section class="module-section ${collapsed ? "collapsed" : ""} ${isActive ? "active-module" : ""}" id="${module.id}">
       <div class="module-head">
         <div>
-          <span class="card-label">${module.title}</span>
+          <span class="card-label">${module.title}${isActive ? " · Em andamento" : ""}</span>
           <h2>${module.subtitle}</h2>
           <p>${module.description}</p>
           ${inlineProgress(progress)}
         </div>
-        <button class="module-toggle" type="button" data-toggle-module="${module.id}" aria-expanded="${!collapsed}">
-          <span class="module-count">${progress.completed} / ${progress.total}</span>
-          <span>${collapsed ? "Abrir" : "Recolher"}</span>
-        </button>
+        <div class="module-head-actions">
+          <a class="button secondary" href="#reader/${continueChapter.id}">Continuar</a>
+          <button class="module-toggle" type="button" data-toggle-module="${module.id}" aria-expanded="${!collapsed}">
+            <span class="module-count">${progress.completed} / ${progress.total}</span>
+            <span>${collapsed ? "Abrir" : "Recolher"}</span>
+          </button>
+        </div>
       </div>
       ${collapsed ? "" : `
         <div class="module-body">
+          <ol class="learning-path" aria-label="Trilha de ${module.subtitle}">
+            ${visibleChapters.map((chapter, index) => renderPathNode(ctx, module, chapter, index)).join("")}
+          </ol>
           ${situations.map((situation) => renderSituation(ctx, situation, visibleIds)).join("")}
         </div>
       `}
     </section>
+  `;
+}
+
+function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter, index: number): string {
+  const status = getChapterPathStatus(ctx.data, ctx.state, chapter.id, module);
+  const labels = { done: "Concluido", current: "Agora", open: "A seguir" };
+  const action = status === "done" ? "Revisar" : status === "current" ? "Continuar" : "Abrir";
+
+  return `
+    <li class="path-node ${status}">
+      <div class="path-marker" aria-hidden="true">${status === "done" ? "OK" : index + 1}</div>
+      <div class="path-copy">
+        <div class="path-topline">
+          <h3>${chapter.title}</h3>
+          <span class="path-status">${labels[status]}</span>
+        </div>
+        <p>${chapter.description}</p>
+        <div class="chapter-meta">
+          <span>${chapter.studyTime || "Sessao curta"}</span>
+          ${confidenceBadge(ctx.state, chapter.id)}
+        </div>
+      </div>
+      <a class="button ${status === "current" ? "" : "secondary"}" href="#reader/${chapter.id}">${action}</a>
+    </li>
   `;
 }
 
@@ -140,11 +185,6 @@ function renderSituation(ctx: AppContext, situation: LearningSituation, visibleI
   if (!chapters.length) return "";
 
   const completed = chapters.filter((chapter) => isCompleted(ctx.state, chapter.id)).length;
-  const progress = {
-    completed,
-    total: chapters.length,
-    percent: chapters.length ? Math.round((completed / chapters.length) * 100) : 0
-  };
 
   return `
     <section class="lernsituation">
@@ -155,10 +195,6 @@ function renderSituation(ctx: AppContext, situation: LearningSituation, visibleI
           <p>${situation.description}</p>
         </div>
         <span class="module-count">${completed} / ${chapters.length}</span>
-      </div>
-      ${inlineProgress(progress)}
-      <div class="chapter-list">
-        ${chapters.map((chapter) => chapterCard(ctx, chapter)).join("")}
       </div>
     </section>
   `;

@@ -5,8 +5,13 @@ import {
   getChapterLearningSituation,
   getChapterModule,
   getChapterVocabulary,
+  getEstimatedSessionMinutes,
+  getNextSessionTab,
   getReadingMinutes,
-  isCompleted
+  getSessionProgress,
+  getVisitedSteps,
+  isCompleted,
+  READER_STEPS
 } from "../domain/course";
 import type { Chapter, ChapterFullContent, ContentBlock, Diagram, ReaderTab } from "../types";
 import {
@@ -25,20 +30,77 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
   const next = ctx.data.chapters[index + 1];
   const done = isCompleted(ctx.state, chapter.id);
   const note = ctx.state.notes[chapter.id] || "";
+  const module = getChapterModule(ctx.data, chapter.id);
+  const session = getSessionProgress(ctx.state, chapter.id);
+  const nextTab = getNextSessionTab(ctx.state, chapter.id, ctx.ui.readerTab);
+  const currentStep = READER_STEPS.find((step) => step.id === ctx.ui.readerTab) || READER_STEPS[0];
+  const minutes = getEstimatedSessionMinutes(chapter);
 
   return `
     <section class="reader">
       <article class="article">
-        <p class="eyebrow">${ctx.data.course.title}</p>
+        <div class="reader-kicker">
+          <p class="eyebrow">${module?.subtitle || ctx.data.course.title}</p>
+          <span class="reader-session-pill">${session.completed}/${session.total} etapas · ${minutes} min</span>
+        </div>
         <h1>${chapter.title}</h1>
         <div class="reader-meta">
           <span>${chapter.studyTime || `${getReadingMinutes(chapter)} min leitura`}</span>
           <span>${index + 1} de ${ctx.data.chapters.length}</span>
           <span>${done ? "Concluido" : "Em estudo"}</span>
         </div>
+
+        <section class="session-guide" aria-label="Fluxo da sessao">
+          <div class="session-guide-copy">
+            <span class="card-label">Fluxo guiado</span>
+            <strong>${currentStep.label}</strong>
+            <p>${currentStep.hint}</p>
+          </div>
+          <div class="session-guide-track" role="list">
+            ${READER_STEPS.map((step) => {
+              const visited = getVisitedSteps(ctx.state, chapter.id).includes(step.id);
+              const active = step.id === ctx.ui.readerTab;
+              return `
+                <button
+                  class="session-guide-step ${visited ? "done" : ""} ${active ? "active" : ""}"
+                  type="button"
+                  role="listitem"
+                  data-reader-tab="${step.id}"
+                  data-reader-chapter="${chapter.id}"
+                >
+                  <span>${step.label}</span>
+                </button>
+              `;
+            }).join("")}
+          </div>
+          <div class="session-progress-line" aria-hidden="true">
+            <div style="width: ${session.percent}%"></div>
+          </div>
+        </section>
+
         <div class="article-body">
           ${readerTabs(ctx, chapter)}
           ${tabContent(ctx, chapter, ctx.ui.readerTab)}
+
+          <section class="session-next-bar">
+            ${nextTab ? `
+              <div>
+                <span class="card-label">Proximo passo</span>
+                <p>${READER_STEPS.find((step) => step.id === nextTab)?.label || "Continuar"}</p>
+              </div>
+              <button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">
+                Avancar na sessao
+              </button>
+            ` : `
+              <div>
+                <span class="card-label">Sessao completa</span>
+                <p>Marque a confianca e conclua o capitulo.</p>
+              </div>
+              <button class="button ${done ? "complete" : ""}" type="button" data-complete="${chapter.id}">
+                ${done ? "Concluido" : "Marcar como concluido"}
+              </button>
+            `}
+          </section>
 
           <section class="notes-box">
             <div>
@@ -57,14 +119,17 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
 
       <aside class="reader-side">
         <div class="panel">
-          <a class="text-link back-link" href="#course">Voltar ao curso</a>
+          <a class="text-link back-link" href="#course">Voltar a trilha</a>
           <div class="actions">
             ${previous ? `<a class="button secondary" href="#reader/${previous.id}">Anterior</a>` : ""}
-            ${next ? `<a class="button secondary" href="#reader/${next.id}">Proximo</a>` : ""}
+            ${next ? `<a class="button secondary" href="#reader/${next.id}">Proximo capitulo</a>` : ""}
             <button class="button ${done ? "complete" : ""}" data-complete="${chapter.id}">
               ${done ? "Concluido" : "Marcar como concluido"}
             </button>
           </div>
+          ${session.percent < 100 && !done ? `
+            <p class="small-note">Dica: complete as ${session.total} etapas antes de marcar como concluido.</p>
+          ` : ""}
           ${confidenceControls(ctx.state, chapter)}
           <div class="reader-tools">
             <span class="small-note">Leitura</span>
@@ -89,23 +154,15 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
 }
 
 function readerTabs(ctx: AppContext, chapter: Chapter): string {
-  const tabs: Array<[ReaderTab, string]> = [
-    ["explain", "Erklaeren"],
-    ["praxis", "Praxisfall"],
-    ["vocab", "Wortschatz"],
-    ["practice", "Uebungen"],
-    ["ap1", "AP1-Check"]
-  ];
-
   return `
     <div class="reader-tabs" aria-label="Kapitelbereiche">
-      ${tabs.map(([value, label]) => `
+      ${READER_STEPS.map((step) => `
         <button
-          class="${ctx.ui.readerTab === value ? "active" : ""}"
+          class="${ctx.ui.readerTab === step.id ? "active" : ""} ${getVisitedSteps(ctx.state, chapter.id).includes(step.id) ? "visited" : ""}"
           type="button"
-          data-reader-tab="${value}"
+          data-reader-tab="${step.id}"
           data-reader-chapter="${chapter.id}"
-        >${label}</button>
+        >${step.label}</button>
       `).join("")}
     </div>
   `;

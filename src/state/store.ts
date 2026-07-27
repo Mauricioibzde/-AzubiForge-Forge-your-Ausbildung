@@ -1,7 +1,8 @@
-import type { AppState, AzubiForgeData, Confidence, Preferences } from "../types";
+import type { AppState, AzubiForgeData, Confidence, Preferences, ReaderTab } from "../types";
 
 const STORAGE_KEY = "azubiforge.progress.v1";
 const CONFIDENCE_VALUES = new Set<Confidence>(["ok", "review", "hard", "ready"]);
+const READER_TAB_VALUES = new Set<ReaderTab>(["explain", "praxis", "vocab", "practice", "ap1"]);
 
 export function loadState(data: AzubiForgeData): AppState {
   const fallback = createFallbackState(data);
@@ -23,7 +24,7 @@ export function saveState(state: AppState): void {
 export function exportState(state: AppState): void {
   const payload = {
     app: "AzubiForge",
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -64,6 +65,7 @@ function createFallbackState(data: AzubiForgeData): AppState {
     notes: {},
     confidence: {},
     collapsedModules: {},
+    sessionSteps: {},
     preferences: {
       theme: "light",
       readingSize: "normal"
@@ -87,8 +89,21 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     notes: sanitizeStringRecord(imported.notes, validChapterIds),
     confidence: sanitizeConfidence(imported.confidence, validChapterIds),
     collapsedModules: sanitizeBooleanRecord(imported.collapsedModules, validModuleIds),
+    sessionSteps: sanitizeSessionSteps(imported.sessionSteps, validChapterIds),
     preferences: sanitizePreferences(imported.preferences, fallback.preferences)
   };
+}
+
+function sanitizeSessionSteps(value: unknown, validKeys: Set<string>): Record<string, ReaderTab[]> {
+  const record: Record<string, ReaderTab[]> = {};
+  if (!value || typeof value !== "object") return record;
+
+  Object.entries(value).forEach(([key, item]) => {
+    if (!validKeys.has(key) || !Array.isArray(item)) return;
+    record[key] = item.filter((tab): tab is ReaderTab => READER_TAB_VALUES.has(tab as ReaderTab));
+  });
+
+  return record;
 }
 
 function sanitizeStringRecord(value: unknown, validKeys: Set<string>): Record<string, string> {
