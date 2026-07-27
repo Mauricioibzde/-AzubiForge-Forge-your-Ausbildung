@@ -59,9 +59,14 @@ await mobile.screenshot({ path: `${screenshotsDir}/mobile-home.png`, fullPage: t
 const mobileHome = await mobile.evaluate(() => ({
   bottomNav: Boolean(document.querySelector(".bottom-nav")),
   bottomVisible: getComputedStyle(document.querySelector(".bottom-nav")).display !== "none",
+  moreButton: Boolean(document.querySelector("[data-more-nav]")),
   scrollWidth: document.documentElement.scrollWidth,
   clientWidth: document.documentElement.clientWidth
 }));
+
+await mobile.click("[data-more-nav]");
+const moreOpen = await mobile.evaluate(() => !document.querySelector("[data-more-sheet]")?.hidden);
+await mobile.click("[data-more-close]");
 
 await mobile.goto(`${baseUrl}/#reader/${firstChapter}`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".mobile-study-dock", { timeout: 10000 });
@@ -76,10 +81,11 @@ await mobile.goto(`${baseUrl}/#review`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".review-focus", { timeout: 10000 });
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-review.png`, fullPage: true });
 
-console.log(`mobile-home: bottomNav=${mobileHome.bottomVisible}`);
+console.log(`mobile-home: bottomNav=${mobileHome.bottomVisible} more=${moreOpen}`);
 console.log(`mobile-reader: dock=${mobileReader.dockVisible}`);
 
 if (!mobileHome.bottomVisible) issues.push("mobile-home: bottom nav hidden");
+if (!moreOpen) issues.push("mobile-home: more sheet did not open");
 if (!mobileReader.dockVisible) issues.push("mobile-reader: study dock hidden");
 if (mobileHome.scrollWidth > mobileHome.clientWidth + 2) {
   issues.push(`mobile-home: horizontal overflow ${mobileHome.clientWidth}/${mobileHome.scrollWidth}`);

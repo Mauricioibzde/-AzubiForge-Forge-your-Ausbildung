@@ -9,6 +9,12 @@ import {
 } from "./domain/course";
 import { exportState, importState, loadState, saveState } from "./state/store";
 import type { Confidence, CourseFilter, ExerciseCheck, GlossaryFilter, ReadingSize, ReaderTab, RouteName, UiState } from "./types";
+import {
+  closeMoreSheet,
+  scrollToPageTop,
+  syncChrome,
+  toggleMoreSheet
+} from "./ui/navigation";
 import { renderCourseView } from "./views/courseView";
 import { renderDocsAiView } from "./views/docsAiView";
 import { renderGlossaryView } from "./views/glossaryView";
@@ -54,17 +60,22 @@ function registerEvents(app: HTMLElement, ctx: AppContext): void {
   document.addEventListener("click", (event) => handleClick(event, app, ctx));
   document.addEventListener("input", (event) => handleInput(event, app, ctx));
   document.addEventListener("change", (event) => void handleChange(event, app, ctx));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMoreSheet();
+  });
 }
 
 function renderRoute(app: HTMLElement, ctx: AppContext): void {
   const hash = window.location.hash || "#home";
   const [route, id] = hash.replace("#", "").split("/") as [RouteName, string | undefined];
+  const previousRoute = document.body.dataset.route as RouteName | undefined;
 
-  setActiveNav(route);
+  closeMoreSheet();
 
+  let chapterId: string | undefined;
   if (route === "course") app.innerHTML = renderCourseView(ctx);
   else if (route === "reader") {
-    const chapterId = id || ctx.state.lastChapterId || ctx.data.chapters[0].id;
+    chapterId = id || ctx.state.lastChapterId || ctx.data.chapters[0].id;
     if (ctx.ui.readerChapterId !== chapterId) {
       ctx.ui.readerChapterId = chapterId;
       ctx.ui.readerTab = getResumeTab(ctx.state, chapterId);
@@ -78,7 +89,10 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
   else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
   else app.innerHTML = renderHomeView(ctx);
 
+  syncChrome(ctx, route || "home", chapterId);
   app.focus({ preventScroll: true });
+
+  if (previousRoute && previousRoute !== route) scrollToPageTop();
   maybeScrollReaderStep(route);
 }
 
@@ -87,23 +101,26 @@ function maybeScrollReaderStep(route: RouteName): void {
   window.requestAnimationFrame(() => {
     const guide = document.querySelector<HTMLElement>(".session-guide");
     if (!guide) return;
-    const top = guide.getBoundingClientRect().top + window.scrollY - 76;
+    const top = guide.getBoundingClientRect().top + window.scrollY - 120;
     if (window.scrollY > top + 40 || window.scrollY < top - 120) {
       window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     }
   });
 }
 
-function setActiveNav(route: RouteName): void {
-  document.querySelectorAll<HTMLElement>("[data-nav]").forEach((link) => {
-    const key = link.dataset.nav;
-    const isReader = route === "reader" && key === "course";
-    link.classList.toggle("active", key === route || isReader);
-  });
-}
-
 function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void {
   const target = event.target as Element;
+
+  if (target.closest("[data-more-nav]")) {
+    toggleMoreSheet();
+    return;
+  }
+
+  if (target.closest("[data-more-close]")) {
+    closeMoreSheet();
+    // allow hash links inside the sheet to continue navigating
+  }
+
   const themeButton = target.closest("[data-theme-toggle]");
   if (themeButton) {
     toggleTheme(ctx);
@@ -312,14 +329,22 @@ function toggleTheme(ctx: AppContext): void {
 function applyPreferences(ctx: AppContext): void {
   document.documentElement.dataset.theme = ctx.state.preferences.theme;
   document.documentElement.dataset.readingSize = ctx.state.preferences.readingSize;
+  const dark = ctx.state.preferences.theme === "dark";
 
-  const themeButton = document.querySelector("[data-theme-toggle]");
-  if (themeButton) {
-    themeButton.textContent = ctx.state.preferences.theme === "dark" ? "Claro" : "Escuro";
+  document.querySelectorAll(".theme-toggle[data-theme-toggle]").forEach((themeButton) => {
+    themeButton.textContent = dark ? "Claro" : "Escuro";
     themeButton.setAttribute(
       "aria-label",
-      ctx.state.preferences.theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro"
+      dark ? "Alternar para tema claro" : "Alternar para tema escuro"
     );
+  });
+
+  const moreTheme = document.querySelector<HTMLElement>(".more-sheet-panel > button[data-theme-toggle]");
+  if (moreTheme) {
+    moreTheme.innerHTML = `
+      <span>${dark ? "Usar tema claro" : "Usar tema escuro"}</span>
+      <small>Aparencia do app</small>
+    `;
   }
 }
 
