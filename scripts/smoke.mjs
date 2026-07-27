@@ -7,6 +7,7 @@ const routes = [
   ["home", "/"],
   ["course", "/#course"],
   ["review", "/#review"],
+  ["exam", "/#exam"],
   ["glossary", "/#glossary"],
   ["docs-ai", "/#docs-ai"]
 ];
@@ -76,6 +77,10 @@ const mobileReader = await mobile.evaluate(() => ({
   clientWidth: document.documentElement.clientWidth
 }));
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-reader.png`, fullPage: true });
+
+await mobile.goto(`${baseUrl}/#exam`, { waitUntil: "networkidle" });
+await mobile.waitForSelector(".exam-shell", { timeout: 10000 });
+await mobile.screenshot({ path: `${screenshotsDir}/mobile-exam.png`, fullPage: true });
 
 await mobile.goto(`${baseUrl}/#review`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".review-focus", { timeout: 10000 });

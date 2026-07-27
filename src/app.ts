@@ -12,7 +12,17 @@ import {
   touchStudied
 } from "./domain/course";
 import { exportState, importState, loadState, saveState } from "./state/store";
-import type { Confidence, CourseFilter, ExerciseCheck, GlossaryFilter, ReadingSize, ReaderTab, RouteName, UiState } from "./types";
+import type {
+  Confidence,
+  CourseFilter,
+  ExamFocusMode,
+  ExerciseCheck,
+  GlossaryFilter,
+  ReadingSize,
+  ReaderTab,
+  RouteName,
+  UiState
+} from "./types";
 import {
   closeMoreSheet,
   registerConnectivityListeners,
@@ -22,10 +32,13 @@ import {
 } from "./ui/navigation";
 import { renderCourseView } from "./views/courseView";
 import { renderDocsAiView } from "./views/docsAiView";
+import { renderExamView } from "./views/examView";
 import { renderGlossaryView } from "./views/glossaryView";
 import { renderHomeView } from "./views/homeView";
 import { renderReaderView } from "./views/readerView";
 import { renderReviewView } from "./views/reviewView";
+
+const READER_TABS: ReaderTab[] = ["explain", "praxis", "vocab", "practice", "ap1"];
 
 export function startApp(): void {
   const app = document.querySelector<HTMLElement>("#app");
@@ -59,6 +72,8 @@ function createUiState(): UiState {
     practiceFilter: "all",
     glossaryMode: "flash",
     glossaryFocusIndex: 0,
+    examFocusMode: "weak",
+    examFocusIndex: 0,
     docsAiFocus: "study-plan",
     docsAiChapterId: ""
   };
@@ -75,7 +90,7 @@ function registerEvents(app: HTMLElement, ctx: AppContext): void {
 
 function renderRoute(app: HTMLElement, ctx: AppContext): void {
   const hash = window.location.hash || "#home";
-  const [route, id] = hash.replace("#", "").split("/") as [RouteName, string | undefined];
+  const [route, id, tab] = hash.replace("#", "").split("/") as [RouteName, string | undefined, string | undefined];
   const previousRoute = document.body.dataset.route as RouteName | undefined;
 
   closeMoreSheet();
@@ -88,6 +103,9 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
       ctx.ui.readerChapterId = chapterId;
       ctx.ui.readerTab = getResumeTab(ctx.state, chapterId);
     }
+    if (tab && READER_TABS.includes(tab as ReaderTab)) {
+      ctx.ui.readerTab = tab as ReaderTab;
+    }
     ctx.state.lastChapterId = chapterId;
     markVisitedStep(ctx.state, chapterId, ctx.ui.readerTab);
     touchStudied(ctx.state, chapterId);
@@ -95,6 +113,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
     app.innerHTML = renderReaderView(ctx, chapterId);
   } else if (route === "review") app.innerHTML = renderReviewView(ctx);
   else if (route === "glossary") app.innerHTML = renderGlossaryView(ctx);
+  else if (route === "exam") app.innerHTML = renderExamView(ctx);
   else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
   else app.innerHTML = renderHomeView(ctx);
 
@@ -186,6 +205,13 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
   const glossaryStep = target.closest<HTMLElement>("[data-glossary-step]");
   if (glossaryStep?.dataset.glossaryStep) {
     ctx.ui.glossaryFocusIndex += Number(glossaryStep.dataset.glossaryStep);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const examStep = target.closest<HTMLElement>("[data-exam-step]");
+  if (examStep?.dataset.examStep) {
+    ctx.ui.examFocusIndex += Number(examStep.dataset.examStep);
     renderRoute(app, ctx);
     return;
   }
@@ -333,6 +359,10 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
     ctx.ui.glossaryMode = value as UiState["glossaryMode"];
     ctx.ui.glossaryFocusIndex = 0;
   }
+  if (group === "exam-focus") {
+    ctx.ui.examFocusMode = value as ExamFocusMode;
+    ctx.ui.examFocusIndex = 0;
+  }
   if (group === "reading-size") {
     ctx.state.preferences.readingSize = value as ReadingSize;
     saveState(ctx.state);
@@ -343,6 +373,7 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
 function maybeAutoAdvance(ctx: AppContext, target?: string): void {
   if (target === "review") ctx.ui.reviewFocusIndex += 1;
   if (target === "glossary") ctx.ui.glossaryFocusIndex += 1;
+  if (target === "exam") ctx.ui.examFocusIndex += 1;
 }
 
 function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext): void {
@@ -368,6 +399,13 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
   if (route === "glossary" && ctx.ui.glossaryMode === "flash") {
     event.preventDefault();
     ctx.ui.glossaryFocusIndex += delta;
+    renderRoute(app, ctx);
+    return;
+  }
+
+  if (route === "exam" && (ctx.ui.examFocusMode === "signals" || ctx.ui.examFocusMode === "drill")) {
+    event.preventDefault();
+    ctx.ui.examFocusIndex += delta;
     renderRoute(app, ctx);
   }
 }
@@ -401,6 +439,7 @@ function registerSwipe(app: HTMLElement, ctx: AppContext): void {
     const delta = dx < 0 ? 1 : -1;
     if (deck.dataset.swipeDeck === "review") ctx.ui.reviewFocusIndex += delta;
     if (deck.dataset.swipeDeck === "glossary") ctx.ui.glossaryFocusIndex += delta;
+    if (deck.dataset.swipeDeck === "exam") ctx.ui.examFocusIndex += delta;
     renderRoute(app, ctx);
   }, { passive: true });
 }

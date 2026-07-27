@@ -1,4 +1,4 @@
-export type RouteName = "home" | "course" | "reader" | "review" | "glossary" | "docs-ai";
+export type RouteName = "home" | "course" | "reader" | "review" | "glossary" | "docs-ai" | "exam";
 
 export type CourseFilter = "all" | "open" | "done" | "notes" | "hard";
 export type GlossaryFilter = "all" | "network" | "security" | "database" | "programming";
@@ -6,6 +6,7 @@ export type ReaderTab = "explain" | "praxis" | "vocab" | "practice" | "ap1";
 export type Confidence = "ok" | "review" | "hard" | "ready";
 export type Theme = "light" | "dark";
 export type ReadingSize = "normal" | "large";
+export type ExamFocusMode = "weak" | "signals" | "drill" | "checklist";
 
 export interface Exercise {
   question: string;
@@ -156,6 +157,8 @@ export interface UiState {
   reviewFocusMode: ReviewFocusMode;
   reviewFocusIndex: number;
   practiceFilter: "all" | "wrong";
+  examFocusMode: ExamFocusMode;
+  examFocusIndex: number;
   docsAiFocus: "study-plan" | "chapter-help" | "review";
   docsAiChapterId: string;
 }

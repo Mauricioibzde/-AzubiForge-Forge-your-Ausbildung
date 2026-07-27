@@ -8,8 +8,11 @@ const ROUTE_TITLES: Record<RouteName, string> = {
   reader: "Capitulo",
   review: "Revisao",
   glossary: "Glossario",
+  exam: "AP1",
   "docs-ai": "Docs AI"
 };
+
+const SECONDARY_ROUTES: RouteName[] = ["review", "glossary", "docs-ai"];
 
 export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string): void {
   document.body.dataset.route = route;
@@ -22,7 +25,7 @@ export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string
 
 export function setActiveNav(route: RouteName): void {
   const activeKey = route === "reader" ? "course" : route;
-  const secondaryOpen = route === "glossary" || route === "docs-ai";
+  const secondaryOpen = SECONDARY_ROUTES.includes(route);
 
   document.querySelectorAll<HTMLElement>("[data-nav]").forEach((link) => {
     const key = link.dataset.nav || "";
@@ -71,8 +74,8 @@ export function updateContextBar(ctx: AppContext, route: RouteName, chapterId?: 
     back.href = "#course";
     back.textContent = "Trilha";
     action.hidden = false;
-    action.href = "#review";
-    action.textContent = "Revisao";
+    action.href = "#exam";
+    action.textContent = "AP1";
     return;
   }
 
@@ -93,8 +96,20 @@ export function updateContextBar(ctx: AppContext, route: RouteName, chapterId?: 
     back.href = "#home";
     back.textContent = "Hoje";
     action.hidden = false;
-    action.href = "#course";
-    action.textContent = "Trilha";
+    action.href = "#exam";
+    action.textContent = "AP1";
+    return;
+  }
+
+  if (route === "exam") {
+    bar.hidden = false;
+    eyebrow.textContent = "Pruefungstraining";
+    title.textContent = "Treino para a AP1";
+    back.href = "#home";
+    back.textContent = "Hoje";
+    action.hidden = false;
+    action.href = "#review";
+    action.textContent = "Revisao";
     return;
   }
 
@@ -118,7 +133,8 @@ export function closeMoreSheet(): void {
   document.body.classList.remove("more-open");
   document.querySelectorAll<HTMLElement>("[data-more-nav]").forEach((button) => {
     button.setAttribute("aria-expanded", "false");
-    button.classList.toggle("active", document.body.dataset.route === "glossary" || document.body.dataset.route === "docs-ai");
+    const route = document.body.dataset.route as RouteName | undefined;
+    button.classList.toggle("active", Boolean(route && SECONDARY_ROUTES.includes(route)));
   });
 }
 

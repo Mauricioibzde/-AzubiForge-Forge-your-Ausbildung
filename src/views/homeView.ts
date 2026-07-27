@@ -18,6 +18,7 @@ import {
   isReviewDue,
   READER_STEPS
 } from "../domain/course";
+import { getExamReadinessSummary, getWeakChapters } from "../domain/exam";
 import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock, readinessBadge } from "../ui/html";
 
 export function renderHomeView(ctx: AppContext): string {
@@ -37,6 +38,8 @@ export function renderHomeView(ctx: AppContext): string {
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
   const moduleProgress = getModuleProgress(ctx.data, ctx.state, module);
   const ctaLabel = session.completed > 0 && session.percent < 100 ? "Continuar sessao" : "Comecar sessao";
+  const examSummary = getExamReadinessSummary(ctx.data, ctx.state);
+  const weakTopics = getWeakChapters(ctx.data, ctx.state, 3);
 
   return `
     <section class="study-home">
@@ -80,14 +83,43 @@ export function renderHomeView(ctx: AppContext): string {
         </div>
       </section>
 
+      <section class="exam-coach rise-in" style="animation-delay: 40ms" aria-label="Coach AP1">
+        <div class="exam-coach-copy">
+          <span class="card-label">Foco na prova</span>
+          <h2>Treino AP1 do dia</h2>
+          <p>${examSummary.weakCount
+            ? `${examSummary.weakCount} tema(s) ainda fracos. Priorize Signalwoerter e perguntas no estilo IHK.`
+            : "Base solida. Mantenha o ritmo com drills AP1 e checklist final."}</p>
+          <div class="chapter-meta">
+            <span>${examSummary.readyCount} quase prontos</span>
+            <span>${examSummary.drillCount} perguntas AP1</span>
+            <span>${examSummary.completedCount} concluidos</span>
+          </div>
+          ${weakTopics.length ? `
+            <div class="mini-list exam-coach-list">
+              ${weakTopics.map((item) => `
+                <a href="#reader/${item.chapter.id}">
+                  <strong>${item.chapter.title}</strong>
+                  <span>${item.moduleTitle} ${readinessBadge(item.readiness)}</span>
+                </a>
+              `).join("")}
+            </div>
+          ` : `<p class="small-note">Nenhum ponto critico na fila. Use o treino AP1 para manter a forma.</p>`}
+        </div>
+        <div class="session-focus-actions">
+          <a class="button large" href="#exam">${examSummary.weakCount ? "Abrir treino AP1" : "Treinar perguntas AP1"}</a>
+          <a class="button secondary" href="#review">Revisao ativa</a>
+        </div>
+      </section>
+
       ${progress.percent === 100 ? `
         <section class="completion-card rise-in">
           <span class="card-label">Trilha avancada</span>
           <h2>Voce concluiu todos os capitulos registrados.</h2>
-          <p>Agora o foco e revisao ativa, termos fracos e subir a prontidao AP1 dos temas marcados como revisar.</p>
+          <p>Agora o foco e revisao ativa, drills AP1 e subir a prontidao dos temas marcados como revisar.</p>
           <div class="session-focus-actions">
-            <a class="button" href="#review">Abrir revisao</a>
-            <a class="button secondary" href="#glossary">Treinar glossario</a>
+            <a class="button" href="#exam">Treino AP1</a>
+            <a class="button secondary" href="#review">Abrir revisao</a>
           </div>
         </section>
       ` : ""}
@@ -125,7 +157,7 @@ export function renderHomeView(ctx: AppContext): string {
         <div class="session-focus-actions">
           <a class="button large" href="#reader/${chapter.id}">${ctaLabel}</a>
           <a class="button secondary" href="#course">Ver trilha do curso</a>
-          <a class="button secondary" href="#review">Revisao ativa</a>
+          <a class="button secondary" href="#exam">Treino AP1</a>
         </div>
       </section>
 
