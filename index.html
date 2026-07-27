@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AzubiForge: estudo offline para AP1 FIAE.">
+  <meta name="theme-color" content="#f6f5f1">
+  <title>AzubiForge - Forge your Ausbildung</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="AzubiForge Home">
+        <span class="brand-mark">AF</span>
+        <span>
+          <strong>AzubiForge</strong>
+          <small>Forge your Ausbildung.</small>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="Navegacao principal">
+        <a href="#home" data-nav="home">Hoje</a>
+        <a href="#course" data-nav="course">Curso AP1</a>
+        <a href="#review" data-nav="review">Revisao</a>
+        <a href="#glossary" data-nav="glossary">Glossario</a>
+        <a href="#docs-ai" data-nav="docs-ai">Docs AI</a>
+      </nav>
+
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Alternar tema">
+        Tema
+      </button>
+    </header>
+
+    <main id="app" class="page" tabindex="-1"></main>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
