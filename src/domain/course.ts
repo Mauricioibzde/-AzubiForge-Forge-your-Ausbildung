@@ -8,6 +8,8 @@ import type {
   Module,
   Progress,
   ReaderTab,
+  Readiness,
+  ReadinessLevel,
   SessionStep,
   VocabularyRow
 } from "../types";
@@ -19,6 +21,8 @@ export const READER_STEPS: SessionStep[] = [
   { id: "practice", label: "Uebungen", hint: "Treine com exercicios." },
   { id: "ap1", label: "AP1-Check", hint: "Feche com foco de prova." }
 ];
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function findChapter(data: AzubiForgeData, chapterId: string): Chapter | undefined {
   return data.chapters.find((chapter) => chapter.id === chapterId);
@@ -73,14 +77,19 @@ export function getReviewQueue(data: AzubiForgeData, state: AppState): Chapter[]
   const wrongChapterIds = new Set(
     Object.entries(state.exerciseChecks)
       .filter(([, value]) => value === "wrong")
-      .map(([key]) => {
-        const parts = key.split(":");
-        if (parts[0] === "review" || parts[0] === "focus") return parts[1];
-        return parts[0];
-      })
+      .map(([key]) => chapterIdFromCheckKey(key))
       .filter(Boolean)
   );
-  const fromMistakes = data.chapters.filter((chapter) => wrongChapterIds.has(chapter.id));
+  const weakVocabIds = new Set(
+    Object.entries(state.vocabChecks)
+      .filter(([, value]) => value === "wrong")
+      .map(([key]) => chapterIdFromCheckKey(key))
+      .filter(Boolean)
+  );
+  const due = data.chapters
+    .filter((chapter) => isReviewDue(state, chapter.id))
+    .sort((a, b) => getDaysSinceStudied(state, b.id) - getDaysSinceStudied(state, a.id));
+  const fromMistakes = data.chapters.filter((chapter) => wrongChapterIds.has(chapter.id) || weakVocabIds.has(chapter.id));
   const marked = data.chapters
     .filter((chapter) => state.confidence[chapter.id] === "hard" || state.confidence[chapter.id] === "review")
     .sort((a, b) => priority[state.confidence[a.id]] - priority[state.confidence[b.id]]);
@@ -89,7 +98,7 @@ export function getReviewQueue(data: AzubiForgeData, state: AppState): Chapter[]
     .filter((chapter) => isCompleted(state, chapter.id) && state.confidence[chapter.id] !== "ready")
     .slice(0, 4);
 
-  return uniqueChapters([...fromMistakes, ...marked, ...open, ...recall]);
+  return uniqueChapters([...fromMistakes, ...due, ...marked, ...open, ...recall]);
 }
 
 export function getTodayChapter(data: AzubiForgeData, state: AppState): Chapter {
@@ -261,6 +270,137 @@ export function getChapterExerciseStats(state: AppState, chapterId: string, tota
     answered: correct + wrong,
     total
   };
+}
+
+export function vocabCheckKey(chapterId: string, index: number): string {
+  return `vocab:${chapterId}:${index}`;
+}
+
+export function getVocabStats(state: AppState, chapterId: string, total: number): {
+  correct: number;
+  wrong: number;
+  answered: number;
+  total: number;
+} {
+  let correct = 0;
+  let wrong = 0;
+
+  for (let index = 0; index < total; index += 1) {
+    const value = state.vocabChecks[vocabCheckKey(chapterId, index)];
+    if (value === "correct") correct += 1;
+    if (value === "wrong") wrong += 1;
+  }
+
+  return { correct, wrong, answered: correct + wrong, total };
+}
+
+export function touchStudied(state: AppState, chapterId: string): void {
+  state.lastStudiedAt[chapterId] = new Date().toISOString();
+}
+
+export function getDaysSinceStudied(state: AppState, chapterId: string): number {
+  const stamp = state.lastStudiedAt[chapterId];
+  if (!stamp) return Number.POSITIVE_INFINITY;
+  const then = Date.parse(stamp);
+  if (Number.isNaN(then)) return Number.POSITIVE_INFINITY;
+  return Math.floor((Date.now() - then) / DAY_MS);
+}
+
+export function isReviewDue(state: AppState, chapterId: string): boolean {
+  if (!isCompleted(state, chapterId) && !getVisitedSteps(state, chapterId).length) return false;
+  const confidence = state.confidence[chapterId];
+  if (confidence === "ready") return getDaysSinceStudied(state, chapterId) >= 7;
+  if (confidence === "hard") return getDaysSinceStudied(state, chapterId) >= 1;
+  if (confidence === "review") return getDaysSinceStudied(state, chapterId) >= 1;
+  if (isCompleted(state, chapterId)) return getDaysSinceStudied(state, chapterId) >= 2;
+  return getDaysSinceStudied(state, chapterId) >= 1;
+}
+
+export function getChapterReadiness(data: AzubiForgeData, state: AppState, chapter: Chapter): Readiness {
+  const session = getSessionProgress(state, chapter.id);
+  const exercises = getChapterExercises(chapter);
+  const exerciseStats = getChapterExerciseStats(state, chapter.id, exercises.length);
+  const vocab = getChapterVocabulary(data, chapter);
+  const vocabStats = getVocabStats(state, chapter.id, vocab.length);
+  const confidence = state.confidence[chapter.id];
+  const reasons: string[] = [];
+
+  let score = 0;
+  if (session.completed >= 1) score += 1;
+  if (session.completed >= 3) score += 1;
+  if (session.percent === 100) score += 1;
+  if (vocabStats.answered > 0 || exerciseStats.answered > 0) score += 1;
+  if (exerciseStats.answered >= Math.min(3, Math.max(1, exercises.length)) && exerciseStats.wrong === 0) score += 1;
+  else if (exerciseStats.answered > 0 && exerciseStats.correct > exerciseStats.wrong) score += 0.5;
+  if (confidence === "ready") score += 1;
+  else if (confidence === "ok") score += 0.5;
+  else if (confidence === "hard" || confidence === "review") score -= 0.5;
+  if (isCompleted(state, chapter.id)) score += 0.5;
+
+  const level = Math.max(0, Math.min(5, Math.round(score))) as ReadinessLevel;
+  const labels: Record<ReadinessLevel, string> = {
+    0: "Nao iniciado",
+    1: "Visto",
+    2: "Em estudo",
+    3: "Praticado",
+    4: "Quase pronto",
+    5: "Pronto AP1"
+  };
+
+  if (session.percent < 100) reasons.push(`Sessao ${session.completed}/${session.total}`);
+  if (exerciseStats.answered === 0) reasons.push("Falta praticar exercicios");
+  else if (exerciseStats.wrong > 0) reasons.push(`${exerciseStats.wrong} erros para revisar`);
+  if (vocabStats.answered === 0) reasons.push("Falta recall de vocabulario");
+  if (!confidence) reasons.push("Sem marcacao de confianca");
+  if (isReviewDue(state, chapter.id)) reasons.push("Revisao em atraso");
+
+  return {
+    level,
+    label: labels[level],
+    percent: Math.round((level / 5) * 100),
+    reasons: reasons.slice(0, 3)
+  };
+}
+
+export function getCourseReadiness(data: AzubiForgeData, state: AppState): Progress {
+  const levels = data.chapters.map((chapter) => getChapterReadiness(data, state, chapter).level);
+  const ready = levels.filter((level) => level >= 4).length;
+  const avg = levels.reduce<number>((sum, level) => sum + level, 0) / Math.max(1, levels.length);
+
+  return {
+    completed: ready,
+    total: data.chapters.length,
+    percent: Math.round((avg / 5) * 100)
+  };
+}
+
+export function canMarkReady(data: AzubiForgeData, state: AppState, chapterId: string): {
+  ok: boolean;
+  message: string;
+} {
+  const chapter = findChapter(data, chapterId);
+  if (!chapter) return { ok: false, message: "Capitulo nao encontrado." };
+
+  const session = getSessionProgress(state, chapterId);
+  const exercises = getChapterExercises(chapter);
+  const stats = getChapterExerciseStats(state, chapterId, exercises.length);
+
+  if (session.percent < 100) {
+    return { ok: false, message: `Complete as ${session.total} etapas da sessao antes de marcar Pronto AP1.` };
+  }
+  if (exercises.length && stats.answered === 0) {
+    return { ok: false, message: "Responda ao menos um exercicio e marque Acertei/Errei antes de Pronto AP1." };
+  }
+  if (stats.wrong > 0) {
+    return { ok: false, message: "Ainda ha exercicios marcados como erro. Revise-os antes de Pronto AP1." };
+  }
+  return { ok: true, message: "" };
+}
+
+function chapterIdFromCheckKey(key: string): string {
+  const parts = key.split(":");
+  if (parts[0] === "review" || parts[0] === "focus" || parts[0] === "vocab") return parts[1] || "";
+  return parts[0] || "";
 }
 
 function percentage(value: number, total: number): number {

@@ -1,4 +1,4 @@
-import type { AppState, Chapter, Confidence, Progress, VocabularyRow } from "../types";
+import type { AppState, Chapter, Confidence, ExerciseCheck, Progress, Readiness, VocabularyRow } from "../types";
 
 export function escapeHtml(value: string): string {
   return value
@@ -20,11 +20,11 @@ export function list(items: string[] | undefined): string {
   return `<ul>${(items || []).map((item) => `<li>${item}</li>`).join("")}</ul>`;
 }
 
-export function progressBlock(progress: Progress): string {
+export function progressBlock(progress: Progress, label = "capitulos"): string {
   return `
     <div class="progress-block">
       <div class="progress-meta">
-        <span>${progress.completed} de ${progress.total} capitulos</span>
+        <span>${progress.completed} de ${progress.total} ${label}</span>
         <strong>${progress.percent}%</strong>
       </div>
       <div class="progress-track" aria-label="Progresso do curso">
@@ -62,6 +62,10 @@ export function confidenceBadge(state: AppState, chapterId: string): string {
   return `<span class="confidence-badge ${value}">${labels[value]}</span>`;
 }
 
+export function readinessBadge(readiness: Readiness): string {
+  return `<span class="readiness-badge level-${readiness.level}">${readiness.label}</span>`;
+}
+
 export function confidenceControls(state: AppState, chapter: Chapter): string {
   const current = state.confidence[chapter.id] || "";
   const options: Array<[Confidence, string]> = [
@@ -85,6 +89,48 @@ export function confidenceControls(state: AppState, chapter: Chapter): string {
         `).join("")}
       </div>
     </section>
+  `;
+}
+
+export function vocabularyRecallCards(
+  rows: VocabularyRow[],
+  chapterId: string,
+  checks: Record<string, ExerciseCheck>
+): string {
+  return `
+    <div class="vocab-recall-grid">
+      ${rows.map((row, index) => {
+        const key = `vocab:${chapterId}:${index}`;
+        const check = checks[key];
+        return `
+          <article class="vocab-recall-card ${check ? `checked-${check}` : ""}">
+            <strong>${row.de}</strong>
+            <details>
+              <summary>Revelar significado</summary>
+              <p><strong>${row.pt}</strong></p>
+              <p>${row.explanation}</p>
+              <p class="small-note">${row.example}</p>
+              <div class="self-check-actions">
+                <button
+                  class="button secondary ${check === "correct" ? "active-check" : ""}"
+                  type="button"
+                  data-vocab-check="correct"
+                  data-check-key="${key}"
+                  data-check-chapter="${chapterId}"
+                >Acertei</button>
+                <button
+                  class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
+                  type="button"
+                  data-vocab-check="wrong"
+                  data-check-key="${key}"
+                  data-check-chapter="${chapterId}"
+                >Errei</button>
+              </div>
+            </details>
+          </article>
+        `;
+      }).join("")}
+    </div>
   `;
 }
 

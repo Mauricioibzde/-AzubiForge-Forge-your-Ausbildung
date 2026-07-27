@@ -1,11 +1,15 @@
 import type { AppContext } from "./appContext";
 import { getCourseData } from "./data/courseData";
 import {
+  canMarkReady,
   findChapter,
+  getChapterExercises,
+  getChapterExerciseStats,
   getResumeTab,
   getSessionProgress,
   isCompleted,
-  markVisitedStep
+  markVisitedStep,
+  touchStudied
 } from "./domain/course";
 import { exportState, importState, loadState, saveState } from "./state/store";
 import type { Confidence, CourseFilter, ExerciseCheck, GlossaryFilter, ReadingSize, ReaderTab, RouteName, UiState } from "./types";
@@ -50,6 +54,7 @@ function createUiState(): UiState {
     readerChapterId: "",
     reviewFocusMode: "flash",
     reviewFocusIndex: 0,
+    practiceFilter: "all",
     docsAiFocus: "study-plan",
     docsAiChapterId: ""
   };
@@ -82,6 +87,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
     }
     ctx.state.lastChapterId = chapterId;
     markVisitedStep(ctx.state, chapterId, ctx.ui.readerTab);
+    touchStudied(ctx.state, chapterId);
     saveState(ctx.state);
     app.innerHTML = renderReaderView(ctx, chapterId);
   } else if (route === "review") app.innerHTML = renderReviewView(ctx);
@@ -168,9 +174,30 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     return;
   }
 
+  const vocabCheck = target.closest<HTMLElement>("[data-vocab-check]");
+  if (vocabCheck?.dataset.vocabCheck && vocabCheck.dataset.checkKey) {
+    setVocabCheck(
+      ctx,
+      vocabCheck.dataset.checkKey,
+      vocabCheck.dataset.vocabCheck as ExerciseCheck,
+      vocabCheck.dataset.checkChapter || ""
+    );
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const wrongPractice = target.closest<HTMLElement>("[data-show-wrong-practice]");
+  if (wrongPractice) {
+    ctx.ui.readerTab = "practice";
+    ctx.ui.practiceFilter = "wrong";
+    renderRoute(app, ctx);
+    return;
+  }
+
   const tabButton = target.closest<HTMLElement>("[data-reader-tab]");
   if (tabButton) {
     ctx.ui.readerTab = tabButton.dataset.readerTab as ReaderTab;
+    if (ctx.ui.readerTab !== "practice") ctx.ui.practiceFilter = "all";
     renderRoute(app, ctx);
     return;
   }
@@ -269,6 +296,9 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
     ctx.ui.reviewFocusMode = value as UiState["reviewFocusMode"];
     ctx.ui.reviewFocusIndex = 0;
   }
+  if (group === "practice-filter") {
+    ctx.ui.practiceFilter = value as UiState["practiceFilter"];
+  }
   if (group === "reading-size") {
     ctx.state.preferences.readingSize = value as ReadingSize;
     saveState(ctx.state);
@@ -283,25 +313,53 @@ function setExerciseCheck(
   chapterId: string
 ): void {
   ctx.state.exerciseChecks[key] = value;
-  if (value === "wrong" && chapterId && findChapter(ctx.data, chapterId)) {
-    const current = ctx.state.confidence[chapterId];
-    if (current !== "hard") ctx.state.confidence[chapterId] = "review";
+  if (chapterId && findChapter(ctx.data, chapterId)) {
+    touchStudied(ctx.state, chapterId);
+    if (value === "wrong") {
+      const current = ctx.state.confidence[chapterId];
+      if (current !== "hard") ctx.state.confidence[chapterId] = "review";
+    }
+  }
+  saveState(ctx.state);
+}
+
+function setVocabCheck(
+  ctx: AppContext,
+  key: string,
+  value: ExerciseCheck,
+  chapterId: string
+): void {
+  ctx.state.vocabChecks[key] = value;
+  if (chapterId && findChapter(ctx.data, chapterId)) {
+    touchStudied(ctx.state, chapterId);
+    if (value === "wrong") {
+      const current = ctx.state.confidence[chapterId];
+      if (current !== "hard") ctx.state.confidence[chapterId] = "review";
+    }
   }
   saveState(ctx.state);
 }
 
 function toggleComplete(ctx: AppContext, chapterId: string): void {
-  if (!findChapter(ctx.data, chapterId)) return;
+  const chapter = findChapter(ctx.data, chapterId);
+  if (!chapter) return;
 
   const markingDone = !isCompleted(ctx.state, chapterId);
   if (markingDone) {
     const session = getSessionProgress(ctx.state, chapterId);
+    const stats = getChapterExerciseStats(ctx.state, chapterId, getChapterExercises(chapter).length);
     if (session.percent < 100) {
       const confirmed = window.confirm(
         `Voce visitou ${session.completed} de ${session.total} etapas desta sessao. Concluir o capitulo mesmo assim?`
       );
       if (!confirmed) return;
+    } else if (stats.answered === 0) {
+      const confirmed = window.confirm(
+        "Voce ainda nao marcou exercicios como Acertei/Errei. Concluir mesmo assim?"
+      );
+      if (!confirmed) return;
     }
+    touchStudied(ctx.state, chapterId);
   }
 
   ctx.state.completed = markingDone
@@ -313,7 +371,16 @@ function toggleComplete(ctx: AppContext, chapterId: string): void {
 function setConfidence(ctx: AppContext, chapterId: string, value: Confidence): void {
   if (!findChapter(ctx.data, chapterId)) return;
 
+  if (value === "ready") {
+    const gate = canMarkReady(ctx.data, ctx.state, chapterId);
+    if (!gate.ok) {
+      window.alert(gate.message);
+      return;
+    }
+  }
+
   ctx.state.confidence[chapterId] = value;
+  touchStudied(ctx.state, chapterId);
   if (value === "ready" && !isCompleted(ctx.state, chapterId)) {
     ctx.state.completed = [...ctx.state.completed, chapterId];
   }

@@ -4,17 +4,20 @@ import {
   getActiveModule,
   getChapterModule,
   getChapterPathStatus,
+  getChapterReadiness,
   getCourseProgress,
+  getCourseReadiness,
   getModuleContinueChapter,
   getModuleProgress,
   getSuggestedChapter,
   isCompleted
 } from "../domain/course";
 import type { Chapter, LearningSituation, Module } from "../types";
-import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock } from "../ui/html";
+import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock, readinessBadge } from "../ui/html";
 
 export function renderCourseView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
+  const readiness = getCourseReadiness(ctx.data, ctx.state);
   const next = getSuggestedChapter(ctx.data, ctx.state);
   const activeModule = getActiveModule(ctx.data, ctx.state);
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, activeModule);
@@ -30,7 +33,8 @@ export function renderCourseView(ctx: AppContext): string {
           ${renderCourseBasis(ctx)}
         </div>
         <div class="panel continue-panel">
-          ${progressBlock(progress)}
+          ${progressBlock(progress, "concluidos")}
+          ${progressBlock(readiness, "quase prontos")}
           <span class="card-label">Continuar daqui</span>
           <h2>${continueChapter.title}</h2>
           <p class="small-note">${activeModule.subtitle}</p>
@@ -155,6 +159,7 @@ function renderModule(
 
 function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter, index: number): string {
   const status = getChapterPathStatus(ctx.data, ctx.state, chapter.id, module);
+  const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const labels = { done: "Concluido", current: "Agora", open: "A seguir" };
   const action = status === "done" ? "Revisar" : status === "current" ? "Continuar" : "Abrir";
 
@@ -165,6 +170,7 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter, index
         <div class="path-topline">
           <h3>${chapter.title}</h3>
           <span class="path-status">${labels[status]}</span>
+          ${readinessBadge(readiness)}
         </div>
         <p>${chapter.description}</p>
         <div class="chapter-meta">

@@ -3,25 +3,31 @@ import {
   getActiveModule,
   getChapterLearningSituation,
   getChapterModule,
+  getChapterReadiness,
   getCourseProgress,
+  getCourseReadiness,
   getEstimatedSessionMinutes,
   getModuleContinueChapter,
   getModuleProgress,
   getReviewQueue,
   getSessionProgress,
   getTodayChapter,
+  isReviewDue,
   READER_STEPS
 } from "../domain/course";
-import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock } from "../ui/html";
+import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock, readinessBadge } from "../ui/html";
 
 export function renderHomeView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
+  const readiness = getCourseReadiness(ctx.data, ctx.state);
   const chapter = getTodayChapter(ctx.data, ctx.state);
+  const chapterReadiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const module = getChapterModule(ctx.data, chapter.id) || getActiveModule(ctx.data, ctx.state);
   const situation = getChapterLearningSituation(ctx.data, chapter.id);
   const session = getSessionProgress(ctx.state, chapter.id);
   const minutes = getEstimatedSessionMinutes(chapter);
   const review = getReviewQueue(ctx.data, ctx.state).filter((item) => item.id !== chapter.id).slice(0, 3);
+  const dueCount = ctx.data.chapters.filter((item) => isReviewDue(ctx.state, item.id)).length;
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
   const moduleProgress = getModuleProgress(ctx.data, ctx.state, module);
   const ctaLabel = session.completed > 0 && session.percent < 100 ? "Continuar sessao" : "Comecar sessao";
@@ -32,9 +38,10 @@ export function renderHomeView(ctx: AppContext): string {
         <p class="eyebrow">Curso offline AP1 FIAE</p>
         <h1>AzubiForge</h1>
         <p class="lead">Forge your Ausbildung. Uma sessao curta, guiada e pratica: leia, aplique, treine vocabulario e feche com AP1.</p>
-        <div class="study-hero-meta">
-          ${progressBlock(progress)}
-          <p class="small-note">Proximo passo claro. Sem dashboard. Sem dispersao.</p>
+        <div class="study-hero-meta dual-progress">
+          ${progressBlock(progress, "concluidos")}
+          ${progressBlock(readiness, "quase prontos")}
+          <p class="small-note">Prontidao media ${readiness.percent}% · ${dueCount} capitulos em revisao</p>
         </div>
       </section>
 
@@ -48,7 +55,9 @@ export function renderHomeView(ctx: AppContext): string {
             <span>${minutes} min</span>
             <span>${situation?.title || "Lernsituation"}</span>
             ${confidenceBadge(ctx.state, chapter.id)}
+            ${readinessBadge(chapterReadiness)}
           </div>
+          ${chapterReadiness.reasons.length ? `<p class="small-note">${chapterReadiness.reasons.join(" · ")}</p>` : ""}
           <div class="session-stepper" aria-label="Etapas da sessao">
             ${READER_STEPS.map((step, index) => {
               const done = (ctx.state.sessionSteps[chapter.id] || []).includes(step.id);

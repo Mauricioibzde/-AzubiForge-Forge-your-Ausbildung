@@ -25,7 +25,7 @@ export function saveState(state: AppState): void {
 export function exportState(state: AppState): void {
   const payload = {
     app: "AzubiForge",
-    version: 4,
+    version: 5,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -68,6 +68,8 @@ function createFallbackState(data: AzubiForgeData): AppState {
     collapsedModules: {},
     sessionSteps: {},
     exerciseChecks: {},
+    vocabChecks: {},
+    lastStudiedAt: {},
     preferences: {
       theme: "light",
       readingSize: "normal"
@@ -93,6 +95,8 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     collapsedModules: sanitizeBooleanRecord(imported.collapsedModules, validModuleIds),
     sessionSteps: sanitizeSessionSteps(imported.sessionSteps, validChapterIds),
     exerciseChecks: sanitizeExerciseChecks(imported.exerciseChecks),
+    vocabChecks: sanitizeExerciseChecks(imported.vocabChecks),
+    lastStudiedAt: sanitizeStringRecord(imported.lastStudiedAt, validChapterIds),
     preferences: sanitizePreferences(imported.preferences, fallback.preferences)
   };
 }

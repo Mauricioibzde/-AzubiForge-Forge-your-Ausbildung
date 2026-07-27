@@ -5,6 +5,7 @@ import {
   getChapterIndex,
   getChapterLearningSituation,
   getChapterModule,
+  getChapterReadiness,
   getChapterVocabulary,
   getEstimatedSessionMinutes,
   getNextSessionTab,
@@ -21,6 +22,8 @@ import {
   escapeHtml,
   list,
   paragraphs,
+  readinessBadge,
+  vocabularyRecallCards,
   vocabularyTable
 } from "../ui/html";
 import { exerciseCard } from "../ui/components";
@@ -37,6 +40,11 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
   const nextTab = getNextSessionTab(ctx.state, chapter.id, ctx.ui.readerTab);
   const currentStep = READER_STEPS.find((step) => step.id === ctx.ui.readerTab) || READER_STEPS[0];
   const minutes = getEstimatedSessionMinutes(chapter);
+  const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
+  const exerciseTotal = (chapter.fullContent
+    ? [...chapter.fullContent.exercises.easy, ...chapter.fullContent.exercises.intermediate, ...chapter.fullContent.exercises.ap1Style]
+    : chapter.exercises).length;
+  const exerciseStats = getChapterExerciseStats(ctx.state, chapter.id, exerciseTotal);
 
   return `
     <section class="reader">
@@ -50,6 +58,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           <span>${chapter.studyTime || `${getReadingMinutes(chapter)} min leitura`}</span>
           <span>${index + 1} de ${ctx.data.chapters.length}</span>
           <span>${done ? "Concluido" : "Em estudo"}</span>
+          ${readinessBadge(readiness)}
         </div>
 
         <section class="session-guide" aria-label="Fluxo da sessao">
@@ -164,13 +173,16 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
             Avancar: ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proximo"}
           </button>
         ` : `
+          <div class="mobile-dock-confidence">
+            ${confidenceControls(ctx.state, chapter)}
+          </div>
           <button class="button ${done ? "complete" : ""}" type="button" data-complete="${chapter.id}">
             ${done ? "Concluido" : "Concluir capitulo"}
           </button>
         `}
         <div class="mobile-study-meta">
-          <span>${session.completed}/${session.total}</span>
-          <a class="text-link" href="#course">Trilha</a>
+          <span>${session.completed}/${session.total} · ${readiness.label}</span>
+          ${exerciseStats.wrong ? `<button class="text-link" type="button" data-show-wrong-practice="${chapter.id}">Ver erros (${exerciseStats.wrong})</button>` : `<a class="text-link" href="#course">Trilha</a>`}
         </div>
       </div>
     </section>
@@ -285,15 +297,17 @@ function praxisTab(ctx: AppContext, chapter: Chapter): string {
 }
 
 function vocabTab(ctx: AppContext, chapter: Chapter): string {
+  const rows = getChapterVocabulary(ctx.data, chapter);
   return `
     <section class="chapter-section">
-      <h2>Deutscher Wortschatz</h2>
-      ${vocabularyTable(getChapterVocabulary(ctx.data, chapter))}
-    </section>
-    <section class="info-box summary">
       <h2>Active Recall</h2>
-      <p>Decke die portugiesische Bedeutung ab und erklaere den deutschen Begriff zuerst selbst.</p>
+      <p>Veja o termo em alemao, explique em voz alta e so depois revele o significado.</p>
+      ${vocabularyRecallCards(rows, chapter.id, ctx.state.vocabChecks)}
     </section>
+    <details class="vocab-table-details">
+      <summary>Ver tabela completa</summary>
+      ${vocabularyTable(rows)}
+    </details>
   `;
 }
 
@@ -303,6 +317,13 @@ function practiceTab(ctx: AppContext, chapter: Chapter): string {
     ? [...content.exercises.easy, ...content.exercises.intermediate, ...content.exercises.ap1Style]
     : chapter.exercises;
   const stats = getChapterExerciseStats(ctx.state, chapter.id, exercises.length);
+  const filter = ctx.ui.practiceFilter;
+  const visible = exercises
+    .map((exercise, index) => ({ exercise, index }))
+    .filter(({ index }) => {
+      if (filter !== "wrong") return true;
+      return ctx.state.exerciseChecks[exerciseCheckKey(chapter.id, index)] === "wrong";
+    });
 
   return `
     <section class="chapter-section">
@@ -310,12 +331,16 @@ function practiceTab(ctx: AppContext, chapter: Chapter): string {
         <h2>Uebungen</h2>
         <p class="small-note">${stats.answered} respondidas · ${stats.correct} corretas · ${stats.wrong} para revisar</p>
       </div>
+      <div class="segmented-control compact" aria-label="Filtrar exercicios">
+        <button class="${filter === "all" ? "active" : ""}" type="button" data-filter-group="practice-filter" data-filter-value="all">Todos</button>
+        <button class="${filter === "wrong" ? "active" : ""}" type="button" data-filter-group="practice-filter" data-filter-value="wrong">So erros (${stats.wrong})</button>
+      </div>
       <p>Responda mentalmente, abra a solucao e marque se acertou. Erros entram na revisao.</p>
-      ${exercises.map((exercise, index) => exerciseCard(exercise, index, {
+      ${visible.length ? visible.map(({ exercise, index }) => exerciseCard(exercise, index, {
         chapterId: chapter.id,
         checkKey: exerciseCheckKey(chapter.id, index),
         check: ctx.state.exerciseChecks[exerciseCheckKey(chapter.id, index)]
-      })).join("")}
+      })).join("") : `<p class="empty-state">Nenhum erro marcado neste capitulo.</p>`}
     </section>
   `;
 }

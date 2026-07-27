@@ -120,6 +120,7 @@ export interface AzubiForgeData {
 
 export type ExerciseCheck = "correct" | "wrong";
 export type ReviewFocusMode = "flash" | "quiz";
+export type ReadinessLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface Preferences {
   theme: Theme;
@@ -134,6 +135,8 @@ export interface AppState {
   collapsedModules: Record<string, boolean>;
   sessionSteps: Record<string, ReaderTab[]>;
   exerciseChecks: Record<string, ExerciseCheck>;
+  vocabChecks: Record<string, ExerciseCheck>;
+  lastStudiedAt: Record<string, string>;
   preferences: Preferences;
 }
 
@@ -147,6 +150,7 @@ export interface UiState {
   readerChapterId: string;
   reviewFocusMode: ReviewFocusMode;
   reviewFocusIndex: number;
+  practiceFilter: "all" | "wrong";
   docsAiFocus: "study-plan" | "chapter-help" | "review";
   docsAiChapterId: string;
 }
@@ -161,4 +165,11 @@ export interface Progress {
   completed: number;
   total: number;
   percent: number;
+}
+
+export interface Readiness {
+  level: ReadinessLevel;
+  label: string;
+  percent: number;
+  reasons: string[];
 }

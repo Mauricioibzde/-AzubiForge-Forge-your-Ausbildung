@@ -2515,3 +2515,107 @@ body.more-open {
     right: 8px;
   }
 }
+
+/* --- Readiness + vocab recall --- */
+
+.readiness-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #d7e5df;
+  color: var(--primary-dark);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.readiness-badge.level-0 { background: #e7ebe9; color: var(--muted); }
+.readiness-badge.level-1 { background: #dce8ff; color: #274a8a; }
+.readiness-badge.level-2 { background: #fff0d6; color: #8a5a12; }
+.readiness-badge.level-3 { background: #d9f1e4; color: #1d6b48; }
+.readiness-badge.level-4 { background: #c8ecdf; color: #0f6b5f; }
+.readiness-badge.level-5 { background: var(--primary); color: #fff; }
+
+.dual-progress {
+  display: grid;
+  gap: 12px;
+}
+
+.vocab-recall-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vocab-recall-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.vocab-recall-card strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.vocab-recall-card details summary {
+  cursor: pointer;
+  font-weight: 750;
+  color: var(--primary-dark);
+}
+
+.vocab-recall-card.checked-correct {
+  border-color: rgba(31, 122, 77, 0.4);
+}
+
+.vocab-recall-card.checked-wrong {
+  border-color: rgba(183, 121, 31, 0.5);
+}
+
+.vocab-table-details {
+  margin-top: 16px;
+}
+
+.vocab-table-details > summary {
+  cursor: pointer;
+  font-weight: 750;
+  padding: 8px 0;
+}
+
+.mobile-dock-confidence .confidence-box {
+  margin: 0;
+}
+
+.mobile-dock-confidence .confidence-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mobile-dock-confidence .confidence-actions button {
+  min-height: 40px;
+  border-radius: 10px;
+  background: #dfeae5;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.mobile-dock-confidence .confidence-actions button.active {
+  background: var(--text);
+  color: #fff;
+}
+
+@media (max-width: 820px) {
+  .vocab-recall-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-study-dock {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}
