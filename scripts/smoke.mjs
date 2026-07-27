@@ -67,7 +67,7 @@ const mobileHome = await mobile.evaluate(() => ({
 
 await mobile.click("[data-more-nav]");
 const moreOpen = await mobile.evaluate(() => !document.querySelector("[data-more-sheet]")?.hidden);
-await mobile.click("[data-more-close]");
+await mobile.click(".more-sheet-panel .more-sheet-head [data-more-close]");
 
 await mobile.goto(`${baseUrl}/#reader/${firstChapter}`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".mobile-study-dock", { timeout: 10000 });
