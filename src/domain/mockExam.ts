@@ -238,6 +238,20 @@ export function setMockExamSelfCheck(
   return setMockExamResponse(attempt, questionId, { selfCheck, answered: true });
 }
 
+export function getMockExamTrend(history: MockExamHistoryEntry[]): {
+  delta: number;
+  label: string;
+  improving: boolean | null;
+} | null {
+  if (history.length < 2) return null;
+  const newest = history[0];
+  const previous = history[1];
+  const delta = newest.percent - previous.percent;
+  if (delta === 0) return { delta: 0, label: "Estavel vs ultimo", improving: null };
+  if (delta > 0) return { delta, label: `+${delta}% vs ultimo`, improving: true };
+  return { delta, label: `${delta}% vs ultimo`, improving: false };
+}
+
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
   for (let index = copy.length - 1; index > 0; index -= 1) {

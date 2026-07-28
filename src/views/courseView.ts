@@ -13,7 +13,7 @@ import {
   isCompleted
 } from "../domain/course";
 import type { Chapter, LearningSituation, Module } from "../types";
-import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock, readinessBadge } from "../ui/html";
+import { confidenceBadge, escapeAttribute, escapeHtml, inlineProgress, progressBlock, readinessBadge } from "../ui/html";
 
 export function renderCourseView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
@@ -173,6 +173,17 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter, index
           ${readinessBadge(readiness)}
         </div>
         <p>${chapter.description}</p>
+        ${(() => {
+          const note = (ctx.state.notes[chapter.id] || "").trim();
+          if (!note) return "";
+          const preview = note.length > 140 ? `${note.slice(0, 140).trim()}…` : note;
+          return `
+            <details class="path-note">
+              <summary>Nota salva</summary>
+              <p>${escapeHtml(preview)}</p>
+            </details>
+          `;
+        })()}
         <div class="chapter-meta">
           <span>${chapter.studyTime || "Sessao curta"}</span>
           ${confidenceBadge(ctx.state, chapter.id)}

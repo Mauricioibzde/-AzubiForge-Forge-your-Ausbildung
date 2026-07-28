@@ -15,6 +15,7 @@ import {
   getVocabStats,
   isCompleted,
   exerciseCheckKey,
+  vocabCheckKey,
   READER_STEPS
 } from "../domain/course";
 import type { Chapter, ChapterFullContent, ContentBlock, Diagram, ReaderTab } from "../types";
@@ -156,6 +157,12 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
                 ${sizeSegment("large", "Grande", ctx.state.preferences.readingSize)}
               </div>
               <button class="button secondary" type="button" data-print-chapter>Imprimir capitulo</button>
+              ${session.completed > 0 ? `
+                <button class="button secondary" type="button" data-reset-session="${chapter.id}">
+                  Reiniciar sessao guiada
+                </button>
+                <p class="small-note">Limpa as etapas visitadas para refazer o fluxo de 5 passos.</p>
+              ` : ""}
             </div>
           </details>
         </div>
@@ -173,6 +180,19 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
       </aside>
 
       <div class="mobile-study-dock" aria-label="Acoes da sessao">
+        <div class="mobile-dock-tabs" aria-label="Etapas da sessao">
+          ${READER_STEPS.map((step) => {
+            const visited = getVisitedSteps(ctx.state, chapter.id).includes(step.id);
+            const active = step.id === ctx.ui.readerTab;
+            return `
+              <button
+                class="mobile-dock-tab ${visited ? "visited" : ""} ${active ? "active" : ""}"
+                type="button"
+                data-reader-tab="${step.id}"
+              >${step.label}</button>
+            `;
+          }).join("")}
+        </div>
         ${nextTab ? `
           <button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">
             Avancar: ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proximo"}
@@ -338,11 +358,63 @@ function praxisTab(ctx: AppContext, chapter: Chapter): string {
 
 function vocabTab(ctx: AppContext, chapter: Chapter): string {
   const rows = getChapterVocabulary(ctx.data, chapter);
+  const mode = ctx.ui.readerVocabMode;
+  const total = rows.length;
+  const index = total ? ((ctx.ui.readerVocabIndex % total) + total) % total : 0;
+  const row = rows[index];
+  const key = row ? vocabCheckKey(chapter.id, index) : "";
+  const check = key ? ctx.state.vocabChecks[key] : undefined;
+
   return `
     <section class="chapter-section">
-      <h2>Active Recall</h2>
+      <div class="practice-head">
+        <h2>Active Recall</h2>
+        <div class="segmented-control compact" aria-label="Modo do Wortschatz">
+          <button class="${mode === "flash" ? "active" : ""}" type="button" data-filter-group="reader-vocab-mode" data-filter-value="flash">Flash</button>
+          <button class="${mode === "grid" ? "active" : ""}" type="button" data-filter-group="reader-vocab-mode" data-filter-value="grid">Grade</button>
+        </div>
+      </div>
       <p>Veja o termo em alemao, explique em voz alta e so depois revele o significado.</p>
-      ${vocabularyRecallCards(rows, chapter.id, ctx.state.vocabChecks)}
+      ${mode === "flash" && row ? `
+        <section class="review-focus" aria-label="Flash Wortschatz">
+          <div class="focus-stage" data-swipe-deck="reader-vocab">
+            <article class="focus-card-big ${check ? `checked-${check}` : ""}">
+              <span class="card-label">Termo ${index + 1}/${total}</span>
+              <h2>${row.de}</h2>
+              <p class="focus-prompt">Explique antes de revelar.</p>
+              <details class="focus-reveal">
+                <summary>Revelar significado</summary>
+                <p><strong>${row.pt}</strong></p>
+                <p>${row.explanation}</p>
+                <p class="small-note">${row.example}</p>
+                <div class="self-check-actions">
+                  <button
+                    class="button secondary ${check === "correct" ? "active-check" : ""}"
+                    type="button"
+                    data-vocab-check="correct"
+                    data-check-key="${key}"
+                    data-check-chapter="${chapter.id}"
+                    data-auto-advance="reader-vocab"
+                  >Acertei</button>
+                  <button
+                    class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
+                    type="button"
+                    data-vocab-check="wrong"
+                    data-check-key="${key}"
+                    data-check-chapter="${chapter.id}"
+                    data-auto-advance="reader-vocab"
+                  >Errei</button>
+                </div>
+              </details>
+            </article>
+          </div>
+          <div class="focus-controls">
+            <button class="button secondary" type="button" data-reader-vocab-step="-1">Anterior</button>
+            <span class="focus-count">${index + 1} / ${total}</span>
+            <button class="button" type="button" data-reader-vocab-step="1">Proximo</button>
+          </div>
+        </section>
+      ` : vocabularyRecallCards(rows, chapter.id, ctx.state.vocabChecks)}
     </section>
     <details class="vocab-table-details">
       <summary>Ver tabela completa</summary>

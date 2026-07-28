@@ -82,6 +82,9 @@ function createUiState(): UiState {
     reviewFocusMode: "flash",
     reviewFocusIndex: 0,
     practiceFilter: "all",
+    glossaryWrongOnly: false,
+    readerVocabMode: "flash",
+    readerVocabIndex: 0,
     glossaryMode: "flash",
     glossaryFocusIndex: 0,
     examFocusMode: "mock",
@@ -120,6 +123,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
       ctx.ui.completeGateChapterId = "";
       ctx.ui.confidenceGateChapterId = "";
       ctx.ui.confidenceGateMessage = "";
+      ctx.ui.readerVocabIndex = 0;
     }
     if (tab && READER_TABS.includes(tab as ReaderTab)) {
       ctx.ui.readerTab = tab as ReaderTab;
@@ -238,6 +242,25 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     return;
   }
 
+  const readerVocabStep = target.closest<HTMLElement>("[data-reader-vocab-step]");
+  if (readerVocabStep?.dataset.readerVocabStep) {
+    ctx.ui.readerVocabIndex += Number(readerVocabStep.dataset.readerVocabStep);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const resetSession = target.closest<HTMLElement>("[data-reset-session]");
+  if (resetSession?.dataset.resetSession) {
+    const chapterId = resetSession.dataset.resetSession;
+    delete ctx.state.sessionSteps[chapterId];
+    ctx.ui.readerTab = "explain";
+    ctx.ui.readerVocabIndex = 0;
+    ctx.ui.completeGateChapterId = "";
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return;
+  }
+
   const examStep = target.closest<HTMLElement>("[data-exam-step]");
   if (examStep?.dataset.examStep) {
     ctx.ui.examFocusIndex += Number(examStep.dataset.examStep);
@@ -281,7 +304,9 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
 
   const tabButton = target.closest<HTMLElement>("[data-reader-tab]");
   if (tabButton) {
-    ctx.ui.readerTab = tabButton.dataset.readerTab as ReaderTab;
+    const nextTab = tabButton.dataset.readerTab as ReaderTab;
+    if (nextTab !== ctx.ui.readerTab) ctx.ui.readerVocabIndex = 0;
+    ctx.ui.readerTab = nextTab;
     if (ctx.ui.readerTab !== "practice") ctx.ui.practiceFilter = "all";
     renderRoute(app, ctx);
     return;
@@ -420,6 +445,14 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
   if (group === "practice-filter") {
     ctx.ui.practiceFilter = value as UiState["practiceFilter"];
   }
+  if (group === "glossary-wrong") {
+    ctx.ui.glossaryWrongOnly = value === "wrong";
+    ctx.ui.glossaryFocusIndex = 0;
+  }
+  if (group === "reader-vocab-mode") {
+    ctx.ui.readerVocabMode = value as UiState["readerVocabMode"];
+    ctx.ui.readerVocabIndex = 0;
+  }
   if (group === "glossary-mode") {
     ctx.ui.glossaryMode = value as UiState["glossaryMode"];
     ctx.ui.glossaryFocusIndex = 0;
@@ -439,6 +472,7 @@ function maybeAutoAdvance(ctx: AppContext, target?: string): void {
   if (target === "review") ctx.ui.reviewFocusIndex += 1;
   if (target === "glossary") ctx.ui.glossaryFocusIndex += 1;
   if (target === "exam") ctx.ui.examFocusIndex += 1;
+  if (target === "reader-vocab") ctx.ui.readerVocabIndex += 1;
 }
 
 function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext): void {
@@ -489,6 +523,11 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
 
   if (route === "reader") {
     event.preventDefault();
+    if (ctx.ui.readerTab === "vocab" && ctx.ui.readerVocabMode === "flash") {
+      ctx.ui.readerVocabIndex += delta;
+      renderRoute(app, ctx);
+      return;
+    }
     const chapterId = ctx.ui.readerChapterId || ctx.state.lastChapterId;
     if (!chapterId) return;
     if (delta > 0) {
@@ -534,6 +573,7 @@ function registerSwipe(app: HTMLElement, ctx: AppContext): void {
     if (deck.dataset.swipeDeck === "review") ctx.ui.reviewFocusIndex += delta;
     if (deck.dataset.swipeDeck === "glossary") ctx.ui.glossaryFocusIndex += delta;
     if (deck.dataset.swipeDeck === "exam") ctx.ui.examFocusIndex += delta;
+    if (deck.dataset.swipeDeck === "reader-vocab") ctx.ui.readerVocabIndex += delta;
     renderRoute(app, ctx);
   }, { passive: true });
 }

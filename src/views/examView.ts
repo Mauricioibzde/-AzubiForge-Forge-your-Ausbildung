@@ -16,6 +16,7 @@ import {
   getMockExamGradedCount,
   getMockExamPool,
   getMockExamRemainingMs,
+  getMockExamTrend,
   getWeakChaptersFromAttempt,
   MOCK_EXAM_PRESETS,
   scoreMockExam
@@ -85,6 +86,8 @@ function renderMockMode(ctx: AppContext): string {
 function renderMockLobby(ctx: AppContext): string {
   const poolSize = getMockExamPool(ctx.data).length;
   const history = ctx.state.mockExamHistory.slice(0, 5);
+  const trend = getMockExamTrend(ctx.state.mockExamHistory);
+  const spark = [...ctx.state.mockExamHistory].slice(0, 8).reverse();
 
   return `
     <section class="mock-lobby" aria-label="Simulado AP1">
@@ -96,6 +99,7 @@ function renderMockLobby(ctx: AppContext): string {
           <span>${poolSize} perguntas no banco</span>
           <span>Mistura por modulo</span>
           <span>Salvo offline</span>
+          ${trend ? `<span class="mock-trend ${trend.improving === true ? "up" : trend.improving === false ? "down" : ""}">${trend.label}</span>` : ""}
         </div>
       </div>
 
@@ -120,6 +124,13 @@ function renderMockLobby(ctx: AppContext): string {
         <section class="panel mock-history">
           <span class="card-label">Historico recente</span>
           <h2>Seus simulados</h2>
+          ${spark.length > 1 ? `
+            <div class="mock-spark" aria-hidden="true">
+              ${spark.map((entry) => `
+                <span class="mock-spark-bar" style="height: ${Math.max(12, entry.percent)}%" title="${entry.percent}%"></span>
+              `).join("")}
+            </div>
+          ` : ""}
           <div class="mini-list">
             ${history.map((entry) => `
               <div class="mock-history-row">

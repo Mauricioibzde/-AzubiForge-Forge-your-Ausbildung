@@ -38,6 +38,12 @@ export function renderGlossaryView(ctx: AppContext): string {
           ${segment("database", "Dados", ctx.ui.glossaryFilter)}
           ${segment("programming", "Programacao", ctx.ui.glossaryFilter)}
         </div>
+        ${mode === "flash" ? `
+          <div class="segmented-control compact" aria-label="Filtrar por desempenho">
+            <button class="${!ctx.ui.glossaryWrongOnly ? "active" : ""}" type="button" data-filter-group="glossary-wrong" data-filter-value="all">Todos</button>
+            <button class="${ctx.ui.glossaryWrongOnly ? "active" : ""}" type="button" data-filter-group="glossary-wrong" data-filter-value="wrong">So erros</button>
+          </div>
+        ` : ""}
         <p class="small-note">${terms.length} de ${ctx.data.glossary.length} termos encontrados</p>
       </div>
 
@@ -133,7 +139,11 @@ function getFilteredGlossary(ctx: AppContext): GlossaryTerm[] {
     const searchable = `${term.word} ${term.translation} ${term.explanation}`.toLowerCase();
     const matchesQuery = !query || searchable.includes(query);
     const matchesFilter = ctx.ui.glossaryFilter === "all" || getTermCategory(term) === ctx.ui.glossaryFilter;
-    return matchesQuery && matchesFilter;
+    if (!matchesQuery || !matchesFilter) return false;
+    if (ctx.ui.glossaryMode === "flash" && ctx.ui.glossaryWrongOnly) {
+      return ctx.state.vocabChecks[`glossary:${term.word.toLowerCase()}`] === "wrong";
+    }
+    return true;
   });
 }
 

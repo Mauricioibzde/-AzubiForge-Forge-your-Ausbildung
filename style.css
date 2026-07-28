@@ -2560,6 +2560,38 @@ summary {
     min-height: 46px;
   }
 
+  .mobile-dock-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+
+  .mobile-dock-tab {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface-soft);
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 750;
+    cursor: pointer;
+  }
+
+  .mobile-dock-tab.visited {
+    color: var(--text);
+  }
+
+  .mobile-dock-tab.active {
+    background: rgba(15, 107, 95, 0.16);
+    border-color: rgba(15, 107, 95, 0.4);
+    color: var(--primary-dark);
+  }
+
   .mobile-study-meta {
     display: flex;
     justify-content: space-between;
@@ -3114,6 +3146,54 @@ summary {
 
 .mock-history-row:last-child {
   border-bottom: 0;
+}
+
+.path-note {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--line);
+  background: rgba(15, 107, 95, 0.05);
+}
+
+.path-note summary {
+  cursor: pointer;
+  font-weight: 750;
+  color: var(--primary-dark);
+}
+
+.path-note p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+.mock-trend.up {
+  color: var(--success);
+  font-weight: 800;
+}
+
+.mock-trend.down {
+  color: var(--warning);
+  font-weight: 800;
+}
+
+.mock-spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 64px;
+  margin: 8px 0 14px;
+  padding: 8px 10px 0;
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.mock-spark-bar {
+  flex: 1 1 0;
+  min-width: 10px;
+  border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(180deg, rgba(15, 107, 95, 0.85), rgba(15, 107, 95, 0.35));
 }
 
 .mock-runner {

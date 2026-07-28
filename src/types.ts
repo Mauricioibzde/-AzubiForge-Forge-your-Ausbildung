@@ -201,6 +201,9 @@ export interface UiState {
   reviewFocusMode: ReviewFocusMode;
   reviewFocusIndex: number;
   practiceFilter: "all" | "wrong";
+  glossaryWrongOnly: boolean;
+  readerVocabMode: "grid" | "flash";
+  readerVocabIndex: number;
   examFocusMode: ExamFocusMode;
   examFocusIndex: number;
   completeGateChapterId: string;
