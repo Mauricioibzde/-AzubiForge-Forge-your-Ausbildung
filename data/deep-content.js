@@ -35,6 +35,441 @@ function buildDeepFullContent(chapter, spec) {
   };
 }
 
+function curatedExercises(easy, intermediate, ap1Style) {
+  return { easy, intermediate, ap1Style };
+}
+
+function buildLf1Lf4CuratedSpecs() {
+  return {
+    mitbestimmung: {
+      studyTime: "50-60 Minuten", stars: "★★★★☆",
+      objectives: ["Erklaeren Sie Mitbestimmung und Interessenvertretung.", "Nennen Sie Aufgaben von Betriebsrat und Jugendvertretung.", "Beschreiben Sie Beteiligung von Auszubildenden."],
+      introduction: ["Mitbestimmung regelt die Beteiligung der Belegschaft an betrieblichen Entscheidungen.", "AP1 fragt nach Betriebsrat, Jugend- und Auszubildendenvertretung (JAV)."],
+      explanation: [
+        { title: "Betriebsrat", paragraphs: ["Vertritt Interessen aller Mitarbeitenden.", "Mitbestimmung bei Sozialangelegenheiten, Personalfragen (in Grenzen), Betriebsaenderungen.", "Kein Ersatz fuer Management — kooperatives Gremium."] },
+        { title: "Jugend- und Auszubildendenvertretung", paragraphs: ["JAV vertritt Interessen der Auszubildenden.", "Sammelt Anliegen, spricht mit Ausbilder und Betriebsrat.", "Azubi kann sich an JAV wenden bei Problemen in der Ausbildung."] }
+      ],
+      realWorldExamples: ["JAV spricht Thema Berufsschulzeiten und Ausbildungsmittel an."],
+      practicalExamples: [{ title: "JIKU: JAV", paragraphs: ["Azubi meldet fehlende Lerngelegenheit — JAV vermittelt mit Ausbilder."], steps: ["Anliegen sammeln.", "Gespraech.", "Loesung.", "Nachverfolgen."] }],
+      vocabulary: [mkVocab("Mitbestimmung", "cogestao", "Beteiligung der Belegschaft.", "Betriebsrat."), mkVocab("Betriebsrat", "conselho de empresa", "Interessenvertretung der Mitarbeiter.", "BR."), mkVocab("Jugendvertretung", "representacao juvenil", "Vertretung junger Arbeitnehmer.", "JAV fuer Azubi."), mkVocab("Interessenvertretung", "representacao de interesses", "Schutz der Rechte.", "BR und JAV."), mkVocab("Sozialangelegenheiten", "assuntos sociais", "Mitbestimmungsthema.", "Arbeitszeit, Urlaub."), mkVocab("Azubi", "aprendiz", "Auszubildender.", "Hat Recht auf JAV."), mkVocab("Beteiligung", "participacao", "Einbeziehung in Entscheidungen.", "Mitbestimmung."), mkVocab("Kooperation", "cooperacao", "Zusammenarbeit BR und Betrieb.", "Nicht Gegnerschaft.")],
+      summary: ["Mitbestimmung = geregelte Beteiligung.", "Betriebsrat + JAV wichtig fuer Azubi.", "JAV vertritt Auszubildende."],
+      mindMap: "Mitbestimmung → Betriebsrat → JAV → Beteiligung",
+      exercises: curatedExercises(
+        [mkEx("Was ist Mitbestimmung?", "Beteiligung der Belegschaft an betrieblichen Entscheidungen."), mkEx("Wofuer JAV?", "Interessen der Auszubildenden vertreten."), mkEx("Betriebsrat fuer wen?", "Alle Mitarbeitenden.")],
+        [mkEx("Unterschied BR und JAV?", "BR=alle MA; JAV=nur Auszubildende."), mkEx("Beispiel Mitbestimmung?", "Arbeitszeitregelung mit BR besprechen.")],
+        [mkEx("AP1: BR ersetzt Geschaeftsfuehrung?", "Falsch — Mitbestimmung, nicht alleinige Leitung.")]
+      ),
+      commonMistakes: ["Betriebsrat mit IHK verwechseln.", "JAV als optional sehen."],
+      revisionChecklist: ["BR und JAV erklaeren.", "Beispiel nennen.", "Mitbestimmung definieren."],
+      related: ["Betriebsrat", "Jugendvertretung", "Mitbestimmung"]
+    },
+
+    berufsplanung: {
+      studyTime: "50-60 Minuten", stars: "★★★★☆",
+      objectives: ["Erklaeren Sie Berufs- und Lebensplanung in der Ausbildung.", "Verbinden Sie Selbst- und Lernkompetenz.", "Planen Sie Lernschritte und Reflexion."],
+      introduction: ["Berufsplanung heisst: Ausbildung aktiv steuern, nicht passiv abwarten.", "AP1 verbindet Kompetenzen, Feedback und berufliche Entwicklung."],
+      explanation: [
+        { title: "Aktive Ausbildung", paragraphs: ["Ziele setzen: Was will ich nach LF1 koennen?", "Kompetenzen pruefen: Was sicher, was unsicher?", "Feedback einholen und dokumentieren."] },
+        { title: "Reflexion", paragraphs: ["Nach Lernfeld: Was gelernt? Was offen? Naechster Schritt?", "Lernkompetenz: effektiv lernen. Selbstkompetenz: Verantwortung uebernehmen."] }
+      ],
+      realWorldExamples: ["Azubi fuehrt Lernjournal: LF3 Netzwerk — OSI sicher, Subnetting ueben."],
+      practicalExamples: [{ title: "Lernplan", paragraphs: ["Woechentlich: 3 Kapitel, 1 Review, 1 Uebung AP1."], steps: ["Stand.", "Ziel.", "Schritte.", "Review."] }],
+      vocabulary: [mkVocab("Berufsplanung", "planejamento de carreira", "Aktive Steuerung der Ausbildung.", "Ziele setzen."), mkVocab("Selbstkompetenz", "autocompetencia", "Verantwortung fuer sich.", "Aktiv lernen."), mkVocab("Lernkompetenz", "competencia de aprendizagem", "Effektiv lernen.", "Methoden."), mkVocab("Feedback", "feedback", "Rueckmeldung zum Lernen.", "Ausbilder."), mkVocab("Reflexion", "reflexao", "Nachdenken ueber Ergebnis.", "Was lief gut?"), mkVocab("Lernziel", "objetivo de aprendizagem", "Konkretes Ziel.", "Subnetting koennen."), mkVocab("Kompetenz", "competencia", "Faehigkeit + Wissen.", "Fachlich und sozial."), mkVocab("Entwicklung", "desenvolvimento", "Fortschritt ueber Zeit.", "Vom Azubi zum Fachkraft.")],
+      summary: ["Aktiv planen, nicht warten.", "Selbst- und Lernkompetenz.", "Reflexion nach Lernfeld."],
+      mindMap: "Berufsplanung → Ziele → Feedback → Reflexion",
+      exercises: curatedExercises(
+        [mkEx("Was ist Berufsplanung?", "Aktive Steuerung der Ausbildung und Entwicklung."), mkEx("Selbstkompetenz?", "Verantwortung und Selbstorganisation."), mkEx("Warum Feedback?", "Lernen verbessern.")],
+        [mkEx("Reflexion nach LF — was?", "Was sicher, was offen, naechster Schritt."), mkEx("Lernkompetenz Beispiel?", "Effektive Lernmethoden nutzen.")],
+        [mkEx("AP1: Azubi muss nicht reflektieren?", "Falsch — Reflexion ist Teil beruflicher Handlung.")]
+      ),
+      commonMistakes: ["Nur auf Pruefung warten.", "Feedback ignorieren."],
+      revisionChecklist: ["Selbst/Lernkompetenz.", "Reflexion erklaeren.", "Eigenes Lernziel."],
+      related: ["Selbstkompetenz", "Lernkompetenz", "Feedback"]
+    },
+
+    "modellunternehmen-jiku": {
+      studyTime: "45-55 Minuten", stars: "★★★☆☆",
+      objectives: ["Erklaeren Sie das Modellunternehmen JIKU IT-Solutions.", "Verbinden Sie Lerneinheiten mit Unternehmenskontext.", "Beschreiben Sie IT-Systemhaus-Leistungen."],
+      introduction: ["Westermann nutzt JIKU als fiktives Systemhaus fuer realistische Aufgaben.", "Jede Lerneinheit soll in Kunde — Leistung — Prozess gedacht werden."],
+      explanation: [
+        { title: "JIKU als Rahmen", paragraphs: ["IT-Systemhaus: Beratung, Beschaffung, Installation, Support, Entwicklung.", "Kunde hat Bedarf → JIKU analysiert → Angebot → Umsetzung → Abnahme.", "Azubi handelt im Unternehmenskontext, nicht abstrakt."] }
+      ],
+      realWorldExamples: ["Kunde braucht 20 Arbeitsplaetze — JIKU: Analyse, Angebot, Lieferung, Einrichtung."],
+      practicalExamples: [{ title: "Kundenauftrag", paragraphs: ["Bedarf klaeren, IPERKA anwenden, dokumentieren."], steps: ["Kunde.", "Leistung.", "Prozess.", "Ergebnis."] }],
+      vocabulary: [mkVocab("Modellunternehmen", "empresa modelo", "Fiktives Lernunternehmen.", "JIKU."), mkVocab("Systemhaus", "empresa de TI", "IT-Dienstleister.", "JIKU IT-Solutions."), mkVocab("IT-Service", "servico de TI", "Dienstleistung.", "Support, Hosting."), mkVocab("Kunde", "cliente", "Auftraggeber.", "Nutzt Leistung."), mkVocab("Leistungsportfolio", "portfolio de servicos", "Angebot des Hauses.", "Beratung bis Cloud."), mkVocab("IT-Loesung", "solucao de TI", "Gesamtpaket.", "Hardware + Service."), mkVocab("Beratung", "consultoria", "Analyse und Empfehlung.", "Erster Schritt."), mkVocab("Support", "suporte", "Hilfe nach Lieferung.", "Helpdesk.")],
+      summary: ["JIKU = Lernrahmen Systemhaus.", "Kunde — Leistung — Prozess.", "Praxisbezug in jeder Aufgabe."],
+      mindMap: "JIKU → Systemhaus → Kunde → Leistung → Prozess",
+      exercises: curatedExercises(
+        [mkEx("Was ist JIKU?", "Modellunternehmen IT-Systemhaus in Westermann."), mkEx("Was macht ein Systemhaus?", "IT-Beratung, Beschaffung, Support, Entwicklung."), mkEx("Warum Modellunternehmen?", "Theorie in berufliche Situation.")],
+        [mkEx("Kunde — Leistung — Prozess?", "Bedarf → IT-Loesung → Ablauf bis Abnahme."), mkEx("Beispiel JIKU-Auftrag?", "Arbeitsplaetze ausstatten.")],
+        [mkEx("AP1: JIKU ist echte Firma in Pruefung?", "Modell — aber Denkrahmen realistisch.")]
+      ),
+      commonMistakes: ["JIKU als optionaler Hintergrund.", "Nur Technik ohne Kundenkontext."],
+      revisionChecklist: ["JIKU erklaeren.", "Leistungsportfolio.", "Praxisbeispiel."],
+      related: ["Systemhaus", "Kunde", "IT-Service"]
+    },
+
+    betriebsziele: {
+      studyTime: "50-60 Minuten", stars: "★★★★☆",
+      objectives: ["Unterscheiden Sie Betrieb und Unternehmen.", "Nennen Sie Sach-, Formal- und Sozialziele.", "Verbinden Sie oekologische und wirtschaftliche Ziele."],
+      introduction: ["Unternehmen verfolgen mehr als Gewinn — Qualitaet, Kundenzufriedenheit, Nachhaltigkeit.", "AP1: Zielarten zuordnen und Entscheidungen begruenden."],
+      explanation: [
+        { title: "Zielarten", paragraphs: ["Sachziele: Produkt/Qualitaet (z.B. zuverlaessige IT).", "Formalziele: wirtschaftlich (Gewinn, Liquiditaet).", "Sozialziele: Mitarbeiter, Image. Oekologie: Umwelt, Nachhaltigkeit."] },
+        { title: "Betrieb vs Unternehmen", paragraphs: ["Betrieb: produziert Leistungen. Unternehmen: rechtliche/wirtschaftliche Einheit mit Zielen.", "IT-Entscheidung immer auch wirtschaftlich: TCO, Support, Energie."] }
+      ],
+      realWorldExamples: ["Guenstiger PC — Formalziel ja, aber schlechter Support schadet Sachziel Qualitaet."],
+      practicalExamples: [{ title: "Notebook-Wahl", paragraphs: ["Nicht nur Preis — Garantie, Energie, Lebensdauer."], steps: ["Ziele.", "Optionen.", "Abwaegung.", "Begruendung."] }],
+      vocabulary: [mkVocab("Betrieb", "operacao", "Erstellt Leistungen.", "Produktion/Service."), mkVocab("Unternehmen", "empresa", "Wirtschaftliche Einheit.", "Mit Zielen."), mkVocab("Sachziel", "objetivo material", "Qualitaet, Produkt.", "Zuverlaessige IT."), mkVocab("Formalziel", "objetivo formal", "Gewinn, Kosten.", "Wirtschaftlichkeit."), mkVocab("Sozialziel", "objetivo social", "Mitarbeiter, Image.", "Gute Ausbildung."), mkVocab("Nachhaltigkeit", "sustentabilidade", "Oekologisch/sozial.", "Green IT."), mkVocab("Gewinn", "lucro", "Erlös minus Kosten.", "Formalziel."), mkVocab("Kundenzufriedenheit", "satisfacao do cliente", "Soziales/marktliches Ziel.", "Guter Service.")],
+      summary: ["Sach-, Formal-, Sozialziele.", "Betrieb vs Unternehmen.", "Entscheidungen mehrdimensional."],
+      mindMap: "Unternehmen → Sach/Formal/Sozial → Nachhaltigkeit",
+      exercises: curatedExercises(
+        [mkEx("Sachziel Beispiel?", "Hohe Qualitaet der IT-Loesung."), mkEx("Formalziel?", "Gewinn erzielen, Kosten senken."), mkEx("Betrieb vs Unternehmen?", "Betrieb=Leistung; Unternehmen=Gesamteinheit.")],
+        [mkEx("Nachhaltigkeit in IT?", "Green IT, Energie, Recycling."), mkEx("Nur guenstigster Preis?", "Nicht immer — TCO und Qualitaet.")],
+        [mkEx("AP1: Sozialziel = Gewinnmaximierung?", "Falsch — Sozialziel = MA/Kunde/Image.")]
+      ),
+      commonMistakes: ["Nur Formalziele sehen.", "Betrieb und Unternehmen gleichsetzen."],
+      revisionChecklist: ["Drei Zielarten.", "Beispiel je Ziel.", "IT-Entscheidung begruenden."],
+      related: ["Sachziel", "Formalziel", "Nachhaltigkeit"]
+    },
+
+    "organisation-rechtsformen": {
+      studyTime: "50-60 Minuten", stars: "★★★★☆",
+      objectives: ["Lesen Sie ein Organigramm.", "Erklaeren Sie Abteilung, Stelle, Verantwortung.", "Nennen Sie Rechtsformen wie GmbH und Einzelunternehmen."],
+      introduction: ["Organisation klaert Zustaendigkeiten. Rechtsform klaert Haftung und Kapital.", "AP1: Organigramm und GmbH auf Grundniveau."],
+      explanation: [
+        { title: "Aufbauorganisation", paragraphs: ["Organigramm: Stellen, Abteilungen, Hierarchie.", "Helpdesk, Vertrieb, Entwicklung — getrennte Verantwortung.", "Klare Zustaendigkeit vermeidet Chaos."] },
+        { title: "Rechtsformen", paragraphs: ["Einzelunternehmen: eine Person, volle Haftung.", "GmbH: Gesellschaft mit beschraenkter Haftung — Kapital, Haftung begrenzt.", "Rechtsform beeinflusst Haftung, Kapital, Vertretung."] }
+      ],
+      realWorldExamples: ["Ticket geht an Helpdesk — nicht an Vertrieb — wegen Organigramm."],
+      practicalExamples: [{ title: "Organigramm lesen", paragraphs: ["Wer ist Vorgesetzter Helpdesk? Wer entscheidet Einkauf?"], steps: ["Abteilung finden.", "Stelle.", "Verantwortung.", "Ansprechpartner."] }],
+      vocabulary: [mkVocab("Organigramm", "organograma", "Darstellung der Organisation.", "Abteilungen."), mkVocab("Abteilung", "departamento", "Organisationseinheit.", "Helpdesk."), mkVocab("Stelle", "cargo", "Position im Betrieb.", "IT-Techniker."), mkVocab("GmbH", "sociedade limitada", "Haftung beschraenkt.", "Kapital erforderlich."), mkVocab("Einzelunternehmen", "empresa individual", "Eine Person.", "Volle Haftung."), mkVocab("Haftung", "responsabilidade legal", "Rechtliche Verantwortung.", "GmbH begrenzt."), mkVocab("Vertretung", "representacao legal", "Wer darf unterschreiben.", "Geschaeftsfuehrer."), mkVocab("Verantwortung", "responsabilidade", "Zustaendigkeit.", "Klare Aufgaben.")],
+      summary: ["Organigramm = Wer macht was.", "Rechtsform = Haftung/Kapital.", "GmbH vs Einzelunternehmen."],
+      mindMap: "Organisation → Organigramm → Rechtsform → Haftung",
+      exercises: curatedExercises(
+        [mkEx("Organigramm?", "Grafische Darstellung der Organisation."), mkEx("GmbH — Haftung?", "Beschraenkt auf Gesellschaft."), mkEx("Abteilung Beispiel?", "Helpdesk, Vertrieb.")],
+        [mkEx("Einzelunternehmen Haftung?", "Unbeschraenkt mit Privatvermoegen."), mkEx("Warum Organisation wichtig?", "Klare Zustaendigkeiten.")],
+        [mkEx("AP1: GmbH = keine Kapitalanforderung?", "Falsch — Stammkapital erforderlich.")]
+      ),
+      commonMistakes: ["Organigramm mit Prozess verwechseln.", "Haftung bei GmbH unbegrenzt annehmen."],
+      revisionChecklist: ["Organigramm lesen.", "GmbH erklaeren.", "Haftung vergleichen."],
+      related: ["Organigramm", "GmbH", "Haftung"]
+    },
+
+    geschaeftsprozesse: {
+      studyTime: "55-65 Minuten", stars: "★★★★☆",
+      objectives: ["Erklaeren Sie Geschaeftsprozess und Wertschoepfung.", "Unterscheiden Sie Kern-, Unterstuetzungs- und Fuehrungsprozess.", "Beschreiben Sie Input und Output."],
+      introduction: ["Prozesse sind wiederholbare Ablaeufe mit Ziel und Ergebnis — nicht nur Task-Listen.", "AP1: Prozessarten und Kundennutzen."],
+      explanation: [
+        { title: "Prozessarten", paragraphs: ["Kernprozess: direkt Kundennutzen (Auftrag bearbeiten).", "Unterstuetzungsprozess: ermoeglicht Kern (Buchhaltung, IT).", "Fuehrungsprozess: Steuerung, Strategie."] },
+        { title: "Input — Output", paragraphs: ["Input: Ausloeser, Daten, Material. Output: Ergebnis fuer Kunden.", "Wertschoepfung wenn Output Nutzen fuer Kunden schafft."] }
+      ],
+      realWorldExamples: ["Notebook-Auftrag: Beratung → Angebot → Beschaffung → Installation → Abnahme."],
+      practicalExamples: [{ title: "Kernprozess JIKU", paragraphs: ["Kundenauftrag IT-Arbeitsplatz von Anfrage bis Uebergabe."], steps: ["Input.", "Schritte.", "Output.", "Kundennutzen."] }],
+      vocabulary: [mkVocab("Geschaeftsprozess", "processo de negocio", "Wiederholbarer Ablauf.", "Mit Ziel."), mkVocab("Kernprozess", "processo core", "Direkt Kundennutzen.", "Auftrag."), mkVocab("Unterstuetzungsprozess", "processo de apoio", "Unterstuetzt Kern.", "HR, IT intern."), mkVocab("Fuehrungsprozess", "processo de gestao", "Steuerung.", "Planung."), mkVocab("Input", "entrada", "Eingabe des Prozesses.", "Kundenanfrage."), mkVocab("Output", "saida", "Ergebnis.", "Installierter PC."), mkVocab("Wertschoepfung", "criacao de valor", "Nutzen fuer Kunde.", "Funktionierender Arbeitsplatz."), mkVocab("Kundennutzen", "beneficio ao cliente", "Mehrwert.", "Zeitersparnis.")],
+      summary: ["Kern/Unterstuetzung/Fuehrung.", "Input → Prozess → Output.", "Wertschoepfung = Kundennutzen."],
+      mindMap: "Prozess → Kern/Support/Fuehrung → Input/Output",
+      exercises: curatedExercises(
+        [mkEx("Kernprozess?", "Direkt am Kundennutzen."), mkEx("Input/Output?", "Eingabe und Ergebnis eines Prozesses."), mkEx("Wertschoepfung?", "Nutzen fuer Kunden schaffen.")],
+        [mkEx("Buchhaltung — Prozessart?", "Unterstuetzungsprozess."), mkEx("Beispiel Kernprozess JIKU?", "Kundenauftrag bearbeiten.")],
+        [mkEx("AP1: Prozess = einmalige Aktion?", "Falsch — wiederholbarer Ablauf.")]
+      ),
+      commonMistakes: ["Prozess mit Projekt verwechseln.", "Nur Kernprozesse zaehlen lassen."],
+      revisionChecklist: ["Drei Prozessarten.", "Input/Output Beispiel.", "Wertschoepfung."],
+      related: ["Kernprozess", "Input", "Output", "Wertschoepfung"]
+    },
+
+    marktumfeld: {
+      studyTime: "50-60 Minuten", stars: "★★★☆☆",
+      objectives: ["Erklaeren Sie Markt, Angebot und Nachfrage.", "Beschreiben Sie Wettbewerb und Lieferanten.", "Verbinden Sie Markt mit IT-Angeboten."],
+      introduction: ["IT-Entscheidungen entstehen im Marktumfeld — Preis, Verfuegbarkeit, Wettbewerb.", "AP1: einfache Marktbegriffe im Systemhauskontext."],
+      explanation: [
+        { title: "Marktgrundlagen", paragraphs: ["Angebot: was Anbieter bieten. Nachfrage: was Kunden wollen.", "Wettbewerb: mehrere Anbieter — Preis und Qualitaet variieren.", "Lieferant: liefert Produkte an JIKU."] }
+      ],
+      realWorldExamples: ["Laptop knapp — JIKU bietet Alternative mit aehnlicher Leistung."],
+      practicalExamples: [{ title: "Angebotsvergleich", paragraphs: ["Marktpreis pruefen, Lieferzeit vergleichen."], steps: ["Angebot.", "Nachfrage.", "Alternative.", "Entscheidung."] }],
+      vocabulary: [mkVocab("Markt", "mercado", "Ort der Angebot-Nachfrage-Beziehung.", "IT-Markt."), mkVocab("Angebot", "oferta", "Was angeboten wird.", "Notebooks."), mkVocab("Nachfrage", "demanda", "Bedarf der Kunden.", "Viele Laptops."), mkVocab("Wettbewerb", "concorrencia", "Konkurrenz.", "Mehrere Systemhaeuser."), mkVocab("Lieferant", "fornecedor", "Liefert an Betrieb.", "Grosshaendler."), mkVocab("Marktform", "forma de mercado", "Struktur des Marktes.", "Polypol, Monopol."), mkVocab("Preis", "preco", "Marktpreis.", "Beeinflusst Angebot."), mkVocab("Verfuegbarkeit", "disponibilidade", "Lieferbarkeit.", "Lagerbestand.")],
+      summary: ["Angebot/Nachfrage/Wettbewerb.", "Lieferanten wichtig fuer JIKU.", "Markt beeinflusst IT-Angebote."],
+      mindMap: "Markt → Angebot/Nachfrage → Wettbewerb → Lieferant",
+      exercises: curatedExercises(
+        [mkEx("Angebot vs Nachfrage?", "Anbieter vs Kundenbedarf."), mkEx("Lieferant?", "Liefert Waren an Betrieb."), mkEx("Wettbewerb?", "Mehrere Anbieter am Markt.")],
+        [mkEx("Knappheit — Folge?", "Preis steigt oder Alternative noetig."), mkEx("Markt und IT-Angebot?", "Preis und Verfuegbarkeit beeinflussen Angebot.")],
+        [mkEx("AP1: Monopol — viele Anbieter?", "Falsch — ein Anbieter dominiert.")]
+      ),
+      commonMistakes: ["Markt nur als Preis sehen.", "Lieferant und Kunde verwechseln."],
+      revisionChecklist: ["Angebot/Nachfrage.", "Wettbewerb Beispiel.", "Lieferant."],
+      related: ["Angebot", "Nachfrage", "Wettbewerb"]
+    },
+
+    "praesentation-teamarbeit": {
+      studyTime: "50-60 Minuten", stars: "★★★★☆",
+      objectives: ["Planen Sie Praesentationen zielgruppengerecht.", "Erklaeren Sie Rollen in der Teamarbeit.", "Erstellen Sie Protokoll und Reflexion."],
+      introduction: ["Praesentation und Teamarbeit sind Handlungsprodukte in LF1.", "AP1: Aufbau, Zielgruppe, Rollen, Feedback."],
+      explanation: [
+        { title: "Praesentation", paragraphs: ["Zielgruppe bestimmt Inhalt — Azubi-Kollegen vs Kunde.", "Aufbau: Einleitung — Hauptteil — Schluss. Weniger ist mehr.", "Ergebnisprotokoll dokumentiert Ergebnis."] },
+        { title: "Teamarbeit", paragraphs: ["Rollen: Moderator, Protokoll, Zeitwachter, Fachbeitrag.", "Reflexion: Was lief gut? Was verbessern?"] }
+      ],
+      realWorldExamples: ["Team stellt JIKU in 5 Folien vor — danach Reflexion ueber Rollen."],
+      practicalExamples: [{ title: "Team-Praesentation", paragraphs: ["Rollen verteilen, 10 Min, Protokoll, Feedback."], steps: ["Planen.", "Rollen.", "Praesentieren.", "Reflektieren."] }],
+      vocabulary: [mkVocab("Praesentation", "apresentacao", "Vortrag vor Publikum.", "Zielgruppe."), mkVocab("Teamarbeit", "trabalho em equipe", "Gemeinsame Aufgabe.", "Rollen."), mkVocab("Zielgruppe", "publico-alvo", "Fuer wen Praesentation.", "Kunden vs Kollegen."), mkVocab("Protokoll", "protocolo", "Schriftliche Ergebnisdoku.", "Handlungsprodukt."), mkVocab("Reflexion", "reflexao", "Rueckblick auf Ablauf.", "Verbesserung."), mkVocab("Moderator", "moderador", "Leitet Diskussion.", "Teamrolle."), mkVocab("Feedback", "feedback", "Rueckmeldung.", "Konstruktiv."), mkVocab("Ergebnisprotokoll", "protocolo de resultados", "Dokumentiert Ergebnis.", "AP1 Produkt.")],
+      summary: ["Zielgruppe bestimmt Inhalt.", "Teamrollen und Protokoll.", "Reflexion abschliessen."],
+      mindMap: "Praesentation → Zielgruppe → Team → Protokoll → Reflexion",
+      exercises: curatedExercises(
+        [mkEx("Zielgruppe wichtig warum?", "Inhalt und Sprache anpassen."), mkEx("Protokoll?", "Dokumentiert Ergebnis der Arbeit."), mkEx("Teamrolle Beispiel?", "Moderator, Protokollfuehrer.")],
+        [mkEx("Gute Praesentation?", "Klar, strukturiert, passend zur Zielgruppe."), mkEx("Reflexion Inhalt?", "Ablauf, Rollen, Verbesserung.")],
+        [mkEx("AP1: Alles in Praesentation?", "Falsch — Wesentliches fuer Zielgruppe.")]
+      ),
+      commonMistakes: ["Zu viel Text auf Folien.", "Reflexion weglassen."],
+      revisionChecklist: ["Zielgruppe.", "Teamrollen.", "Protokoll/Reflexion."],
+      related: ["Praesentation", "Teamarbeit", "Protokoll"]
+    },
+
+    datenschutz: {
+      studyTime: "55-65 Minuten", stars: "★★★★★",
+      objectives: ["Unterscheiden Sie Datenschutz und Datensicherheit.", "Erklaeren Sie personenbezogene Daten und DSGVO-Grundideen.", "Nennen Sie Zweckbindung und Loeschung."],
+      introduction: ["Datenschutz schuetzt Personen — nicht nur Systeme.", "AP1: DSGVO, personenbezogene Daten, Zweckbindung."],
+      explanation: [
+        { title: "Datenschutz vs Datensicherheit", paragraphs: ["Datenschutz: Recht auf Schutz personenbezogener Daten (DSGVO).", "Datensicherheit: technischer Schutz aller Daten/Systeme (CIA).", "Beides wichtig — unterschiedliche Fragestellung."] },
+        { title: "Grundprinzipien", paragraphs: ["Zweckbindung: nur fuer festgelegten Zweck nutzen.", "Datenminimierung: nur noetige Daten.", "Loeschung wenn nicht mehr noetig. Einwilligung wo erforderlich."] }
+      ],
+      realWorldExamples: ["Helpdesk sieht Kundendaten nur fuer Ticket — nicht fuer Privatzwecke."],
+      practicalExamples: [{ title: "Support-Ticket", paragraphs: ["Nur noetige Kundendaten oeffnen, danach nicht speichern."], steps: ["Zweck pruefen.", "Minimieren.", "Zugriff.", "Loeschen."] }],
+      vocabulary: [mkVocab("Datenschutz", "protecao de dados", "Schutz personenbezogener Daten.", "DSGVO."), mkVocab("personenbezogene Daten", "dados pessoais", "Daten identifizierbarer Person.", "Name, E-Mail."), mkVocab("DSGVO", "RGPD", "EU-Datenschutzverordnung.", "Rechtliche Basis."), mkVocab("Zweckbindung", "limitacao de finalidade", "Nur fuer festen Zweck.", "Supportfall."), mkVocab("Loeschung", "eliminacao", "Daten entfernen wenn unnoetig.", "Aufbewahrungsfrist."), mkVocab("Einwilligung", "consentimento", "Zustimmung der Person.", "Newsletter."), mkVocab("Datensicherheit", "seguranca de dados", "Technischer Schutz.", "Verschluesselung."), mkVocab("Datenminimierung", "minimizacao de dados", "Nur noetige Daten.", "Weniger ist mehr.")],
+      summary: ["Datenschutz = Personen/DSGVO.", "Datensicherheit = Technik/CIA.", "Zweckbindung und Loeschung."],
+      mindMap: "Datenschutz → personenbezogen → DSGVO → Zweckbindung",
+      exercises: curatedExercises(
+        [mkEx("Datenschutz vs Datensicherheit?", "Recht/Person vs Technik/System."), mkEx("personenbezogene Daten?", "Daten zu identifizierbarer Person."), mkEx("Zweckbindung?", "Nur fuer festgelegten Zweck nutzen.")],
+        [mkEx("Helpdesk sieht Kundendaten — wann ok?", "Nur wenn fuer Ticket noetig."), mkEx("DSGVO?", "Datenschutz-Grundverordnung EU.")],
+        [mkEx("AP1: Datensicherheit = Datenschutz?", "Falsch — verwandt aber unterschiedlich.")]
+      ),
+      commonMistakes: ["Datenschutz und Security gleichsetzen.", "Daten unbegrenzt speichern."],
+      revisionChecklist: ["Unterschied Datenschutz/Sicherheit.", "DSGVO Grundideen.", "Zweckbindung Beispiel."],
+      related: ["DSGVO", "personenbezogene Daten", "Zweckbindung"]
+    },
+
+    "it-grundschutz": {
+      studyTime: "55-65 Minuten", stars: "★★★★☆",
+      objectives: ["Erklaeren Sie IT-Grundschutz als systematischen Ansatz.", "Nennen Sie Sicherheitsleitlinie und Sicherheitsprozess.", "Beschreiben Sie Massnahmen und Kontrolle."],
+      introduction: ["IT-Grundschutz (BSI) strukturiert Informationssicherheit im Unternehmen.", "AP1: Grundidee — kein BSI-Expertenwissen."],
+      explanation: [
+        { title: "Sicherheitsprozess", paragraphs: ["Leitlinie: Sicherheitsziele der Unternehmensleitung.", "Schutzbedarf feststellen → Massnahmen waehlen → umsetzen → kontrollieren.", "Dauerhafter Prozess, kein einmaliges Projekt."] }
+      ],
+      realWorldExamples: ["Unternehmen definiert Leitlinie, prueft Schutzbedarf fuer Server und Clients."],
+      practicalExamples: [{ title: "Grundschutz-Zyklus", paragraphs: ["Leitlinie → Analyse → Massnahme → Kontrolle → verbessern."], steps: ["Leitlinie.", "Schutzbedarf.", "Massnahme.", "Audit."] }],
+      vocabulary: [mkVocab("IT-Grundschutz", "IT-Grundschutz BSI", "Systematischer Sicherheitsansatz.", "BSI Standard."), mkVocab("Sicherheitsleitlinie", "politica de seguranca", "Vorgabe der Leitung.", "Sicherheitsziele."), mkVocab("Sicherheitsprozess", "processo de seguranca", "Dauerhafter Zyklus.", "Plan-Do-Check."), mkVocab("Massnahme", "medida", "Konkrete Schutzaktion.", "Patch, Backup."), mkVocab("Kontrolle", "controle", "Pruefen ob wirksam.", "Audit."), mkVocab("BSI", "BSI", "Bundesamt fuer Sicherheit.", "IT-Grundschutz Herausgeber."), mkVocab("Standard", "padrao", "Vorgehensweise.", "Grundschutz-Katalog."), mkVocab("Organisation", "organizacao", "Prozesse und Rollen.", "Nicht nur Technik.")],
+      summary: ["IT-Grundschutz = systematisch.", "Leitlinie → Schutzbedarf → Massnahme → Kontrolle.", "Dauerhafter Prozess."],
+      mindMap: "Grundschutz → Leitlinie → Schutzbedarf → Massnahme → Kontrolle",
+      exercises: curatedExercises(
+        [mkEx("IT-Grundschutz?", "Systematischer Ansatz fuer Informationssicherheit."), mkEx("Sicherheitsleitlinie?", "Vorgaben der Unternehmensleitung."), mkEx("Sicherheitsprozess?", "Dauerhafter Zyklus von Analyse bis Kontrolle.")],
+        [mkEx("Einmalige Massnahme reicht?", "Nein — dauerhafter Prozess."), mkEx("BSI?", "Bundesamt fuer Sicherheit in der Informationstechnik.")],
+        [mkEx("AP1: Grundschutz nur Technik?", "Falsch — Organisation und Prozesse auch.")]
+      ),
+      commonMistakes: ["Grundschutz als einmaliges Projekt.", "Nur Firewall = Grundschutz."],
+      revisionChecklist: ["Prozess erklaeren.", "Leitlinie.", "Massnahme + Kontrolle."],
+      related: ["IT-Grundschutz", "Sicherheitsleitlinie", "Schutzbedarf"]
+    },
+
+    schutzbedarf: {
+      studyTime: "55-65 Minuten", stars: "★★★★★",
+      objectives: ["Erklaeren Sie Schutzbedarfsfeststellung.", "Ordne normal, hoch, sehr hoch ein.", "Bewerten Sie CIA-Schutzziele."],
+      introduction: ["Schutzbedarf = wie schlimm waere Schaden — nicht Wahrscheinlichkeit.", "AP1: Kundendatenbank hoher Schutzbedarf Vertraulichkeit."],
+      explanation: [
+        { title: "Feststellung", paragraphs: ["Bewertung pro Anwendung/System: Vertraulichkeit, Integritaet, Verfuegbarkeit.", "Stufen: normal, hoch, sehr hoch.", "Hoher Schutzbedarf → staerkere Massnahmen."] }
+      ],
+      realWorldExamples: ["Kundendatenbank: Vertraulichkeit sehr hoch — Verschluesselung, Zugriffskontrolle."],
+      practicalExamples: [{ title: "Schutzbedarf Server", paragraphs: ["Webserver oeffentlich vs Intranet-Server mit Personaldaten."], steps: ["Asset.", "CIA bewerten.", "Stufe.", "Massnahme."] }],
+      vocabulary: [mkVocab("Schutzbedarf", "necessidade de protecao", "Moegliche Schadenshoehe.", "normal/hoch/sehr hoch."), mkVocab("Schutzbedarfsfeststellung", "determinacao de protecao", "Methodische Bewertung.", "Grundschutz."), mkVocab("normal", "normal", "Standard-Schutzniveau.", "Buero-PC."), mkVocab("hoch", "alto", "Erhoehter Schutz.", "Kundendaten."), mkVocab("sehr hoch", "muito alto", "Maximaler Schutz.", "Personaldaten, Gesundheit."), mkVocab("Schadensauswirkung", "impacto do dano", "Folge eines Schadens.", "Image, Geld, Recht."), mkVocab("Asset", "ativo", "Zu schuetzendes Objekt.", "Server, DB."), mkVocab("CIA", "triade CIA", "Vertraulichkeit, Integritaet, Verfuegbarkeit.", "Bewertungsdimension.")],
+      summary: ["Schutzbedarf = Schadenshoehe.", "CIA je Asset bewerten.", "Stufe bestimmt Massnahmen."],
+      mindMap: "Schutzbedarf → CIA → normal/hoch/sehr hoch → Massnahme",
+      exercises: curatedExercises(
+        [mkEx("Schutzbedarf misst?", "Schadenshoehe, nicht Wahrscheinlichkeit."), mkEx("Stufen?", "normal, hoch, sehr hoch."), mkEx("Kundendaten Vertraulichkeit?", "Oft hoch oder sehr hoch.")],
+        [mkEx("Schutzbedarf vs Risiko?", "Schutzbedarf=Schaden; Risiko=Wahrscheinlichkeit x Schaden."), mkEx("Verfuegbarkeit Server Produktion?", "Oft hoch — Ausfall teuer.")],
+        [mkEx("AP1: normal = keine Massnahmen?", "Falsch — Standardmassnahmen trotzdem.")]
+      ),
+      commonMistakes: ["Schutzbedarf mit Risiko verwechseln.", "Alles 'hoch' einstufen ohne Begruendung."],
+      revisionChecklist: ["Schutzbedarf definieren.", "CIA Bewertung.", "Stufen."],
+      related: ["Schutzbedarf", "CIA", "Massnahme"]
+    },
+
+    bedrohungen: {
+      studyTime: "55-65 Minuten", stars: "★★★★☆",
+      objectives: ["Erklaeren Sie Bedrohung, Schwachstelle und Risiko.", "Nennen Sie technische und menschliche Bedrohungen.", "Verbinden Sie mit Massnahmen."],
+      introduction: ["Risiko entsteht wenn Bedrohung Schwachstelle ausnutzt und Schaden moeglich ist.", "AP1: Malware, ungepatcht, menschlicher Fehler."],
+      explanation: [
+        { title: "Risikomodell", paragraphs: ["Bedrohung: z.B. Malware, Diebstahl, Feuer, Insider.", "Schwachstelle: ungepatchter Server, schwaches Passwort.", "Risiko = Eintritt x Schaden. Massnahme reduziert Risiko."] }
+      ],
+      realWorldExamples: ["Ungepatchter Server + Ransomware-Bedrohung = hohes Risiko."],
+      practicalExamples: [{ title: "Risikoanalyse", paragraphs: ["Bedrohung identifizieren, Schwachstelle schliessen, Massnahme dokumentieren."], steps: ["Asset.", "Bedrohung.", "Schwachstelle.", "Massnahme."] }],
+      vocabulary: [mkVocab("Bedrohung", "ameaca", "Potenzielle Gefahr.", "Malware, Diebstahl."), mkVocab("Schwachstelle", "vulnerabilidade", "Schwache Stelle.", "Ungepatcht."), mkVocab("Risiko", "risco", "Eintritt x Schaden.", "Bewertbar."), mkVocab("Schaden", "dano", "Folge eines Ereignisses.", "Datenverlust."), mkVocab("Massnahme", "medida", "Risiko reduzieren.", "Patch, Backup."), mkVocab("Malware", "malware", "Schadsoftware.", "Ransomware."), mkVocab("Insider", "insider", "Bedrohung von innen.", "Mitarbeiter."), mkVocab("Schadensszenario", "cenario de dano", "Moeglicher Schadensablauf.", "Was passiert wenn...")],
+      summary: ["Bedrohung + Schwachstelle = Risiko.", "Massnahmen reduzieren Risiko.", "Technisch und menschlich."],
+      mindMap: "Bedrohung → Schwachstelle → Risiko → Massnahme",
+      exercises: curatedExercises(
+        [mkEx("Bedrohung vs Schwachstelle?", "Gefahr vs schwache Stelle im System."), mkEx("Risiko?", "Eintrittswahrscheinlichkeit und Schaden."), mkEx("Massnahme Beispiel?", "Patch, Backup, Schulung.")],
+        [mkEx("Ungepatchter Server?", "Schwachstelle."), mkEx("Ransomware?", "Bedrohung.")],
+        [mkEx("AP1: Risiko = nur Technik?", "Falsch — auch organisatorisch/menschlich.")]
+      ),
+      commonMistakes: ["Bedrohung und Schwachstelle verwechseln.", "Risiko ignorieren."],
+      revisionChecklist: ["Drei Begriffe.", "Beispielkette.", "Massnahme."],
+      related: ["Bedrohung", "Schwachstelle", "Risiko"]
+    },
+
+    "social-engineering": {
+      studyTime: "50-60 Minuten", stars: "★★★★★",
+      objectives: ["Erklaeren Sie Social Engineering und Phishing.", "Nennen Sie Erkennungsmerkmale und Gegenmassnahmen.", "Beschreiben Sie MFA und Sensibilisierung."],
+      introduction: ["Nicht jeder Angriff ist technisch — Taeuschung nutzt Vertrauen.", "AP1: Phishing, Anrufer als Admin, Gegenmassnahmen."],
+      explanation: [
+        { title: "Methoden", paragraphs: ["Phishing: gefaelschte E-Mail/Link. Vishing: Telefon.", "Pretexting: erfundene Geschichte. Druck und Autoritaet.", "Identitaetsdiebstahl: Daten stehlen, sich ausgeben."] },
+        { title: "Gegenmassnahmen", paragraphs: ["Schulung, Skepsis bei Druck, keine Passwoerter am Telefon.", "MFA, klare Prozesse, Meldeweg fuer Verdacht."] }
+      ],
+      realWorldExamples: ["Anrufer als 'IT-Admin' fragt Passwort — immer verifizieren, nie geben."],
+      practicalExamples: [{ title: "Phishing-Mail", paragraphs: ["Link pruefen, Absender, Druck erkennen, melden."], steps: ["Verdaechtig?", "Nicht klicken.", "Melden.", "Schulen."] }],
+      vocabulary: [mkVocab("Social Engineering", "engenharia social", "Manipulation von Menschen.", "Vertrauen ausnutzen."), mkVocab("Phishing", "phishing", "Gefaelschte Nachrichten.", "E-Mail mit Link."), mkVocab("Identitaetsdiebstahl", "roubo de identidade", "Identitaet stehlen/nutzen.", "Gefaehrlich."), mkVocab("MFA", "autenticacao multifator", "Mehrfaktor-Authentifizierung.", "Zusatzsicherheit."), mkVocab("Sensibilisierung", "conscientizacao", "Schulung der Mitarbeiter.", "Awareness."), mkVocab("Vishing", "vishing", "Phishing per Telefon.", "Anruf."), mkVocab("Verifikation", "verificacao", "Identitaet pruefen.", "Zurueckrufen."), mkVocab("Meldeprozess", "processo de reporte", "Verdaechtiges melden.", "IT-Security.")],
+      summary: ["Social Engineering = menschliche Schwachstelle.", "Phishing erkennen.", "MFA + Schulung + Prozesse."],
+      mindMap: "Social Engineering → Phishing → MFA → Schulung",
+      exercises: curatedExercises(
+        [mkEx("Social Engineering?", "Manipulation von Menschen statt Technik."), mkEx("Phishing?", "Gefaelschte Nachricht zum Datendiebstahl."), mkEx("MFA?", "Mehrfaktor-Authentifizierung.")],
+        [mkEx("'Admin ruft an, will Passwort'?", "Verweigern und offiziell verifizieren."), mkEx("Gegenmassnahme?", "Schulung, MFA, Meldeprozess.")],
+        [mkEx("AP1: Passwort am Telefon ok wenn nett?", "Falsch — nie Passwoerter weitergeben.")]
+      ),
+      commonMistakes: ["Nur technische Schutzmechanismen.", "Phishing-Link klicken aus Neugier."],
+      revisionChecklist: ["Phishing erkennen.", "MFA erklaeren.", "Reaktion auf Anruf."],
+      related: ["Phishing", "MFA", "Sensibilisierung"]
+    },
+
+    tom: {
+      studyTime: "50-60 Minuten", stars: "★★★★☆",
+      objectives: ["Erklaeren Sie technisch-organisatorische Massnahmen (TOM).", "Ordne Zugriffskontrolle, Verschluesselung, Backup zu.", "Verbinden Sie Technik und Organisation."],
+      introduction: ["TOM sind konkrete Schutzmassnahmen — technisch UND organisatorisch.", "AP1: Beispiele zuordnen."],
+      explanation: [
+        { title: "TOM-Beispiele", paragraphs: ["Technisch: Verschluesselung, Firewall, Backup, Protokollierung.", "Organisatorisch: Schulung, Richtlinien, Zutrittskontrolle, Rollen.", "Beides zusammen wirksam."] }
+      ],
+      realWorldExamples: ["Dateiablage: Berechtigungen + Backup + Anweisung fuer Mitarbeiter."],
+      practicalExamples: [{ title: "TOM-Liste", paragraphs: ["Fuer Laptop: BitLocker, Passwort, Schulung, Diebstahl melden."], steps: ["Asset.", "TOM technisch.", "TOM organisatorisch.", "Doku."] }],
+      vocabulary: [mkVocab("TOM", "medidas tecnicas e organizacionais", "Technisch-organisatorische Massnahmen.", "DSGVO-Begriff."), mkVocab("Zugriffskontrolle", "controle de acesso", "Wer darf zugreifen.", "Least Privilege."), mkVocab("Verschluesselung", "criptografia", "Daten unlesbar ohne Schluessel.", "BitLocker."), mkVocab("Protokollierung", "registro/log", "Aktivitaeten aufzeichnen.", "Audit."), mkVocab("Zutrittskontrolle", "controle de acesso fisico", "Physischer Zugang.", "Serverraum."), mkVocab("Schulung", "treinamento", "Organisatorische Massnahme.", "Awareness."), mkVocab("Backup", "backup", "Technische Massnahme.", "Wiederherstellung."), mkVocab("Richtlinie", "politica", "Organisatorische Vorgabe.", "Passwortrichtlinie.")],
+      summary: ["TOM = technisch + organisatorisch.", "Beispiele zuordnen.", "Technik allein reicht nicht."],
+      mindMap: "TOM → technisch → organisatorisch → Backup/Schulung",
+      exercises: curatedExercises(
+        [mkEx("TOM?", "Technisch-organisatorische Massnahmen."), mkEx("Technisches TOM?", "Verschluesselung, Firewall, Backup."), mkEx("Organisatorisches TOM?", "Schulung, Richtlinie, Zutritt.")],
+        [mkEx("Nur Firewall reicht?", "Nein — auch Organisation."), mkEx("Protokollierung wofuer?", "Nachvollziehbarkeit, Audit.")],
+        [mkEx("AP1: Schulung ist TOM?", "Ja — organisatorische Massnahme.")]
+      ),
+      commonMistakes: ["TOM nur technisch.", "Backup ohne Test."],
+      revisionChecklist: ["TOM definieren.", "Je 2 Beispiele tech/org.", "Asset zuordnen."],
+      related: ["TOM", "Verschluesselung", "Zugriffskontrolle"]
+    },
+
+    sicherheitskonzept: {
+      studyTime: "55-65 Minuten", stars: "★★★★☆",
+      objectives: ["Erklaeren Sie Aufbau eines Sicherheitskonzepts.", "Verbinden Sie Schutzbedarf, Risiken und Massnahmen.", "Beschreiben Sie Verantwortlichkeiten und Kontrolle."],
+      introduction: ["Sicherheitskonzept dokumentiert Ziele, Schutzbedarf, Risiken und Massnahmen.", "AP1: Zusammenhang verstehen, nicht nur Begriffe."],
+      explanation: [
+        { title: "Inhalte", paragraphs: ["Schutzbedarf je System, Risikoanalyse, Massnahmenplan.", "Verantwortliche, Kontrollen, Review-Datum.", "Lebendes Dokument — regelmaessig aktualisieren."] }
+      ],
+      realWorldExamples: ["Mobile Datentraeger: Verschluesselung, Ausgabeprozess, Verlustmeldung im Konzept."],
+      practicalExamples: [{ title: "Konzept-Skizze", paragraphs: ["Asset → Schutzbedarf → Risiko → Massnahme → Verantwortlicher."], steps: ["Scope.", "Analyse.", "Massnahmen.", "Kontrolle."] }],
+      vocabulary: [mkVocab("Sicherheitskonzept", "conceito de seguranca", "Dokumentiert Sicherheitsmassnahmen.", "Gesamtplan."), mkVocab("Massnahmenplan", "plano de medidas", "Konkrete Massnahmen.", "Umsetzung."), mkVocab("Verantwortlichkeit", "responsabilidade", "Wer ist zustaendig.", "CISO, IT-Leiter."), mkVocab("Kontrolle", "controle", "Wirksamkeit pruefen.", "Audit."), mkVocab("Risikoanalyse", "analise de risco", "Teil des Konzepts.", "Bedrohungen."), mkVocab("Review", "revisao", "Regelmaessige Pruefung.", "Jaehrlich."), mkVocab("Scope", "escopo", "Was ist abgedeckt.", "Server, Clients."), mkVocab("Dokumentation", "documentacao", "Nachvollziehbarkeit.", "Pflicht.")],
+      summary: ["Konzept = Schutzbedarf + Risiko + Massnahmen.", "Verantwortliche und Kontrolle.", "Dokumentieren und pflegen."],
+      mindMap: "Konzept → Schutzbedarf → Risiko → Massnahme → Kontrolle",
+      exercises: curatedExercises(
+        [mkEx("Sicherheitskonzept?", "Dokument mit Zielen, Schutzbedarf, Massnahmen."), mkEx("Warum dokumentieren?", "Nachvollziehbar, pruefbar, Verantwortung."), mkEx("Verantwortlichkeit?", "Klare Zustaendigkeit fuer Massnahmen.")],
+        [mkEx("Konzept einmal schreiben reicht?", "Nein — regelmaessig aktualisieren."), mkEx("Schutzbedarf im Konzept?", "Ja — Basis fuer Massnahmen.")],
+        [mkEx("AP1: Konzept ohne Kontrolle?", "Unvollstaendig — Kontrolle ist Pflicht.")]
+      ),
+      commonMistakes: ["Konzept als Formular ohne Inhalt.", "Keine Verantwortlichen."],
+      revisionChecklist: ["Konzept-Inhalte.", "Schutzbedarf-Risiko-Massnahme Kette.", "Kontrolle."],
+      related: ["Sicherheitskonzept", "Schutzbedarf", "Massnahmenplan"]
+    },
+
+    seguranca: {
+      studyTime: "50-60 Minuten", stars: "★★★★☆",
+      objectives: ["Erklaeren Sie CIA-Triade auf AP1-Niveau.", "Unterscheiden Sie Authentifizierung und Autorisierung.", "Nennen Sie typische Schutzmassnahmen."],
+      introduction: ["Seguranca da informacao — Vertraulichkeit, Integridade, Disponibilidade.", "AP1 module: Authentifizierung vs Autorisierung."],
+      explanation: [
+        { title: "CIA und Zugang", paragraphs: ["Vertraulichkeit: nur Berechtigte. Integritaet: unveraendert. Verfuegbarkeit: nutzbar.", "Authentifizierung: Wer bist du? (Login). Autorisierung: Was darfst du? (Rechte).", "Massnahmen: Passwort, MFA, Firewall, Backup, Updates, Schulung."] }
+      ],
+      realWorldExamples: ["Login korrekt (Auth) aber keine Admin-Rechte (Autorisierung verweigert)."],
+      practicalExamples: [{ title: "Helpdesk-Zugang", paragraphs: ["Auth per AD, Autorisierung nur Ticket-System — kein Lohnbereich."], steps: ["Login.", "Rechte pruefen.", "Least Privilege.", "Log."] }],
+      vocabulary: [mkVocab("Vertraulichkeit", "confidencialidade", "Nur Berechtigte.", "CIA."), mkVocab("Integritaet", "integridade", "Daten korrekt.", "CIA."), mkVocab("Verfuegbarkeit", "disponibilidade", "System nutzbar.", "CIA."), mkVocab("Authentifizierung", "autenticacao", "Identitaet pruefen.", "Login."), mkVocab("Autorisierung", "autorizacao", "Rechte pruefen.", "Zugriff erlaubt?"), mkVocab("Firewall", "firewall", "Netzwerkfilter.", "Schutz."), mkVocab("Least Privilege", "minimo privilegio", "Nur noetige Rechte.", "Sicherheitsprinzip."), mkVocab("Verschluesselung", "criptografia", "Vertraulichkeit schuetzen.", "TLS, BitLocker.")],
+      summary: ["CIA = Kern der Seguranca.", "Auth vs Autorisierung.", "Technik + Mensch + Prozesse."],
+      mindMap: "Seguranca → CIA → Auth/Autorisierung → Massnahmen",
+      exercises: curatedExercises(
+        [mkEx("CIA?", "Vertraulichkeit, Integritaet, Verfuegbarkeit."), mkEx("Authentifizierung vs Autorisierung?", "Wer vs Was darf."), mkEx("Firewall?", "Filtert Netzwerkverkehr.")],
+        [mkEx("Ransomware — welches Schutzziel?", "Verfuegbarkeit und Integritaet."), mkEx("Least Privilege?", "Minimale noetige Rechte.")],
+        [mkEx("AP1: Authentifizierung = Autorisierung?", "Falsch — Login vs Rechte.")]
+      ),
+      commonMistakes: ["Auth und Autorisierung verwechseln.", "Nur Technik ohne Schulung."],
+      revisionChecklist: ["CIA.", "Auth vs Autorisierung.", "3 Massnahmen."],
+      related: ["Vertraulichkeit", "Authentifizierung", "Autorisierung"]
+    },
+
+    "softwareentwicklung-umfeld": {
+      studyTime: "50-60 Minuten", stars: "★★★☆☆",
+      objectives: ["Beschreiben Sie Phasen und Rollen in Softwareprojekten.", "Unterscheiden Sie Neuentwicklung und Anpassung.", "Erklaeren Sie Teamarbeit in der Entwicklung."],
+      introduction: ["Softwareentwicklung ist mehr als Code — Analyse, Test, Doku, Kommunikation.", "AP1: Projekt, Rollen, Anpassung vs Neubau."],
+      explanation: [
+        { title: "Projekt und Rollen", paragraphs: ["Phasen: Analyse, Entwurf, Implementierung, Test, Einfuehrung, Wartung.", "Rollen: Entwickler, Tester, Fachkraft, Projektleitung.", "Anpassung: bestehende Software erweitern. Neuentwicklung: von Grund auf."] }
+      ],
+      realWorldExamples: ["Kunde braucht neue Auswertung — Entwickler passt bestehende App an."],
+      practicalExamples: [{ title: "Anpassungsprojekt", paragraphs: ["Anforderung klaeren, Code aendern, testen, dokumentieren."], steps: ["Analyse.", "Entwurf.", "Code.", "Test."] }],
+      vocabulary: [mkVocab("Softwareentwicklung", "desenvolvimento de software", "Erstellung und Pflege von Software.", "Ganzheitlich."), mkVocab("Projekt", "projeto", "Zeitlich begrenzte Aufgabe.", "Mit Ziel."), mkVocab("Anpassung", "adaptacao", "Bestehende Software aendern.", "Erweiterung."), mkVocab("Neuentwicklung", "novo desenvolvimento", "Software von Grund auf.", "Greenfield."), mkVocab("Entwickler", "desenvolvedor", "Programmiert und entwirft.", "Rolle."), mkVocab("Tester", "testador", "Prueft Software.", "QA."), mkVocab("Wartung", "manutencao", "Phase nach Einfuehrung.", "Bugfixes."), mkVocab("Dokumentation", "documentacao", "Teil der Entwicklung.", "Nicht optional.")],
+      summary: ["Entwicklung = ganzer Prozess.", "Anpassung vs Neuentwicklung.", "Team und Rollen."],
+      mindMap: "SW-Entwicklung → Phasen → Rollen → Anpassung/Neu",
+      exercises: curatedExercises(
+        [mkEx("Softwareentwicklung nur Code?", "Nein — Analyse, Test, Doku auch."), mkEx("Anpassung?", "Bestehende Software erweitern."), mkEx("Tester Rolle?", "Qualitaet pruefen.")],
+        [mkEx("Phasen nennen?", "Analyse, Entwurf, Implementierung, Test, Wartung."), mkEx("Neuentwicklung vs Anpassung?", "Neu=von Grund; Anpassung=bestehend.")],
+        [mkEx("AP1: Doku erst am Ende?", "Schlecht — frueh mitdenken.")]
+      ),
+      commonMistakes: ["Nur Programmieren zaehlen.", "Test vernachlaessigen."],
+      revisionChecklist: ["Phasen.", "Rollen.", "Anpassung Beispiel."],
+      related: ["Softwareentwicklung", "Projekt", "Test"]
+    },
+
+    "daten-informationen": {
+      studyTime: "45-55 Minuten", stars: "★★★★☆",
+      objectives: ["Unterscheiden Sie Daten und Informationen.", "Erklaeren Sie Kontext und Bedeutung.", "Verbinden Sie mit Datenbanken und Datenschutz."],
+      introduction: ["Daten sind rohe Zeichen — Information entsteht durch Kontext.", "AP1: 42 vs 42 Monitore Lagerbestand."],
+      explanation: [
+        { title: "Unterschied", paragraphs: ["Datum: Zeichen oder Wert ohne Kontext (42, A, 1010).", "Information: Daten mit Bedeutung im Kontext (42 Monitore auf Lager).", "Wichtig fuer DB, Auswertung, Datenschutz — was bedeutet das Feld?"] }
+      ],
+      realWorldExamples: ["CSV-Spalte 'Wert' — erst Kontext (Preis? Anzahl?) macht Information."],
+      practicalExamples: [{ title: "Lagerbestand", paragraphs: ["42 = Datum. '42 Stueck Monitor Modell X' = Information."], steps: ["Rohwert.", "Kontext.", "Information.", "Entscheidung."] }],
+      vocabulary: [mkVocab("Daten", "dados", "Zeichen/Werte ohne Kontext.", "42, ABC."), mkVocab("Information", "informacao", "Daten mit Bedeutung.", "42 Monitore."), mkVocab("Kontext", "contexto", "Macht Bedeutung.", "Lager, Preis."), mkVocab("Auswertung", "analise", "Information nutzen.", "Report."), mkVocab("Datenqualitaet", "qualidade dos dados", "Korrektheit/Vollstaendigkeit.", "Wichtig."), mkVocab("Metadaten", "metadados", "Daten ueber Daten.", "Erstellungsdatum."), mkVocab("Strukturiert", "estruturado", "In Feldern/Tabellen.", "DB."), mkVocab("Bedeutung", "significado", "Semantik der Information.", "Kontext.")],
+      summary: ["Daten + Kontext = Information.", "Fuer DB und Datenschutz wichtig.", "Qualitaet und Bedeutung."],
+      mindMap: "Daten → Kontext → Information → Auswertung",
+      exercises: curatedExercises(
+        [mkEx("Daten vs Information?", "Roh vs mit Bedeutung."), mkEx("42 als Datum?", "Ja — ohne Kontext."), mkEx("Kontext?", "Macht aus Daten Information.")],
+        [mkEx("1010 binaer?", "Daten — Information: dezimal 10."), mkEx("Warum wichtig in DB?", "Felder muessen Bedeutung haben.")],
+        [mkEx("AP1: Alle Daten sind Information?", "Falsch — erst mit Kontext.")]
+      ),
+      commonMistakes: ["Daten und Information gleichsetzen.", "Kontext ignorieren."],
+      revisionChecklist: ["Unterschied erklaeren.", "Beispiel 42.", "DB-Bezug."],
+      related: ["Daten", "Information", "Kontext"]
+    },
+
+    zahlensysteme: {
+      studyTime: "55-70 Minuten", stars: "★★★★☆",
+      objectives: ["Rechnen Sie einfache Binaer- und Hex-Zahlen.", "Erklaeren Sie Bit, Byte und Oktett.", "Verbinden Sie mit IPv4 und Speicher."],
+      introduction: ["Computer arbeiten binaer — Menschen nutzen dezimal und hex.", "AP1: 1010 binaer = 10 dezimal; Bit/Byte; IPv4-Oktette."],
+      explanation: [
+        { title: "Systeme", paragraphs: ["Binaer: Basis 2 (0,1). Dezimal: Basis 10. Hex: Basis 16 (0-9,A-F).", "Bit = kleinste Einheit. Byte = 8 Bit. 1024 Byte = 1 KiB (often 1000 in Marketing).", "IPv4: vier Oktette dezimal — jede 0-255 (= 8 Bit)."] },
+        { title: "Umrechnung", paragraphs: ["Binaer 1010: 1×8 + 0×4 + 1×2 + 0×1 = 10 dezimal.", "Hex FF = 255 dezimal = 11111111 binaer.", "AP1: kleine Umrechnungen und Zuordnung."] }
+      ],
+      realWorldExamples: ["MAC-Adresse oft hex. IPv4 Oktett 192 = 11000000 binaer."],
+      practicalExamples: [{ title: "Binaer ueben", paragraphs: ["1010 → 10. 1111 → 15. 10000000 → 128."], steps: ["Stellenwerte.", "Summieren.", "Pruefen.", "Hex optional."] }],
+      vocabulary: [mkVocab("Bit", "bit", "Kleinste Dateneinheit.", "0 oder 1."), mkVocab("Byte", "byte", "8 Bit.", "Speichereinheit."), mkVocab("binaer", "binario", "Basis 2.", "1010."), mkVocab("dezimal", "decimal", "Basis 10.", "Alltag."), mkVocab("hexadezimal", "hexadecimal", "Basis 16.", "FF, A0."), mkVocab("Oktett", "octeto", "8 Bit — ein IPv4-Teil.", "192."), mkVocab("Stellenwert", "valor posicional", "Position bestimmt Wert.", "Binaer 8-4-2-1."), mkVocab("Umrechnung", "conversao", "Zwischen Systemen.", "Binaer→Dezimal.")],
+      summary: ["Binaer/Dezimal/Hex.", "Bit, Byte, Oktett.", "Einfache Umrechnung AP1."],
+      mindMap: "Zahlensysteme → Binaer → Bit/Byte → IPv4 Oktett",
+      exercises: curatedExercises(
+        [mkEx("Wie viele Bit in Byte?", "8."), mkEx("1010 binaer dezimal?", "10."), mkEx("IPv4 Oktett Bits?", "8 (= 0-255).")],
+        [mkEx("1111 binaer?", "15."), mkEx("Hex FF dezimal?", "255."), mkEx("Bit vs Byte?", "Bit kleinste; Byte 8 Bit.")],
+        [mkEx("AP1: 256 in einem Oktett?", "Falsch — max 255.")]
+      ),
+      commonMistakes: ["Bit und Byte verwechseln.", "Stellenwerte falsch summieren."],
+      revisionChecklist: ["1010=10.", "Bit/Byte.", "Oktett IPv4."],
+      related: ["Bit", "Byte", "binaer", "hexadezimal"]
+    }
+  };
+}
+
 const DEEP_CHAPTER_SPECS = {
   "duales-system": {
     studyTime: "55-65 Minuten",
@@ -1855,17 +2290,13 @@ const DEEP_CHAPTER_SPECS = {
     commonMistakes: ["HTTP als L4.", "Alle Apps nur L7 ohne Transport."],
     revisionChecklist: ["L7 Protokolle.", "HTTP/DNS/SMTP.", "Stack Beispiel."],
     related: ["HTTP", "DNS", "SMTP", "TCP"]
-  }
+  },
+
+  ...buildLf1Lf4CuratedSpecs()
 };
 
 /** Expand remaining LF1/LF4/LF5 ids with shared deep builder from chapter metadata */
-const DEEP_CHAPTER_IDS = [
-  "mitbestimmung", "berufsplanung", "modellunternehmen-jiku", "betriebsziele",
-  "organisation-rechtsformen", "geschaeftsprozesse", "marktumfeld", "praesentation-teamarbeit",
-  "datenschutz", "it-grundschutz", "schutzbedarf", "bedrohungen", "social-engineering",
-  "tom", "sicherheitskonzept", "seguranca",
-  "softwareentwicklung-umfeld", "daten-informationen", "zahlensysteme"
-];
+const DEEP_CHAPTER_IDS = [];
 
 function buildMetaDeepSpec(chapter) {
   const terms = (chapter.ihk || chapter.title)

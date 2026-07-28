@@ -1,7 +1,7 @@
 import type { AppContext } from "../appContext";
 import { sortByCheckPriority } from "../domain/course";
 import type { GlossaryFilter, GlossaryTerm } from "../types";
-import { escapeAttribute } from "../ui/html";
+import { escapeAttribute, kpiCard } from "../ui/html";
 
 export function renderGlossaryView(ctx: AppContext): string {
   const terms = sortByCheckPriority(
@@ -13,22 +13,34 @@ export function renderGlossaryView(ctx: AppContext): string {
   const current = terms[index];
 
   return `
-    <section class="glossary-shell">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Glossario</p>
+    <section class="ds-page glossary-shell">
+      <div class="ds-hero-layout rise-in">
+        <header class="ds-hero">
+          <p class="ds-caption">Glossario</p>
           <h1>Termos essenciais</h1>
-          <p>Liste para consulta rapida ou use o modo flashcard para active recall em alemao.</p>
-        </div>
-        <div class="segmented-control compact" aria-label="Modo do glossario">
-          <button class="${mode === "flash" ? "active" : ""}" type="button" data-filter-group="glossary-mode" data-filter-value="flash">Flashcards</button>
-          <button class="${mode === "list" ? "active" : ""}" type="button" data-filter-group="glossary-mode" data-filter-value="list">Lista</button>
-        </div>
+          <p class="ds-lead">Liste para consulta rapida ou use o modo flashcard para active recall em alemao.</p>
+          <div class="segmented-control compact glossary-mode-control" aria-label="Modo do glossario">
+            <button class="${mode === "flash" ? "active" : ""}" type="button" data-filter-group="glossary-mode" data-filter-value="flash">Flashcards</button>
+            <button class="${mode === "list" ? "active" : ""}" type="button" data-filter-group="glossary-mode" data-filter-value="list">Lista</button>
+          </div>
+        </header>
+        <aside class="ds-card ds-progress-rail" aria-label="Estatisticas do glossario">
+          <span class="ds-caption">Termos</span>
+          <div class="ds-kpi-value">${terms.length}</div>
+          <p class="ds-aux">de ${ctx.data.glossary.length} no glossario completo</p>
+          <p class="ds-aux">Modo ${mode === "flash" ? "flashcard" : "lista"}</p>
+        </aside>
       </div>
 
-      <div class="toolbar glossary-tools">
+      <section class="ds-kpi-grid rise-in" style="animation-delay:24ms" aria-label="Filtros do glossario">
+        ${kpiCard("Visiveis", String(terms.length), ctx.ui.glossaryQuery ? `Busca: ${ctx.ui.glossaryQuery}` : "Sem filtro de texto")}
+        ${kpiCard("Filtro", ctx.ui.glossaryFilter === "all" ? "Todos" : ctx.ui.glossaryFilter, "Categoria tematica")}
+        ${kpiCard("Modo", mode === "flash" ? "Flash" : "Lista", mode === "flash" && ctx.ui.glossaryWrongOnly ? "So erros" : "Todos os termos")}
+      </section>
+
+      <div class="toolbar glossary-tools ds-card rise-in" style="animation-delay:40ms">
         <input
-          class="search-input"
+          class="search-input premium-search"
           type="search"
           placeholder="Pesquisar termo"
           aria-label="Pesquisar termo"

@@ -12,6 +12,7 @@ import {
 } from "../domain/course";
 import type { ReviewFocusMode } from "../types";
 import { chapterCard, exerciseCard } from "../ui/components";
+import { kpiCard } from "../ui/html";
 
 export function renderReviewView(ctx: AppContext): string {
   const queue = getReviewQueue(ctx.data, ctx.state).slice(0, 8);
@@ -64,25 +65,31 @@ export function renderReviewView(ctx: AppContext): string {
   const sprintPercent = Math.min(100, Math.round((resolvedToday / sprintTarget) * 100));
 
   return `
-    <section class="review-shell">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Revisao ativa</p>
+    <section class="ds-page review-shell">
+      <div class="ds-hero-layout rise-in">
+        <header class="ds-hero">
+          <p class="ds-caption">Revisao ativa</p>
           <h1>Responda antes de olhar.</h1>
-          <p>Modo foco para celular e estudo rapido: um termo ou uma pergunta por vez, sem lista infinita.</p>
-        </div>
-        <div class="panel">
-          <span class="card-label">Fila</span>
-          <h2>${queue.length}</h2>
-          <p class="small-note">capitulos para revisar</p>
-          <p class="small-note">${resolvedToday} resolvidos hoje · streak ${reviewStreak} dia(s)</p>
+          <p class="ds-lead">Modo foco para celular e estudo rapido: um termo ou uma pergunta por vez, sem lista infinita.</p>
+        </header>
+        <aside class="ds-card ds-progress-rail" aria-label="Fila de revisao">
+          <span class="ds-caption">Fila</span>
+          <div class="ds-kpi-value">${queue.length}</div>
+          <p class="ds-aux">capitulos para revisar</p>
+          <p class="ds-aux">${resolvedToday} resolvidos hoje · streak ${reviewStreak} dia(s)</p>
           ${wrongExerciseCount || wrongVocabCount
-            ? `<p class="small-note">${wrongExerciseCount} exercicios · ${wrongVocabCount} termos para revisar</p>`
+            ? `<p class="ds-aux">${wrongExerciseCount} exercicios · ${wrongVocabCount} termos para revisar</p>`
             : ""}
-        </div>
+        </aside>
       </div>
 
-      <section class="review-sprint panel" aria-label="Sprint de revisao">
+      <section class="ds-kpi-grid rise-in" style="animation-delay:24ms" aria-label="Metricas de revisao">
+        ${kpiCard("Sprint hoje", `${resolvedToday}/${sprintTarget}`, `${sprintPercent}% da meta diaria`)}
+        ${kpiCard("Vencidos", String(focusDueCount), `${dueTermCount} termos · ${dueCardCount} perguntas`)}
+        ${kpiCard("Erros", String(focusWrongCount), "Filtro rapido disponivel abaixo")}
+      </section>
+
+      <section class="ds-card review-sprint rise-in" style="animation-delay:40ms" aria-label="Sprint de revisao">
         <div class="review-sprint-head">
           <div>
             <span class="card-label">Sprint AP1 (20 min)</span>
@@ -100,7 +107,7 @@ export function renderReviewView(ctx: AppContext): string {
         <p class="small-note">${sprintPercent}% da meta diaria de revisao · streak ${reviewStreak} dia(s)</p>
       </section>
 
-      <section class="review-focus panel" aria-label="Modo foco">
+      <section class="ds-card review-focus rise-in" style="animation-delay:56ms" aria-label="Modo foco">
         <div class="review-focus-head">
           <span class="card-label">Modo foco</span>
           <div class="segmented-control compact" aria-label="Tipo de revisao">
@@ -131,7 +138,7 @@ export function renderReviewView(ctx: AppContext): string {
         `}
       </section>
 
-      <details class="review-more">
+      <details class="review-more ds-details rise-in" style="animation-delay:72ms">
         <summary>Ver fila completa e lista longa</summary>
         <div class="review-layout">
           <section class="panel">

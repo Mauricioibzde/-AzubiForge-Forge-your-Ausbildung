@@ -24,7 +24,7 @@ import {
   scoreMockExam
 } from "../domain/mockExam";
 import type { ExamFocusMode, MockExamAttempt, MockExamLength, MockExamQuestion } from "../types";
-import { escapeAttribute, escapeHtml, readinessBadge } from "../ui/html";
+import { escapeAttribute, escapeHtml, kpiCard, readinessBadge } from "../ui/html";
 
 export function renderExamView(ctx: AppContext): string {
   const summary = getExamReadinessSummary(ctx.data, ctx.state);
@@ -37,24 +37,30 @@ export function renderExamView(ctx: AppContext): string {
     : 0;
 
   return `
-    <section class="exam-shell">
+    <section class="ds-page exam-shell">
       ${unfinished && mode !== "mock" ? renderMockResumeBanner(unfinished) : ""}
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">AP1 Pruefungstraining</p>
+      <div class="ds-hero-layout rise-in">
+        <header class="ds-hero">
+          <p class="ds-caption">AP1 Pruefungstraining</p>
           <h1>Treine como a IHK pergunta.</h1>
-          <p>Foco total na prova: Signalwoerter, drills, checklist e simulados com cronometro.</p>
-        </div>
-        <div class="panel exam-summary-panel">
-          <span class="card-label">Estado para a prova</span>
-          <p><strong>${summary.readyCount}</strong> quase prontos</p>
-          <p><strong>${summary.weakCount}</strong> pontos fracos</p>
-          <p><strong>${poolSize}</strong> perguntas no banco</p>
-          <p><strong>${historyCount}</strong> simulado(s) feitos</p>
-        </div>
+          <p class="ds-lead">Foco total na prova: Signalwoerter, drills, checklist e simulados com cronometro.</p>
+        </header>
+        <aside class="ds-card ds-progress-rail exam-summary-panel" aria-label="Estado para a prova">
+          <span class="ds-caption">Estado para a prova</span>
+          <p class="ds-aux"><strong>${summary.readyCount}</strong> quase prontos</p>
+          <p class="ds-aux"><strong>${summary.weakCount}</strong> pontos fracos</p>
+          <p class="ds-aux"><strong>${poolSize}</strong> perguntas no banco</p>
+          <p class="ds-aux"><strong>${historyCount}</strong> simulado(s) feitos</p>
+        </aside>
       </div>
 
-      <div class="segmented-control exam-mode-control" aria-label="Modo de treino AP1">
+      <section class="ds-kpi-grid rise-in" style="animation-delay:24ms" aria-label="Metricas AP1">
+        ${kpiCard("Quase prontos", String(summary.readyCount), "Capitulos com boa prontidao")}
+        ${kpiCard("Pontos fracos", String(summary.weakCount), "Prioridade no modo weak")}
+        ${kpiCard("Banco AP1", String(poolSize), `${historyCount} simulado(s) concluido(s)`)}
+      </section>
+
+      <div class="segmented-control exam-mode-control rise-in" style="animation-delay:40ms" aria-label="Modo de treino AP1">
         ${modeButton("mock", "Simulado", mode)}
         ${modeButton("weak", "Pontos fracos", mode)}
         ${modeButton("signals", "Signalwoerter", mode)}

@@ -4918,6 +4918,21 @@ a.session-step:hover {
   gap: var(--space-2);
 }
 
+.review-shell .review-sprint,
+.review-shell .review-focus,
+.glossary-shell .glossary-tools {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.glossary-shell .glossary-mode-control {
+  margin-top: var(--space-2);
+}
+
+.exam-shell .exam-summary-panel p {
+  margin: 0;
+}
+
 .panel:hover,
 .stat-card:hover,
 .premium-card:hover {
