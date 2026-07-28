@@ -65,3 +65,9 @@ Especificação completa do sistema de aprendizagem (missões, planejador, revis
 ## Arquitetura
 
 Veja [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Próxima ação de aprendizagem
+
+Fonte única de verdade para “O que eu devo fazer agora?”:
+
+[docs/NEXT_LEARNING_ACTION.md](docs/NEXT_LEARNING_ACTION.md)

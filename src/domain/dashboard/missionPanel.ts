@@ -4,8 +4,10 @@ import type { Mission } from "../../schemas/mission";
 import { getNormalizedCourseData } from "../../data/normalizedCourse";
 import {
   READER_STEPS,
+  findChapter,
   getActiveModule,
   getChapterIndex,
+  getChapterModule,
   getChapterReadiness,
   getEstimatedSessionMinutes,
   getSessionProgress,
@@ -15,6 +17,11 @@ import {
   isCompleted,
   stampToLocalDayKey
 } from "../course";
+import {
+  labelForLearningAction,
+  resolveNextLearningAction,
+  type NextLearningAction
+} from "../learning/nextLearningAction";
 
 export type MissionStepState = "done" | "current" | "upcoming";
 
@@ -74,6 +81,7 @@ export interface MissionPanelModel {
   materials: Array<{ label: string; href: string; kind: string }>;
   tip: string;
   completed: boolean;
+  nextAction: NextLearningAction | null;
 }
 
 const STEP_DISPLAY: Record<ReaderTab, { label: string; shortLabel: string; learnings: string[] }> = {
@@ -139,8 +147,21 @@ const IMPORTANCE_LABELS = {
 } as const;
 
 export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
-  const chapter = getTodayChapter(ctx.data, ctx.state);
-  const module = getActiveModule(ctx.data, ctx.state);
+  let nextAction: NextLearningAction | null = null;
+  try {
+    nextAction = resolveNextLearningAction({
+      course: getNormalizedCourseData(),
+      state: ctx.state
+    });
+  } catch {
+    nextAction = null;
+  }
+
+  const focusId = nextAction?.missionId || nextAction?.chapterId;
+  const chapter =
+    (focusId && findChapter(ctx.data, focusId)) ||
+    getTodayChapter(ctx.data, ctx.state);
+  const module = getChapterModule(ctx.data, chapter.id) || getActiveModule(ctx.data, ctx.state);
   let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
   try {
     mission = getNormalizedCourseData().missionsById[chapter.id] || null;
@@ -256,14 +277,15 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     estimatedMinutes,
     difficultyLabel: DIFFICULTY_LABELS[difficulty] || "Intermediário",
     importanceLabel: IMPORTANCE_LABELS[importance],
-    continueHref: completed
-      ? (nextMission?.href || "#course")
-      : `#reader/${chapter.id}/${currentStep.id}`,
-    continueLabel: completed
-      ? (nextMission ? "Próxima missão" : "Abrir trilha")
-      : session.completed > 0
-        ? "Continuar missão"
-        : "Começar missão",
+    continueHref: nextAction?.href
+      || (completed ? (nextMission?.href || "#course") : `#reader/${chapter.id}/${currentStep.id}`),
+    continueLabel: nextAction
+      ? labelForLearningAction(nextAction)
+      : completed
+        ? (nextMission ? "Próxima missão" : "Abrir trilha")
+        : session.completed > 0
+          ? "Continuar missão"
+          : "Começar missão",
     sessionPercent: session.percent,
     currentStepIndex: steps.findIndex((step) => step.id === currentStep.id) + 1,
     stepsTotal: steps.length,
@@ -295,7 +317,8 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       { label: "Glossário", href: "#glossary", kind: "glossary" }
     ],
     tip: tipForStep(currentStep.id, currentStep.hint),
-    completed
+    completed,
+    nextAction
   };
 }
 
