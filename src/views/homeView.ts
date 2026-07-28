@@ -67,6 +67,13 @@ export function renderHomeView(ctx: AppContext): string {
   const unfinishedMock = ctx.state.mockExam && ctx.state.mockExam.status !== "finished" ? ctx.state.mockExam : null;
   const studyGoal = ctx.state.preferences.studyGoal || "Dominar a AP1 e organizar os fundamentos.";
   const examMode = examSummary.weakCount ? "weak" : "drill";
+  const sessionStatus = session.percent === 100 ? "Concluida" : session.completed > 0 ? "Em andamento" : "Ainda nao iniciada";
+  const reviewStatus = dueItems > 0 ? `${dueItems} item(ns) vencidos` : "Sem vencimentos hoje";
+  const examStatus = unfinishedMock
+    ? "Simulado em andamento"
+    : examSummary.weakCount
+      ? `${examSummary.weakCount} tema(s) fracos para treinar`
+      : "Base estavel para mock curto";
 
   return `
     <section class="dashboard">
@@ -130,6 +137,43 @@ export function renderHomeView(ctx: AppContext): string {
             <div class="hero-cube hero-cube-c"></div>
           </div>
         </aside>
+      </section>
+
+      <section class="learning-plan rise-in" style="animation-delay: 20ms" aria-label="Plano de estudo do dia">
+        <div class="learning-plan-head">
+          <span class="card-label">Fluxo de aprendizado</span>
+          <h2>Plano de hoje em 3 blocos</h2>
+          <p class="small-note">Siga a ordem para acelerar retenção: sessão guiada → revisão vencida → treino AP1.</p>
+        </div>
+        <div class="learning-plan-grid">
+          <article class="plan-step-card">
+            <span class="plan-step-index">1</span>
+            <div>
+              <strong>Sessao guiada</strong>
+              <p class="small-note">${chapter.title}</p>
+              <span class="status-pill open">${sessionStatus}</span>
+            </div>
+            <a class="text-link" href="#reader/${chapter.id}/${resumeTab}">${ctaLabel} →</a>
+          </article>
+          <article class="plan-step-card">
+            <span class="plan-step-index">2</span>
+            <div>
+              <strong>Revisao ativa</strong>
+              <p class="small-note">Corrigir erros antes de esquecer</p>
+              <span class="status-pill ${dueItems > 0 ? "due" : "open"}">${reviewStatus}</span>
+            </div>
+            <a class="text-link" href="#review" data-go-review-due>Revisar agora →</a>
+          </article>
+          <article class="plan-step-card">
+            <span class="plan-step-index">3</span>
+            <div>
+              <strong>Treino AP1</strong>
+              <p class="small-note">${examStatus}</p>
+              <span class="status-pill ${unfinishedMock ? "due" : "open"}">${unfinishedMock ? "Retomar mock" : "Treino recomendado"}</span>
+            </div>
+            <a class="text-link" href="${unfinishedMock ? "#exam/mock" : `#exam/${examMode}`}" ${unfinishedMock ? "data-go-exam-mock" : ""}>Abrir AP1 →</a>
+          </article>
+        </div>
       </section>
 
       <section class="dashboard-session session-focus rise-in" style="animation-delay: 40ms">

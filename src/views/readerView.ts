@@ -51,6 +51,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
     : chapter.exercises).length;
   const exerciseStats = getChapterExerciseStats(ctx.state, chapter.id, exerciseTotal);
   const vocabStats = getVocabStats(ctx.state, chapter.id, vocabRows.length);
+  const stepCoach = getStepCoach(currentStep.id);
 
   return `
     <section class="reader">
@@ -92,6 +93,22 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           </div>
           <div class="session-progress-line" aria-hidden="true">
             <div style="width: ${session.percent}%"></div>
+          </div>
+        </section>
+
+        <section class="step-coach panel soft-panel" aria-label="Guia da etapa atual">
+          <div>
+            <span class="card-label">Etapa atual</span>
+            <h2>${currentStep.label}</h2>
+            <p>${stepCoach.goal}</p>
+            <p class="small-note">Para concluir bem esta etapa: ${stepCoach.done}</p>
+          </div>
+          <div class="step-coach-actions">
+            ${nextTab
+              ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Concluir e ir para ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proxima etapa"}</button>`
+              : `<a class="button" href="#review">Fechar e revisar erros</a>`
+            }
+            <a class="button secondary" href="#reader/${chapter.id}/${currentStep.id}">Focar nesta etapa</a>
           </div>
         </section>
 
@@ -217,6 +234,37 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
       </div>
     </section>
   `;
+}
+
+function getStepCoach(tab: ReaderTab): { goal: string; done: string } {
+  if (tab === "explain") {
+    return {
+      goal: "Entender o conceito central e identificar onde ele aparece na prova AP1.",
+      done: "você consegue explicar a ideia em 2 frases, sem consultar o texto"
+    };
+  }
+  if (tab === "praxis") {
+    return {
+      goal: "Conectar a teoria a um cenário real de trabalho de infraestrutura/suporte.",
+      done: "você consegue descrever um caso real e a decisão técnica tomada"
+    };
+  }
+  if (tab === "vocab") {
+    return {
+      goal: "Fixar termos DE/PT críticos para perguntas curtas e interpretação de enunciado.",
+      done: "você acerta os principais termos sem abrir a resposta"
+    };
+  }
+  if (tab === "practice") {
+    return {
+      goal: "Treinar aplicação ativa e reduzir erros recorrentes antes do AP1-check.",
+      done: "você respondeu e marcou Acertei/Errei em pelo menos 1 exercício"
+    };
+  }
+  return {
+    goal: "Consolidar a evidência da sessão e preparar revisão de pontos fracos.",
+    done: "você identifica o que já domina e o que precisa voltar na revisão"
+  };
 }
 
 function renderCompleteButton(

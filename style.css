@@ -2255,6 +2255,56 @@ a.session-step:hover {
   margin-top: 0;
 }
 
+.learning-plan {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 4px);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow);
+}
+
+.learning-plan-head h2 {
+  margin: 6px 0 4px;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+}
+
+.learning-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plan-step-card {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.plan-step-card strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.plan-step-index {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .dashboard-session h2 {
   font-family: var(--font-display);
   font-size: clamp(1.8rem, 3vw, 2.4rem);
@@ -2723,6 +2773,25 @@ a.session-step:hover {
   font-size: 0.84rem;
 }
 
+.step-coach {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.step-coach h2 {
+  margin: 6px 0;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+}
+
+.step-coach-actions {
+  display: grid;
+  gap: 8px;
+}
+
 .session-guide-step.active {
   background: var(--text);
   color: #fff;
@@ -2758,6 +2827,8 @@ a.session-step:hover {
 }
 
 @media (max-width: 900px) {
+  .learning-plan-grid,
+  .step-coach,
   .dashboard-hero,
   .dashboard-grid,
   .dashboard-coach,
