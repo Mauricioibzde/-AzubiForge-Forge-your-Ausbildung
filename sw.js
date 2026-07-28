@@ -1,4 +1,4 @@
-const CACHE_NAME = "azubiforge-offline-v69";
+const CACHE_NAME = "azubiforge-offline-v72";
 const APP_ASSETS = [
   "./",
   "./index.html"

@@ -1,6 +1,8 @@
 import type { AppContext } from "../appContext";
 import { findChapter, getChapterModule, getDueReviewItemCount } from "../domain/course";
 import { getNextJourneyHref } from "../domain/journey";
+import { getNormalizedCourseData } from "../data/normalizedCourse";
+import { labelForLearningAction, resolveNextLearningAction } from "../domain/learning/nextLearningAction";
 import type { RouteName } from "../types";
 
 const ROUTE_TITLES: Record<RouteName, string> = {
@@ -67,14 +69,26 @@ export function updateContinueChip(ctx: AppContext, route: RouteName): void {
     route === "course" ||
     route === "home";
   const useful = Boolean(chapter) && !hideOnPage;
-  const href = getNextJourneyHref(ctx.data, ctx.state);
-  const label = route === "home" ? "Continuar jornada" : "Continuar estudo";
+  let href = getNextJourneyHref(ctx.data, ctx.state);
+  let label = route === "home" ? "Continuar jornada" : "Continuar estudo";
+  let title = chapter?.title || "Continuar";
+  try {
+    const nextAction = resolveNextLearningAction({
+      course: getNormalizedCourseData(),
+      state: ctx.state
+    });
+    href = nextAction.href;
+    label = labelForLearningAction(nextAction);
+    title = nextAction.title;
+  } catch {
+    // keep journey href fallback
+  }
 
   document.querySelectorAll<HTMLAnchorElement>("[data-continue-study]").forEach((chip) => {
     chip.hidden = !useful;
     if (!chapter) return;
     chip.href = href;
-    chip.title = chapter.title;
+    chip.title = title;
 
     const textLabel = chip.querySelector<HTMLElement>("[data-continue-label]");
     if (textLabel) textLabel.textContent = label;

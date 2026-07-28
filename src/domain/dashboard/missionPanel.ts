@@ -4,8 +4,10 @@ import type { Mission } from "../../schemas/mission";
 import { getNormalizedCourseData } from "../../data/normalizedCourse";
 import {
   READER_STEPS,
+  findChapter,
   getActiveModule,
   getChapterIndex,
+  getChapterModule,
   getChapterReadiness,
   getEstimatedSessionMinutes,
   getSessionProgress,
@@ -15,6 +17,12 @@ import {
   isCompleted,
   stampToLocalDayKey
 } from "../course";
+import {
+  labelForLearningAction,
+  resolveNextLearningAction,
+  type NextLearningAction
+} from "../learning/nextLearningAction";
+import { getMissionLearningEvidence, type MissionLearningEvidence } from "../learning/learningEvidence";
 
 export type MissionStepState = "done" | "current" | "upcoming";
 
@@ -27,7 +35,6 @@ export interface MissionStepView {
   estimatedMinutes: number;
   href: string;
   learnings: string[];
-  xp: number;
 }
 
 export interface MissionCelebration {
@@ -59,11 +66,17 @@ export interface MissionPanelModel {
   celebration: MissionCelebration;
   nextMission: { title: string; href: string } | null;
   rewards: {
-    xp: number;
+    potentialXp: number;
+    earnedXp: number;
+    xpLabel: string;
     competencyLabel: string;
     reviewLabel: string;
+    practiceLabel: string;
+    masteryLabel: string;
     nextMissionLabel: string;
+    evidenceSummary: string;
   };
+  evidence: MissionLearningEvidence | null;
   summary: {
     learningField: string;
     situation: string;
@@ -74,6 +87,7 @@ export interface MissionPanelModel {
   materials: Array<{ label: string; href: string; kind: string }>;
   tip: string;
   completed: boolean;
+  nextAction: NextLearningAction | null;
 }
 
 const STEP_DISPLAY: Record<ReaderTab, { label: string; shortLabel: string; learnings: string[] }> = {
@@ -139,8 +153,21 @@ const IMPORTANCE_LABELS = {
 } as const;
 
 export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
-  const chapter = getTodayChapter(ctx.data, ctx.state);
-  const module = getActiveModule(ctx.data, ctx.state);
+  let nextAction: NextLearningAction | null = null;
+  try {
+    nextAction = resolveNextLearningAction({
+      course: getNormalizedCourseData(),
+      state: ctx.state
+    });
+  } catch {
+    nextAction = null;
+  }
+
+  const focusId = nextAction?.missionId || nextAction?.chapterId;
+  const chapter =
+    (focusId && findChapter(ctx.data, focusId)) ||
+    getTodayChapter(ctx.data, ctx.state);
+  const module = getChapterModule(ctx.data, chapter.id) || getActiveModule(ctx.data, ctx.state);
   let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
   try {
     mission = getNormalizedCourseData().missionsById[chapter.id] || null;
@@ -152,8 +179,7 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const estimatedMinutes = mission?.estimatedMinutes || getEstimatedSessionMinutes(chapter);
   const stepMinutes = Math.max(8, Math.round(estimatedMinutes / READER_STEPS.length));
-  const xpTotal = mission?.rewards.xp || 80 + Math.max(0, ctx.data.chapters.findIndex((item) => item.id === chapter.id)) * 10;
-  const stepXp = Math.max(20, Math.round(xpTotal / READER_STEPS.length));
+  const evidence = mission ? getMissionLearningEvidence(mission, ctx.state) : null;
   const studyStreak = getStudyStreak(ctx.state);
 
   const steps: MissionStepView[] = READER_STEPS.map((step) => {
@@ -168,8 +194,7 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       state: "upcoming" as MissionStepState,
       estimatedMinutes: stepMinutes,
       href: `#reader/${chapter.id}/${step.id}`,
-      learnings: objectives.length ? objectives.slice(0, 3) : display.learnings,
-      xp: stepXp
+      learnings: objectives.length ? objectives.slice(0, 3) : display.learnings
     };
   });
 
@@ -237,13 +262,15 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     ? {
         show: true,
         title: "Missão concluída",
-        detail: `+${xpTotal} XP · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
+        detail: evidence
+          ? `${evidence.summaryLabel} · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
+          : (nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada")
       }
     : lastDone
       ? {
           show: true,
           title: "Etapa concluída",
-          detail: `✓ ${lastDone.shortLabel} · +${lastDone.xp} XP · Próxima: ${currentStep.shortLabel}`
+          detail: `✓ ${lastDone.shortLabel} · Próxima: ${currentStep.shortLabel}`
         }
       : { show: false, title: "", detail: "" };
 
@@ -256,14 +283,15 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     estimatedMinutes,
     difficultyLabel: DIFFICULTY_LABELS[difficulty] || "Intermediário",
     importanceLabel: IMPORTANCE_LABELS[importance],
-    continueHref: completed
-      ? (nextMission?.href || "#course")
-      : `#reader/${chapter.id}/${currentStep.id}`,
-    continueLabel: completed
-      ? (nextMission ? "Próxima missão" : "Abrir trilha")
-      : session.completed > 0
-        ? "Continuar missão"
-        : "Começar missão",
+    continueHref: nextAction?.href
+      || (completed ? (nextMission?.href || "#course") : `#reader/${chapter.id}/${currentStep.id}`),
+    continueLabel: nextAction
+      ? labelForLearningAction(nextAction)
+      : completed
+        ? (nextMission ? "Próxima missão" : "Abrir trilha")
+        : session.completed > 0
+          ? "Continuar missão"
+          : "Começar missão",
     sessionPercent: session.percent,
     currentStepIndex: steps.findIndex((step) => step.id === currentStep.id) + 1,
     stepsTotal: steps.length,
@@ -276,15 +304,23 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     celebration,
     nextMission,
     rewards: {
-      xp: xpTotal,
-      competencyLabel: "1 competência",
-      reviewLabel: "Revisão em 3 dias",
-      nextMissionLabel: nextMission ? nextMission.title : "Fim do módulo atual"
+      potentialXp: evidence?.potentialXp || 0,
+      earnedXp: evidence?.earnedXp || 0,
+      xpLabel: evidence?.rewardXpLabel || "XP só após domínio comprovado",
+      competencyLabel: evidence?.competencyLabel || "Competências do capítulo",
+      reviewLabel: evidence?.reviewLabel || "Após o domínio",
+      practiceLabel: evidence?.practiceLabel || "Sem exercícios marcados",
+      masteryLabel: evidence?.masteryLabel || "Teste ainda não feito",
+      nextMissionLabel: nextMission ? nextMission.title : "Fim do módulo atual",
+      evidenceSummary: evidence?.summaryLabel || "Ainda sem evidência registrada"
     },
+    evidence,
     summary: {
       learningField: `${module.title} · ${module.subtitle}`,
       situation: truncate(module.description || module.subtitle, 72),
-      status: completed ? "Concluída" : session.completed > 0 ? "Em andamento" : "Disponível",
+      status: evidence
+        ? evidence.summaryLabel
+        : completed ? "Concluída" : session.completed > 0 ? "Em andamento" : "Disponível",
       startedLabel,
       lastActivityLabel: readiness.label
     },
@@ -295,7 +331,8 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       { label: "Glossário", href: "#glossary", kind: "glossary" }
     ],
     tip: tipForStep(currentStep.id, currentStep.hint),
-    completed
+    completed,
+    nextAction
   };
 }
 
