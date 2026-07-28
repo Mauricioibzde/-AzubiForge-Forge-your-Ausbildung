@@ -75,3 +75,7 @@ Fonte única de verdade para “O que eu devo fazer agora?”:
 Evidência e XP honestos (sem gamificação vazia):
 
 [docs/LEARNING_EVIDENCE.md](docs/LEARNING_EVIDENCE.md)
+
+Cores e contraste (psicologia + WCAG):
+
+[docs/COLOR_CONTRAST.md](docs/COLOR_CONTRAST.md)
