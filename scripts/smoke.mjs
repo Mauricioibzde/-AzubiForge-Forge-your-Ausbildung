@@ -35,7 +35,8 @@ const homePolish = await desktop.evaluate(() => {
     || "";
   const parts = href.replace(/^#/, "").split("/");
   return {
-    dashboard: Boolean(document.querySelector(".ds-hero, .dashboard-hero")),
+    dashboard: Boolean(document.querySelector(".journey-page, .ds-hero")),
+    journeyTimeline: Boolean(document.querySelector(".journey-timeline")),
     lucideIcons: document.querySelectorAll(".lucide, [data-lucide]").length,
     streakCalendar: Boolean(document.querySelector(".streak-calendar, .ds-progress-rail .streak-calendar")),
     streakDays: document.querySelectorAll(".streak-day").length,
@@ -44,6 +45,7 @@ const homePolish = await desktop.evaluate(() => {
   };
 });
 if (!homePolish.dashboard) issues.push("home: dashboard layout missing");
+if (!homePolish.journeyTimeline) issues.push("home: journey timeline missing");
 if (homePolish.lucideIcons < 8) issues.push(`home: lucide icons missing (${homePolish.lucideIcons})`);
 if (!homePolish.streakCalendar || homePolish.streakDays !== 14) {
   issues.push(`home: streak calendar missing or incomplete (${homePolish.streakDays})`);

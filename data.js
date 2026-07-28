@@ -3334,24 +3334,119 @@ const AZUBIFORGE_DATA = {
 
 window.AZUBIFORGE_DATA = AZUBIFORGE_DATA;
 
+function buildGuidedFullContent(title, description, focus, summary, example, terms = [], options = {}) {
+  const studyTime = options.studyTime || "45-60 Minuten";
+  const difficulty = options.difficulty || "Medium";
+  const baseTerms = terms.length ? terms : title.split(/[\s\-–]+/).filter((part) => part.length > 2).slice(0, 6);
+  const vocabulary = baseTerms.map((term, index) => ({
+    de: term,
+    pt: `Conceito ${index + 1}: ${term}`,
+    explanation: `Fachbegriff aus ${title}. ${focus}`,
+    example: example || `Im Betrieb: ${term} wird im Kontext von ${title} verwendet.`
+  }));
+
+  while (vocabulary.length < 5) {
+    vocabulary.push({
+      de: `${title} — Kernbegriff ${vocabulary.length + 1}`,
+      pt: `Ideia central de ${title}`,
+      explanation: summary,
+      example
+    });
+  }
+
+  const mkEx = (question, answer, explanation = summary) => ({ question, answer, explanation });
+
+  return {
+    studyTime,
+    difficulty,
+    importance: {
+      stars: "★★★☆☆",
+      explanation: [description, summary, `Portuguese support: ${summary}`]
+    },
+    objectives: [
+      `Erklaeren Sie ${title} in eigenen Worten.`,
+      `Nennen Sie die wichtigsten Fachbegriffe zu ${title}.`,
+      `Beschreiben Sie eine berufliche Situation mit ${title}.`,
+      `Beantworten Sie AP1-nahe Fragen zu ${title}.`
+    ],
+    introduction: [
+      description,
+      summary,
+      `${title} gehoert zur AP1 FIAE. Lerne zuerst die Idee, dann die Fachwoerter und danach die Anwendung im Betrieb.`
+    ],
+    explanation: [
+      { title: `Grundidee: ${title}`, paragraphs: [description, summary] },
+      { title: "Berufliche Anwendung", paragraphs: [example, focus] },
+      { title: "AP1-Fokus", paragraphs: [focus, "Antworte knapp, nenne Fachbegriffe und begruende mit einem Beispiel aus dem Betrieb."] }
+    ],
+    realWorldExamples: [example, `Ein Azubi bei JIKU IT-Solutions wendet ${title} in einer echten Kundenanfrage an.`],
+    practicalExamples: [{
+      title: "Praxisfall JIKU IT-Solutions",
+      paragraphs: [example, description],
+      steps: ["Situation erkennen.", "Fachbegriffe zuordnen.", "Loesung begruenden.", "Ergebnis dokumentieren."]
+    }],
+    ihkFocus: focus,
+    commonMistakes: [
+      `Verwechslung von Begriffen rund um ${title}.`,
+      "Antwort ohne beruflichen Bezug.",
+      "Nur Definition auswendig, aber kein Beispiel."
+    ],
+    vocabulary: vocabulary.slice(0, 10),
+    summary: [summary, focus, description],
+    mindMap: `${title} → Begriffe → Praxis → AP1-Check`,
+    exercises: {
+      easy: [
+        mkEx(`Was bedeutet ${title}?`, summary),
+        mkEx(`Nennen Sie zwei Fachwoerter zu ${title}.`, baseTerms.slice(0, 2).join(", ") || title),
+        mkEx(`Warum ist ${title} in der Ausbildung wichtig?`, description)
+      ],
+      intermediate: [
+        mkEx(`Erklaeren Sie ${title} in zwei Saetzen fuer einen Kunden.`, summary),
+        mkEx(`Welche Rolle spielt ${title} im Betrieb?`, example),
+        mkEx(`Ordne ${title} einer Lernsituation zu.`, example)
+      ],
+      ap1Style: [
+        mkEx(`AP1: Beurteilen Sie eine Aussage zu ${title}.`, summary),
+        mkEx(`AP1: Welche Massnahme passt zu ${title}?`, example),
+        mkEx(`AP1: Erklaeren Sie ${title} mit dem Signalwort 'erklaeren'.`, summary)
+      ]
+    },
+    related: baseTerms.slice(0, 4),
+    revisionChecklist: [
+      `Ich kann ${title} erklaeren.`,
+      "Ich kenne die wichtigsten Fachbegriffe.",
+      "Ich kann ein Praxisbeispiel nennen.",
+      "Ich habe mindestens eine Uebung beantwortet.",
+      "Ich habe die 5 Etapas da sessao abgeschlossen."
+    ]
+  };
+}
+
 function createAp1Chapter(id, title, description, ihk, summary, example) {
+  const fullContent = buildGuidedFullContent(title, description, ihk, summary, example, [], {
+    studyTime: "50-65 Minuten",
+    difficulty: "Medium"
+  });
+
   return {
     id,
     title,
     description,
     text: [
-      `${title} é um tópico básico da AP1 FIAE e aparece como parte do vocabulário técnico que você precisa reconhecer em alemão e português.`,
-      description
+      `${title} é um tópico central da AP1 FIAE. Estude a ideia, fixe os termos em alemão e treine com exercícios guiados.`,
+      description,
+      summary
     ],
     ihk,
     summary,
     example,
+    studyTime: fullContent.studyTime,
+    difficulty: fullContent.difficulty,
     exercises: [
-      {
-        question: `Explique ${title} com suas próprias palavras.`,
-        answer: summary
-      }
-    ]
+      ...fullContent.exercises.easy.slice(0, 2),
+      ...fullContent.exercises.ap1Style.slice(0, 1)
+    ],
+    fullContent
   };
 }
 
@@ -10730,6 +10825,10 @@ AZUBIFORGE_DATA.chapters = [
 ];
 
 function createWestermannChapter(id, title, description, focus, summary, example, terms = []) {
+  const fullContent = buildGuidedFullContent(title, description, focus, summary, example, terms, {
+    studyTime: "45-60 Minuten",
+    difficulty: "Medium"
+  });
   const vocabulary = terms.length ? terms.join(", ") : "wichtige Fachbegriffe aus dem Lernfeld";
 
   return {
@@ -10739,25 +10838,18 @@ function createWestermannChapter(id, title, description, focus, summary, example
     text: [
       `${title} gehoert zur Grundstufe LF 1-5. Der Fokus liegt auf Verstehen, beruflicher Handlung und sicherem Umgang mit Fachwoertern.`,
       description,
-      `Portuguese support: este capitulo resume o tema em linguagem propria para estudo. Ele segue a estrutura dos livros Westermann, mas nao copia o texto do livro. Palavras-chave: ${vocabulary}.`
+      `Portuguese support: este capitulo resume o tema em linguagem propria para estudo. Palavras-chave: ${vocabulary}.`
     ],
     ihk: focus,
     summary,
     example,
+    studyTime: fullContent.studyTime,
+    difficulty: fullContent.difficulty,
     exercises: [
-      {
-        question: `Erklaeren Sie ${title} in zwei bis drei einfachen Saetzen.`,
-        answer: summary
-      },
-      {
-        question: "Welche deutschen Fachwoerter solltest du fuer dieses Thema aktiv koennen?",
-        answer: vocabulary
-      },
-      {
-        question: "Wie wuerde dieses Thema in einer beruflichen Situation erscheinen?",
-        answer: example
-      }
-    ]
+      ...fullContent.exercises.easy.slice(0, 2),
+      ...fullContent.exercises.intermediate.slice(0, 1)
+    ],
+    fullContent
   };
 }
 
@@ -11515,6 +11607,58 @@ const AZUBIFORGE_GLOSSARY_BY_WORD = new Map(
 );
 
 AZUBIFORGE_DATA.glossary = [...AZUBIFORGE_GLOSSARY_BY_WORD.values()];
+
+function enrichChapterGuidedContent(chapter) {
+  if (chapter.fullContent) return chapter;
+
+  const terms = (chapter.ihk || "")
+    .split(/[,;:]/g)
+    .flatMap((part) => part.match(/[A-ZÄÖÜ][A-Za-zäöüß\-/]+/g) || [])
+    .slice(0, 8);
+
+  chapter.fullContent = buildGuidedFullContent(
+    chapter.title,
+    chapter.description,
+    chapter.ihk || chapter.summary,
+    chapter.summary,
+    chapter.example,
+    terms
+  );
+  chapter.studyTime = chapter.studyTime || chapter.fullContent.studyTime;
+  chapter.difficulty = chapter.difficulty || chapter.fullContent.difficulty;
+
+  if (!chapter.exercises?.length) {
+    chapter.exercises = [
+      ...chapter.fullContent.exercises.easy.slice(0, 2),
+      ...chapter.fullContent.exercises.intermediate.slice(0, 1)
+    ];
+  }
+
+  return chapter;
+}
+
+AZUBIFORGE_DATA.chapters = AZUBIFORGE_DATA.chapters.map(enrichChapterGuidedContent);
+
+const AZUBIFORGE_AUTO_GLOSSARY = [];
+AZUBIFORGE_DATA.chapters.forEach((chapter) => {
+  (chapter.fullContent?.vocabulary || []).forEach((row) => {
+    const key = row.de.toLowerCase();
+    if (!AZUBIFORGE_GLOSSARY_BY_WORD.has(key)) {
+      AZUBIFORGE_AUTO_GLOSSARY.push({
+        word: row.de,
+        translation: row.pt,
+        explanation: row.explanation
+      });
+    }
+  });
+});
+
+if (AZUBIFORGE_AUTO_GLOSSARY.length) {
+  AZUBIFORGE_AUTO_GLOSSARY.forEach((term) => {
+    AZUBIFORGE_GLOSSARY_BY_WORD.set(term.word.toLowerCase(), term);
+  });
+  AZUBIFORGE_DATA.glossary = [...AZUBIFORGE_GLOSSARY_BY_WORD.values()];
+}
 
 AZUBIFORGE_DATA.learningSituations = {
   start: [

@@ -49,7 +49,10 @@ export function renderCourseView(ctx: AppContext): string {
           <h1>${ctx.data.course.title}</h1>
           <p class="ds-lead">${ctx.data.course.description}</p>
           ${renderCourseBasis(ctx)}
-          <a class="button accent" href="#reader/${continueChapter.id}/${continueTab}">Continuar estudo</a>
+          <div class="course-hero-actions">
+            <a class="button accent" href="#reader/${continueChapter.id}/${continueTab}">Continuar estudo</a>
+            <a class="button secondary" href="#home">Ver jornada completa</a>
+          </div>
         </header>
         <aside class="ds-card ds-progress-rail" aria-label="Progresso da trilha">
           ${donutProgress(progress, "Conclusao")}

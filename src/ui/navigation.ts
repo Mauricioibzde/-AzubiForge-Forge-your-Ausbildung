@@ -1,9 +1,10 @@
 import type { AppContext } from "../appContext";
-import { findChapter, getChapterModule, getDueReviewItemCount, getResumeTab } from "../domain/course";
+import { findChapter, getChapterModule, getDueReviewItemCount } from "../domain/course";
+import { getNextJourneyHref } from "../domain/journey";
 import type { RouteName } from "../types";
 
 const ROUTE_TITLES: Record<RouteName, string> = {
-  home: "Hoje",
+  home: "Jornada",
   course: "Trilha",
   reader: "Capitulo",
   review: "Revisao",
@@ -40,9 +41,8 @@ export function updateContinueChip(ctx: AppContext, route: RouteName): void {
   const chapter = findChapter(ctx.data, ctx.state.lastChapterId) || ctx.data.chapters[0];
   const hideOnReader = route === "reader";
   const useful = Boolean(chapter) && !hideOnReader;
-  const resumeTab = chapter ? getResumeTab(ctx.state, chapter.id) : "explain";
-  const href = chapter ? `#reader/${chapter.id}/${resumeTab}` : "#home";
-  const label = route === "home" ? `Continuar: ${chapter?.title || "estudo"}` : "Continuar estudo";
+  const href = getNextJourneyHref(ctx.data, ctx.state);
+  const label = route === "home" ? "Continuar jornada" : "Continuar estudo";
 
   document.querySelectorAll<HTMLAnchorElement>("[data-continue-study]").forEach((chip) => {
     chip.hidden = !useful;

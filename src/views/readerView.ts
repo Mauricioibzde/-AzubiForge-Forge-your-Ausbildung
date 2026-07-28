@@ -20,6 +20,7 @@ import {
   vocabCheckKey,
   READER_STEPS
 } from "../domain/course";
+import { getJourneyProgress, getNextJourneyHref } from "../domain/journey";
 import type { Chapter, ChapterFullContent, ContentBlock, Diagram, ReaderTab } from "../types";
 import {
   confidenceControls,
@@ -52,6 +53,8 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
   const exerciseStats = getChapterExerciseStats(ctx.state, chapter.id, exerciseTotal);
   const vocabStats = getVocabStats(ctx.state, chapter.id, vocabRows.length);
   const stepCoach = getStepCoach(currentStep.id);
+  const journey = getJourneyProgress(ctx.data, ctx.state);
+  const nextJourneyHref = getNextJourneyHref(ctx.data, ctx.state);
 
   return `
     <section class="reader">
@@ -70,9 +73,9 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
 
         <section class="session-guide" aria-label="Fluxo da sessao">
           <div class="session-guide-copy">
-            <span class="card-label">Fluxo guiado</span>
+            <span class="card-label">Fluxo guiado · ${session.completed}/${session.total}</span>
             <strong>${currentStep.label}</strong>
-            <p>${currentStep.hint}</p>
+            <p>${stepCoach.goal}</p>
           </div>
           <div class="session-guide-track" role="list">
             ${READER_STEPS.map((step) => {
@@ -94,6 +97,15 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           <div class="session-progress-line" aria-hidden="true">
             <div style="width: ${session.percent}%"></div>
           </div>
+        </section>
+
+        <section class="journey-reader-bar panel" aria-label="Posicao na jornada">
+          <div>
+            <span class="ds-caption">Jornada AP1</span>
+            <p class="ds-aux">${journey.completed}/${journey.total} capitulos · ${journey.percent}% da trilha</p>
+          </div>
+          <a class="button accent" href="${nextJourneyHref}">Proximo passo na jornada</a>
+          <a class="button secondary" href="#home">Ver linha do tempo</a>
         </section>
 
         <section class="step-coach panel soft-panel" aria-label="Guia da etapa atual">
