@@ -2898,6 +2898,13 @@ a.session-step:hover {
   align-items: center;
 }
 
+.review-due-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
 .focus-card-big {
   display: grid;
   gap: 12px;
@@ -2908,6 +2915,13 @@ a.session-step:hover {
     linear-gradient(160deg, rgba(15, 107, 95, 0.08), transparent 42%),
     var(--surface-soft);
   min-height: 240px;
+}
+
+.focus-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
 }
 
 .focus-card-big h2 {
@@ -3160,6 +3174,11 @@ a.session-step:hover {
 
   .focus-controls {
     grid-template-columns: 1fr;
+  }
+
+  .focus-card-meta {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .focus-controls .button,

@@ -25,10 +25,17 @@ export function renderReviewView(ctx: AppContext): string {
     ? allCards.filter((card) => ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)] === "wrong")
     : allCards;
 
-  const terms = sortByCheckPriority(filteredTerms, (term) => ctx.state.vocabChecks[vocabCheckKey(term.chapterId, term.index)]);
-  const cards = sortByCheckPriority(
+  const terms = prioritizeDueItems(
+    filteredTerms,
+    (term) => vocabCheckKey(term.chapterId, term.index),
+    (term) => ctx.state.vocabChecks[vocabCheckKey(term.chapterId, term.index)],
+    ctx.state.reviewSchedule
+  );
+  const cards = prioritizeDueItems(
     filteredCards,
-    (card) => ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)]
+    (card) => exerciseCheckKey(card.chapterId, card.exerciseIndex),
+    (card) => ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)],
+    ctx.state.reviewSchedule
   );
 
   const deckSize = mode === "flash" ? terms.length : cards.length;
@@ -40,6 +47,9 @@ export function renderReviewView(ctx: AppContext): string {
     (term) => ctx.state.vocabChecks[vocabCheckKey(term.chapterId, term.index)] === "wrong"
   ).length;
   const focusWrongCount = mode === "flash" ? wrongVocabCount : wrongExerciseCount;
+  const dueTermCount = filteredTerms.filter((term) => isReviewItemDue(ctx.state.reviewSchedule, vocabCheckKey(term.chapterId, term.index))).length;
+  const dueCardCount = filteredCards.filter((card) => isReviewItemDue(ctx.state.reviewSchedule, exerciseCheckKey(card.chapterId, card.exerciseIndex))).length;
+  const focusDueCount = mode === "flash" ? dueTermCount : dueCardCount;
 
   return `
     <section class="review-shell">
@@ -70,6 +80,10 @@ export function renderReviewView(ctx: AppContext): string {
         <div class="segmented-control compact" aria-label="Filtrar por desempenho">
           <button class="${!wrongOnly ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="all">Todos</button>
           <button class="${wrongOnly ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="wrong">So erros (${focusWrongCount})</button>
+        </div>
+        <div class="review-due-summary" role="status">
+          <span class="status-pill due">Vencidos hoje: ${focusDueCount}</span>
+          <span class="small-note">Termos: ${dueTermCount} · Perguntas: ${dueCardCount}</span>
         </div>
 
         ${deckSize === 0 ? `<p class="empty-state">${wrongOnly ? "Nenhum erro marcado neste modo." : "Nada na fila de foco agora."}</p>` : `
@@ -141,9 +155,13 @@ function renderFlashFocus(
 ): string {
   const key = vocabCheckKey(term.chapterId, term.index);
   const check = ctx.state.vocabChecks[key];
+  const due = isReviewItemDue(ctx.state.reviewSchedule, key);
   return `
     <article class="focus-card-big ${check ? `checked-${check}` : ""}">
-      <span class="card-label">Flashcard ${index + 1}/${total}</span>
+      <div class="focus-card-meta">
+        <span class="card-label">Flashcard ${index + 1}/${total}</span>
+        ${due ? `<span class="status-pill due">Vence hoje</span>` : ""}
+      </div>
       <h2>${term.word}</h2>
       <p class="focus-prompt">Explique em voz alta antes de revelar.</p>
       <details class="focus-reveal">
@@ -181,9 +199,13 @@ function renderQuizFocus(
   total: number
 ): string {
   const checkKey = exerciseCheckKey(card.chapterId, card.exerciseIndex);
+  const due = isReviewItemDue(ctx.state.reviewSchedule, checkKey);
   return `
     <article class="focus-card-big">
-      <span class="card-label">Pergunta ${index + 1}/${total}</span>
+      <div class="focus-card-meta">
+        <span class="card-label">Pergunta ${index + 1}/${total}</span>
+        ${due ? `<span class="status-pill due">Vence hoje</span>` : ""}
+      </div>
       <p class="exam-chapter-tag">${card.chapterTitle}</p>
       <h2>AP1 check</h2>
       <p class="focus-question">${card.question}</p>
@@ -215,4 +237,21 @@ function renderQuizFocus(
       </details>
     </article>
   `;
+}
+
+function isReviewItemDue(schedule: Record<string, string>, key: string): boolean {
+  const dueAt = schedule[key];
+  if (!dueAt) return false;
+  const due = Date.parse(dueAt);
+  return !Number.isNaN(due) && due <= Date.now();
+}
+
+function prioritizeDueItems<T>(
+  items: T[],
+  getKey: (item: T) => string,
+  getCheck: (item: T) => "correct" | "wrong" | undefined,
+  schedule: Record<string, string>
+): T[] {
+  const sorted = sortByCheckPriority(items, getCheck);
+  return [...sorted].sort((a, b) => Number(isReviewItemDue(schedule, getKey(b))) - Number(isReviewItemDue(schedule, getKey(a))));
 }
