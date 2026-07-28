@@ -34,6 +34,7 @@ import {
   syncChrome,
   toggleSidebar
 } from "./ui/navigation";
+import { hydrateIcons } from "./ui/icons";
 import { renderCourseView } from "./views/courseView";
 import { renderDocsAiView } from "./views/docsAiView";
 import { renderExamView } from "./views/examView";
@@ -73,6 +74,7 @@ export function startApp(): void {
   registerConnectivityListeners();
   registerServiceWorker();
   renderRoute(app, ctx);
+  hydrateIcons();
 }
 
 function createUiState(): UiState {
@@ -164,6 +166,9 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
   app.focus({ preventScroll: true });
 
   if (route === "home" && id === "progress") scrollToHomeSection("dashboard-progress");
+
+  hydrateIcons(app);
+  hydrateIcons(document.body);
 
   if (previousRoute && previousRoute !== route) scrollToPageTop();
   maybeScrollReaderStep(route);

@@ -36,6 +36,7 @@ const homePolish = await desktop.evaluate(() => {
   const parts = href.replace(/^#/, "").split("/");
   return {
     dashboard: Boolean(document.querySelector(".dashboard-hero")),
+    lucideIcons: document.querySelectorAll(".lucide, [data-lucide]").length,
     streakCalendar: Boolean(document.querySelector(".streak-calendar")),
     streakDays: document.querySelectorAll(".streak-day").length,
     resumeDeepLink: parts[0] === "reader" && parts.length >= 3,
@@ -43,6 +44,7 @@ const homePolish = await desktop.evaluate(() => {
   };
 });
 if (!homePolish.dashboard) issues.push("home: dashboard layout missing");
+if (homePolish.lucideIcons < 8) issues.push(`home: lucide icons missing (${homePolish.lucideIcons})`);
 if (!homePolish.streakCalendar || homePolish.streakDays !== 14) {
   issues.push(`home: streak calendar missing or incomplete (${homePolish.streakDays})`);
 }

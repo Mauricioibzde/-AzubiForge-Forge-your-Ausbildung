@@ -1,6 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
   <title id="title">AzubiForge</title>
-  <rect width="512" height="512" rx="96" fill="#202124"/>
-  <path fill="#d7b98e" d="M132 352 226 112h60l94 240h-58l-19-52H207l-19 52h-56Zm92-99h62l-31-86-31 86Z"/>
-  <path fill="#ffffff" d="M168 392h176v38H168z"/>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f6b5f"/>
+      <stop offset="1" stop-color="#0b5249"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g fill="none" stroke="#f3f8f5" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M156 332 256 128l100 204"/>
+    <path d="M198 332h116"/>
+    <path d="M176 384h160"/>
+    <path d="M336 220h56l-24 44"/>
+  </g>
 </svg>

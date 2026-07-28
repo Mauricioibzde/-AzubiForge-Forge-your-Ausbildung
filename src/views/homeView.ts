@@ -32,6 +32,7 @@ import {
   progressBlock,
   readinessBadge
 } from "../ui/html";
+import { icon } from "../ui/icons";
 
 export function renderHomeView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
@@ -110,7 +111,7 @@ export function renderHomeView(ctx: AppContext): string {
         </div>
         <aside class="dashboard-hero-aside">
           <div class="goal-card panel">
-            <span class="goal-icon" aria-hidden="true">◎</span>
+            <span class="goal-icon" aria-hidden="true">${icon("target", "goal-icon", 20)}</span>
             <div>
               <span class="card-label">Seu objetivo</span>
               <p class="goal-text">${escapeAttribute(studyGoal)}</p>
@@ -286,7 +287,7 @@ export function renderHomeView(ctx: AppContext): string {
 
       <footer class="offline-bar rise-in" style="animation-delay: 140ms">
         <div class="offline-bar-copy">
-          <span class="offline-bar-icon" aria-hidden="true">☁</span>
+          <span class="offline-bar-icon" aria-hidden="true">${icon("cloud-download", "offline-bar-icon", 20)}</span>
           <div>
             <strong>Busca e backup offline</strong>
             <p class="small-note">Pesquise capitulos e exporte progresso para estudar sem internet.</p>

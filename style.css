@@ -184,6 +184,83 @@ button {
   color: var(--text);
 }
 
+.ui-icon,
+.ui-icon svg,
+.lucide {
+  display: block;
+  flex-shrink: 0;
+}
+
+.nav-icon .lucide,
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ui-icon-inverted .lucide,
+.ui-icon-inverted svg,
+.sidebar-premium-icon .lucide,
+.sidebar-premium-icon svg {
+  color: #fff;
+}
+
+.theme-icons {
+  display: inline-grid;
+  place-items: center;
+}
+
+.theme-icon-moon,
+.theme-icon-sun {
+  grid-area: 1 / 1;
+}
+
+:root[data-theme="dark"] .theme-icon-moon {
+  display: none;
+}
+
+:root:not([data-theme="dark"]) .theme-icon-sun {
+  display: none;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-continue-icon .lucide,
+.topbar-continue-icon svg {
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+}
+
+.goal-icon .lucide,
+.goal-icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+}
+
+.offline-bar-icon .lucide,
+.offline-bar-icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+}
+
+.menu-toggle .lucide,
+.menu-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-button .lucide,
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+}
+
 :root[data-theme="dark"] .sidebar-nav .nav-icon {
   background: rgba(127, 209, 196, 0.14);
   color: var(--primary);
@@ -334,7 +411,6 @@ button {
   border-radius: 12px;
   background: var(--primary);
   color: #fff;
-  font-size: 0.9rem;
 }
 
 @media (min-width: 821px) {
