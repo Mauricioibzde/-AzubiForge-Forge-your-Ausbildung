@@ -9,6 +9,8 @@ import {
   isCompleted,
   READER_STEPS
 } from "./course";
+import { getNormalizedCourseData } from "../data/normalizedCourse";
+import { resolveNextLearningAction } from "./learning/nextLearningAction";
 
 export type JourneyNodeKind = "module" | "chapter" | "session-step" | "review-gate" | "exam-gate";
 
@@ -125,15 +127,22 @@ export function getJourneyProgress(data: AzubiForgeData, state: AppState): Journ
 }
 
 export function getNextJourneyHref(data: AzubiForgeData, state: AppState): string {
-  const nodes = getJourneyNodes(data, state).filter((node) => node.kind !== "module");
-  const currentIndex = nodes.findIndex((node) => node.status === "current");
-  if (currentIndex >= 0) return nodes[currentIndex].href;
+  try {
+    return resolveNextLearningAction({
+      course: getNormalizedCourseData(),
+      state
+    }).href;
+  } catch {
+    const nodes = getJourneyNodes(data, state).filter((node) => node.kind !== "module");
+    const currentIndex = nodes.findIndex((node) => node.status === "current");
+    if (currentIndex >= 0) return nodes[currentIndex].href;
 
-  const nextOpen = nodes.find((node) => node.status === "open");
-  if (nextOpen) return nextOpen.href;
+    const nextOpen = nodes.find((node) => node.status === "open");
+    if (nextOpen) return nextOpen.href;
 
-  const suggested = getSuggestedChapter(data, state);
-  return `#reader/${suggested.id}/${getResumeTab(state, suggested.id)}`;
+    const suggested = getSuggestedChapter(data, state);
+    return `#reader/${suggested.id}/${getResumeTab(state, suggested.id)}`;
+  }
 }
 
 function getModuleJourneyStatus(
