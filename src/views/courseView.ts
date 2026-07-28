@@ -243,25 +243,29 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter): stri
   return `
     <li class="path-node ${status}">
       <div class="path-marker" aria-hidden="true">${status === "done" ? "✓" : "○"}</div>
-      <div class="path-copy">
-        <div class="path-topline">
+      <div class="path-body">
+        <div class="path-copy">
           <span class="path-status">${labels[status]}</span>
-          <h3>${chapter.title}</h3>
-          ${readinessBadge(readiness)}
+          <div class="path-title-row">
+            <h3>${chapter.title}</h3>
+            ${readinessBadge(readiness)}
+          </div>
+          <p class="ds-aux path-desc">${chapter.description}</p>
+          ${(() => {
+            const note = (ctx.state.notes[chapter.id] || "").trim();
+            if (!note) return "";
+            const preview = note.length > 120 ? `${note.slice(0, 120).trim()}…` : note;
+            return `<details class="path-note"><summary>Nota</summary><p>${escapeHtml(preview)}</p></details>`;
+          })()}
+          <div class="chapter-meta path-meta">
+            <span>${chapter.studyTime || "Sessao curta"}</span>
+            ${confidenceBadge(ctx.state, chapter.id)}
+          </div>
         </div>
-        <p class="ds-aux path-desc">${chapter.description}</p>
-        ${(() => {
-          const note = (ctx.state.notes[chapter.id] || "").trim();
-          if (!note) return "";
-          const preview = note.length > 120 ? `${note.slice(0, 120).trim()}…` : note;
-          return `<details class="path-note"><summary>Nota</summary><p>${escapeHtml(preview)}</p></details>`;
-        })()}
-        <div class="chapter-meta">
-          <span>${chapter.studyTime || "Sessao curta"}</span>
-          ${confidenceBadge(ctx.state, chapter.id)}
+        <div class="path-actions">
+          <a class="button ${status === "current" ? "accent" : "secondary"} path-node-cta" href="#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}">${action}</a>
         </div>
       </div>
-      <a class="button ${status === "current" ? "accent" : "secondary"} path-node-cta" href="#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}">${action}</a>
     </li>
   `;
 }
