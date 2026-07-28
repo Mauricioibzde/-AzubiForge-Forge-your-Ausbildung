@@ -2328,6 +2328,13 @@ summary {
   margin-bottom: 8px;
 }
 
+.practice-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
 .reader-more-tools,
 .chapter-mini-wrap {
   margin-top: 14px;
@@ -2906,6 +2913,36 @@ summary {
   gap: 8px;
 }
 
+.streak-calendar {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.streak-day {
+  display: grid;
+  place-items: center;
+  min-height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.streak-day.studied {
+  background: rgba(15, 107, 95, 0.16);
+  border-color: rgba(15, 107, 95, 0.4);
+  color: var(--primary-dark);
+}
+
+.streak-day.today {
+  outline: 2px solid rgba(15, 107, 95, 0.45);
+  outline-offset: 1px;
+}
+
 .completion-card {
   padding: 22px 24px;
   border: 1px solid rgba(15, 107, 95, 0.28);
@@ -3275,6 +3312,10 @@ summary {
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+}
+
+.mock-jump-unanswered {
+  width: fit-content;
 }
 
 .mock-your-answer,

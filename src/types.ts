@@ -202,8 +202,12 @@ export interface UiState {
   reviewFocusIndex: number;
   practiceFilter: "all" | "wrong";
   glossaryWrongOnly: boolean;
+  reviewWrongOnly: boolean;
+  examDrillWrongOnly: boolean;
   readerVocabMode: "grid" | "flash";
   readerVocabIndex: number;
+  readerPracticeMode: "list" | "flash";
+  readerPracticeIndex: number;
   examFocusMode: ExamFocusMode;
   examFocusIndex: number;
   completeGateChapterId: string;

@@ -1,5 +1,6 @@
 import type { AppContext } from "../appContext";
 import {
+  exerciseCheckKey,
   getReviewExercises,
   getReviewQueue,
   getReviewVocabularyDeck,
@@ -11,12 +12,23 @@ import { chapterCard, exerciseCard } from "../ui/components";
 
 export function renderReviewView(ctx: AppContext): string {
   const queue = getReviewQueue(ctx.data, ctx.state).slice(0, 8);
-  const cards = getReviewExercises(ctx.data, ctx.state).slice(0, 10);
-  const terms = getReviewVocabularyDeck(ctx.data, ctx.state, 18);
+  const allCards = getReviewExercises(ctx.data, ctx.state).slice(0, 24);
+  const allTerms = getReviewVocabularyDeck(ctx.data, ctx.state, 24);
   const mode = ctx.ui.reviewFocusMode;
+  const wrongOnly = ctx.ui.reviewWrongOnly;
+
+  const terms = wrongOnly
+    ? allTerms.filter((term) => ctx.state.vocabChecks[vocabCheckKey(term.chapterId, term.index)] === "wrong")
+    : allTerms;
+  const cards = wrongOnly
+    ? allCards.filter((card) => ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)] === "wrong")
+    : allCards;
+
   const deckSize = mode === "flash" ? terms.length : cards.length;
   const index = deckSize ? ((ctx.ui.reviewFocusIndex % deckSize) + deckSize) % deckSize : 0;
-  const wrongCount = Object.values(ctx.state.exerciseChecks).filter((value) => value === "wrong").length;
+  const wrongExerciseCount = Object.values(ctx.state.exerciseChecks).filter((value) => value === "wrong").length;
+  const wrongVocabCount = Object.values(ctx.state.vocabChecks).filter((value) => value === "wrong").length;
+  const focusWrongCount = mode === "flash" ? wrongVocabCount : wrongExerciseCount;
 
   return `
     <section class="review-shell">
@@ -30,7 +42,9 @@ export function renderReviewView(ctx: AppContext): string {
           <span class="card-label">Fila</span>
           <h2>${queue.length}</h2>
           <p class="small-note">capitulos para revisar</p>
-          ${wrongCount ? `<p class="small-note">${wrongCount} exercicios marcados para revisar</p>` : ""}
+          ${wrongExerciseCount || wrongVocabCount
+            ? `<p class="small-note">${wrongExerciseCount} exercicios · ${wrongVocabCount} termos para revisar</p>`
+            : ""}
         </div>
       </div>
 
@@ -42,8 +56,12 @@ export function renderReviewView(ctx: AppContext): string {
             ${focusModeButton("quiz", "Perguntas", mode)}
           </div>
         </div>
+        <div class="segmented-control compact" aria-label="Filtrar por desempenho">
+          <button class="${!wrongOnly ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="all">Todos</button>
+          <button class="${wrongOnly ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="wrong">So erros (${focusWrongCount})</button>
+        </div>
 
-        ${deckSize === 0 ? `<p class="empty-state">Nada na fila de foco agora.</p>` : `
+        ${deckSize === 0 ? `<p class="empty-state">${wrongOnly ? "Nenhum erro marcado neste modo." : "Nada na fila de foco agora."}</p>` : `
           <div class="focus-stage" data-swipe-deck="review">
             ${mode === "flash" ? renderFlashFocus(ctx, terms[index], index, deckSize) : renderQuizFocus(ctx, cards[index], index, deckSize)}
           </div>
@@ -62,7 +80,7 @@ export function renderReviewView(ctx: AppContext): string {
           <section class="panel">
             <span class="card-label">Flashcards</span>
             <div class="flashcard-grid">
-              ${terms.map((term) => `
+              ${allTerms.map((term) => `
                 <details class="flashcard">
                   <summary>${term.word}</summary>
                   <strong>${term.translation}</strong>
@@ -75,11 +93,11 @@ export function renderReviewView(ctx: AppContext): string {
           <section class="panel">
             <span class="card-label">Perguntas rapidas</span>
             <div class="exercise-group">
-              ${cards.map((card, cardIndex) => exerciseCard(card, cardIndex, {
+              ${allCards.map((card) => exerciseCard(card, card.exerciseIndex, {
                 chapterId: card.chapterId,
                 chapterTitle: card.chapterTitle,
-                checkKey: `review:${card.chapterId}:${cardIndex}`,
-                check: ctx.state.exerciseChecks[`review:${card.chapterId}:${cardIndex}`]
+                checkKey: exerciseCheckKey(card.chapterId, card.exerciseIndex),
+                check: ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)]
               })).join("")}
             </div>
           </section>
@@ -147,11 +165,11 @@ function renderFlashFocus(
 
 function renderQuizFocus(
   ctx: AppContext,
-  card: { question: string; answer: string; explanation?: string; chapterId: string; chapterTitle: string },
+  card: { question: string; answer: string; explanation?: string; chapterId: string; chapterTitle: string; exerciseIndex: number },
   index: number,
   total: number
 ): string {
-  const checkKey = `focus:${card.chapterId}:${index}`;
+  const checkKey = exerciseCheckKey(card.chapterId, card.exerciseIndex);
   return `
     <article class="focus-card-big">
       <span class="card-label">Pergunta ${index + 1}/${total}</span>

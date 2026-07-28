@@ -29,6 +29,14 @@ desktop.on("pageerror", (error) => {
 await desktop.goto(baseUrl, { waitUntil: "networkidle" });
 await desktop.waitForSelector("main h1", { timeout: 10000 });
 
+const homePolish = await desktop.evaluate(() => ({
+  streakCalendar: Boolean(document.querySelector(".streak-calendar")),
+  streakDays: document.querySelectorAll(".streak-day").length
+}));
+if (!homePolish.streakCalendar || homePolish.streakDays !== 14) {
+  issues.push(`home: streak calendar missing or incomplete (${homePolish.streakDays})`);
+}
+
 const desktopChrome = await desktop.evaluate(() => {
   const sidebar = document.querySelector(".sidebar");
   return {
@@ -86,9 +94,13 @@ await mobile.goto(`${baseUrl}/#reader/${firstChapter}`, { waitUntil: "networkidl
 await mobile.waitForSelector(".mobile-study-dock", { timeout: 10000 });
 const mobileReader = await mobile.evaluate(() => ({
   dockVisible: getComputedStyle(document.querySelector(".mobile-study-dock")).display !== "none",
+  swipeTabs: Boolean(document.querySelector("[data-swipe-tabs]")),
   scrollWidth: document.documentElement.scrollWidth,
   clientWidth: document.documentElement.clientWidth
 }));
+await mobile.click('[data-reader-tab="practice"]');
+await mobile.waitForSelector('[data-filter-group="reader-practice-mode"]', { timeout: 10000 });
+const practiceFlash = await mobile.evaluate(() => Boolean(document.querySelector('[data-swipe-deck="reader-practice"], [data-filter-value="flash"].active')));
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-reader.png`, fullPage: true });
 
 await mobile.goto(`${baseUrl}/#exam`, { waitUntil: "networkidle" });
@@ -99,15 +111,19 @@ await mobile.screenshot({ path: `${screenshotsDir}/mobile-exam.png`, fullPage: t
 
 await mobile.goto(`${baseUrl}/#review`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".review-focus", { timeout: 10000 });
+const reviewWrongFilter = await mobile.evaluate(() => Boolean(document.querySelector('[data-filter-group="review-wrong"]')));
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-review.png`, fullPage: true });
 
 console.log(`mobile-home: menu=${mobileHome.menuVisible} open=${sidebarOpen} closed=${sidebarClosed}`);
-console.log(`mobile-reader: dock=${mobileReader.dockVisible}`);
+console.log(`mobile-reader: dock=${mobileReader.dockVisible} swipeTabs=${mobileReader.swipeTabs} practiceFlash=${practiceFlash}`);
 
 if (!mobileHome.menuVisible) issues.push("mobile-home: menu toggle hidden");
 if (!sidebarOpen) issues.push("mobile-home: sidebar did not open");
 if (!sidebarClosed) issues.push("mobile-home: sidebar did not close");
 if (!mobileReader.dockVisible) issues.push("mobile-reader: study dock hidden");
+if (!mobileReader.swipeTabs) issues.push("mobile-reader: swipe tabs missing");
+if (!practiceFlash) issues.push("mobile-reader: practice flash mode missing");
+if (!reviewWrongFilter) issues.push("mobile-review: wrong-only filter missing");
 if (mobileHome.scrollWidth > mobileHome.clientWidth + 2) {
   issues.push(`mobile-home: horizontal overflow ${mobileHome.clientWidth}/${mobileHome.scrollWidth}`);
 }

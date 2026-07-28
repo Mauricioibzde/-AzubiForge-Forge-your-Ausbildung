@@ -83,8 +83,12 @@ function createUiState(): UiState {
     reviewFocusIndex: 0,
     practiceFilter: "all",
     glossaryWrongOnly: false,
+    reviewWrongOnly: false,
+    examDrillWrongOnly: false,
     readerVocabMode: "flash",
     readerVocabIndex: 0,
+    readerPracticeMode: "flash",
+    readerPracticeIndex: 0,
     glossaryMode: "flash",
     glossaryFocusIndex: 0,
     examFocusMode: "mock",
@@ -124,6 +128,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
       ctx.ui.confidenceGateChapterId = "";
       ctx.ui.confidenceGateMessage = "";
       ctx.ui.readerVocabIndex = 0;
+      ctx.ui.readerPracticeIndex = 0;
     }
     if (tab && READER_TABS.includes(tab as ReaderTab)) {
       ctx.ui.readerTab = tab as ReaderTab;
@@ -249,12 +254,20 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     return;
   }
 
+  const readerPracticeStep = target.closest<HTMLElement>("[data-reader-practice-step]");
+  if (readerPracticeStep?.dataset.readerPracticeStep) {
+    ctx.ui.readerPracticeIndex += Number(readerPracticeStep.dataset.readerPracticeStep);
+    renderRoute(app, ctx);
+    return;
+  }
+
   const resetSession = target.closest<HTMLElement>("[data-reset-session]");
   if (resetSession?.dataset.resetSession) {
     const chapterId = resetSession.dataset.resetSession;
     delete ctx.state.sessionSteps[chapterId];
     ctx.ui.readerTab = "explain";
     ctx.ui.readerVocabIndex = 0;
+    ctx.ui.readerPracticeIndex = 0;
     ctx.ui.completeGateChapterId = "";
     saveState(ctx.state);
     renderRoute(app, ctx);
@@ -298,6 +311,8 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
   if (wrongPractice) {
     ctx.ui.readerTab = "practice";
     ctx.ui.practiceFilter = "wrong";
+    ctx.ui.readerPracticeMode = "flash";
+    ctx.ui.readerPracticeIndex = 0;
     renderRoute(app, ctx);
     return;
   }
@@ -305,7 +320,10 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
   const tabButton = target.closest<HTMLElement>("[data-reader-tab]");
   if (tabButton) {
     const nextTab = tabButton.dataset.readerTab as ReaderTab;
-    if (nextTab !== ctx.ui.readerTab) ctx.ui.readerVocabIndex = 0;
+    if (nextTab !== ctx.ui.readerTab) {
+      ctx.ui.readerVocabIndex = 0;
+      ctx.ui.readerPracticeIndex = 0;
+    }
     ctx.ui.readerTab = nextTab;
     if (ctx.ui.readerTab !== "practice") ctx.ui.practiceFilter = "all";
     renderRoute(app, ctx);
@@ -442,16 +460,29 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
     ctx.ui.reviewFocusMode = value as UiState["reviewFocusMode"];
     ctx.ui.reviewFocusIndex = 0;
   }
-  if (group === "practice-filter") {
-    ctx.ui.practiceFilter = value as UiState["practiceFilter"];
-  }
   if (group === "glossary-wrong") {
     ctx.ui.glossaryWrongOnly = value === "wrong";
     ctx.ui.glossaryFocusIndex = 0;
   }
+  if (group === "review-wrong") {
+    ctx.ui.reviewWrongOnly = value === "wrong";
+    ctx.ui.reviewFocusIndex = 0;
+  }
+  if (group === "exam-drill-wrong") {
+    ctx.ui.examDrillWrongOnly = value === "wrong";
+    ctx.ui.examFocusIndex = 0;
+  }
   if (group === "reader-vocab-mode") {
     ctx.ui.readerVocabMode = value as UiState["readerVocabMode"];
     ctx.ui.readerVocabIndex = 0;
+  }
+  if (group === "reader-practice-mode") {
+    ctx.ui.readerPracticeMode = value as UiState["readerPracticeMode"];
+    ctx.ui.readerPracticeIndex = 0;
+  }
+  if (group === "practice-filter") {
+    ctx.ui.practiceFilter = value as UiState["practiceFilter"];
+    ctx.ui.readerPracticeIndex = 0;
   }
   if (group === "glossary-mode") {
     ctx.ui.glossaryMode = value as UiState["glossaryMode"];
@@ -473,6 +504,7 @@ function maybeAutoAdvance(ctx: AppContext, target?: string): void {
   if (target === "glossary") ctx.ui.glossaryFocusIndex += 1;
   if (target === "exam") ctx.ui.examFocusIndex += 1;
   if (target === "reader-vocab") ctx.ui.readerVocabIndex += 1;
+  if (target === "reader-practice") ctx.ui.readerPracticeIndex += 1;
 }
 
 function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext): void {
@@ -528,6 +560,11 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
       renderRoute(app, ctx);
       return;
     }
+    if (ctx.ui.readerTab === "practice" && ctx.ui.readerPracticeMode === "flash") {
+      ctx.ui.readerPracticeIndex += delta;
+      renderRoute(app, ctx);
+      return;
+    }
     const chapterId = ctx.ui.readerChapterId || ctx.state.lastChapterId;
     if (!chapterId) return;
     if (delta > 0) {
@@ -547,33 +584,58 @@ function registerSwipe(app: HTMLElement, ctx: AppContext): void {
   let startX = 0;
   let startY = 0;
   let tracking = false;
+  let mode: "deck" | "tabs" | null = null;
 
   document.addEventListener("touchstart", (event) => {
     const target = event.target as Element | null;
-    if (!target?.closest("[data-swipe-deck]")) return;
+    const deck = target?.closest("[data-swipe-deck]");
+    const tabs = target?.closest("[data-swipe-tabs]");
+    if (!deck && !tabs) return;
     const touch = event.changedTouches[0];
     startX = touch.clientX;
     startY = touch.clientY;
     tracking = true;
+    mode = deck ? "deck" : "tabs";
   }, { passive: true });
 
   document.addEventListener("touchend", (event) => {
-    if (!tracking) return;
+    if (!tracking || !mode) return;
     tracking = false;
     const target = event.target as Element | null;
-    const deck = target?.closest<HTMLElement>("[data-swipe-deck]");
-    if (!deck) return;
-
     const touch = event.changedTouches[0];
     const dx = touch.clientX - startX;
     const dy = touch.clientY - startY;
-    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy)) return;
+    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy)) {
+      mode = null;
+      return;
+    }
 
     const delta = dx < 0 ? 1 : -1;
+
+    if (mode === "tabs") {
+      mode = null;
+      if (!target?.closest("[data-swipe-tabs]")) return;
+      const currentIndex = READER_TABS.indexOf(ctx.ui.readerTab);
+      if (currentIndex < 0) return;
+      const nextIndex = Math.max(0, Math.min(READER_TABS.length - 1, currentIndex + delta));
+      if (nextIndex === currentIndex) return;
+      ctx.ui.readerTab = READER_TABS[nextIndex];
+      ctx.ui.readerVocabIndex = 0;
+      ctx.ui.readerPracticeIndex = 0;
+      if (ctx.ui.readerTab !== "practice") ctx.ui.practiceFilter = "all";
+      renderRoute(app, ctx);
+      return;
+    }
+
+    const deck = target?.closest<HTMLElement>("[data-swipe-deck]");
+    mode = null;
+    if (!deck) return;
+
     if (deck.dataset.swipeDeck === "review") ctx.ui.reviewFocusIndex += delta;
     if (deck.dataset.swipeDeck === "glossary") ctx.ui.glossaryFocusIndex += delta;
     if (deck.dataset.swipeDeck === "exam") ctx.ui.examFocusIndex += delta;
     if (deck.dataset.swipeDeck === "reader-vocab") ctx.ui.readerVocabIndex += delta;
+    if (deck.dataset.swipeDeck === "reader-practice") ctx.ui.readerPracticeIndex += delta;
     renderRoute(app, ctx);
   }, { passive: true });
 }
@@ -644,6 +706,17 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
         ...ctx.state.mockExam,
         currentIndex: Math.max(0, Math.min(ctx.state.mockExam.questions.length - 1, index))
       };
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
+    return true;
+  }
+
+  if (target.closest("[data-mock-jump-unanswered]") && ctx.state.mockExam) {
+    const attempt = ctx.state.mockExam;
+    const unanswered = attempt.questions.findIndex((item) => !attempt.responses[item.id]?.answered);
+    if (unanswered >= 0) {
+      ctx.state.mockExam = { ...attempt, currentIndex: unanswered };
       saveState(ctx.state);
       renderRoute(app, ctx);
     }

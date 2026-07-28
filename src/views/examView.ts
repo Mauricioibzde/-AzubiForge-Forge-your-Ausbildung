@@ -181,6 +181,11 @@ function renderMockActive(attempt: MockExamAttempt): string {
           `;
         }).join("")}
       </div>
+      ${answered < total ? `
+        <button class="button secondary mock-jump-unanswered" type="button" data-mock-jump-unanswered>
+          Ir para a primeira sem resposta (${total - answered})
+        </button>
+      ` : ""}
 
       <article class="mock-question-card">
         <span class="card-label">Aufgabe ${index + 1}/${total}</span>
@@ -428,9 +433,27 @@ function renderSignalCard(item: SignalWort, index: number, total: number): strin
 }
 
 function renderDrillMode(ctx: AppContext): string {
-  const items = getAp1DrillExercises(ctx.data, ctx.state, 24);
-  if (!items.length) {
+  const allItems = getAp1DrillExercises(ctx.data, ctx.state, 24);
+  const wrongOnly = ctx.ui.examDrillWrongOnly;
+  const items = wrongOnly
+    ? allItems.filter((item) => ctx.state.exerciseChecks[`exam:${item.chapterId}:${item.style}:${item.question}`] === "wrong")
+    : allItems;
+  const wrongCount = allItems.filter((item) => ctx.state.exerciseChecks[`exam:${item.chapterId}:${item.style}:${item.question}`] === "wrong").length;
+
+  if (!allItems.length) {
     return `<p class="empty-state">Ainda nao ha perguntas AP1 suficientes neste curso.</p>`;
+  }
+
+  if (!items.length) {
+    return `
+      <section class="review-focus panel" aria-label="Drill AP1">
+        <div class="segmented-control compact" aria-label="Filtrar drills">
+          <button class="${!wrongOnly ? "active" : ""}" type="button" data-filter-group="exam-drill-wrong" data-filter-value="all">Todos</button>
+          <button class="${wrongOnly ? "active" : ""}" type="button" data-filter-group="exam-drill-wrong" data-filter-value="wrong">So erros (${wrongCount})</button>
+        </div>
+        <p class="empty-state">Nenhum erro marcado nos drills ainda.</p>
+      </section>
+    `;
   }
 
   const index = ((ctx.ui.examFocusIndex % items.length) + items.length) % items.length;
@@ -442,6 +465,10 @@ function renderDrillMode(ctx: AppContext): string {
   return `
     <section class="review-focus panel" aria-label="Drill AP1">
       <p class="small-note">Responda como na prova: leia o Signalwort, monte a resposta, so depois revele.</p>
+      <div class="segmented-control compact" aria-label="Filtrar drills">
+        <button class="${!wrongOnly ? "active" : ""}" type="button" data-filter-group="exam-drill-wrong" data-filter-value="all">Todos</button>
+        <button class="${wrongOnly ? "active" : ""}" type="button" data-filter-group="exam-drill-wrong" data-filter-value="wrong">So erros (${wrongCount})</button>
+      </div>
       <div class="focus-stage" data-swipe-deck="exam">
         ${renderDrillCard(item, index, items.length, signal, checkKey, check)}
       </div>

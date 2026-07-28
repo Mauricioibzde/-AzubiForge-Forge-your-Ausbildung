@@ -14,6 +14,7 @@ import {
   getResumeTab,
   getSessionProgress,
   getStudyStreak,
+  getStudyCalendarDays,
   getTodayChapter,
   getTodayStudyCount,
   isReviewDue,
@@ -27,6 +28,7 @@ export function renderHomeView(ctx: AppContext): string {
   const readiness = getCourseReadiness(ctx.data, ctx.state);
   const daily = getDailyGoalProgress(ctx.state);
   const streak = getStudyStreak(ctx.state);
+  const calendar = getStudyCalendarDays(ctx.state, 14);
   const todayCount = getTodayStudyCount(ctx.state);
   const chapter = getTodayChapter(ctx.data, ctx.state);
   const chapterReadiness = getChapterReadiness(ctx.data, ctx.state, chapter);
@@ -83,6 +85,14 @@ export function renderHomeView(ctx: AppContext): string {
             </div>
           </div>
           <p class="small-note">Streak ${streak} dia(s) · ${todayCount} capitulo(s) tocados hoje · ${dueCount} em revisao</p>
+          <div class="streak-calendar" aria-label="Ultimos 14 dias de estudo">
+            ${calendar.map((day) => `
+              <span
+                class="streak-day ${day.studied ? "studied" : ""} ${day.isToday ? "today" : ""}"
+                title="${day.key}${day.studied ? " · estudou" : ""}"
+              >${day.label}</span>
+            `).join("")}
+          </div>
         </div>
       </section>
 

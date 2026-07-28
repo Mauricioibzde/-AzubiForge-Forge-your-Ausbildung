@@ -115,14 +115,15 @@ export function getChapterExercises(chapter: Chapter): Exercise[] {
 export function getReviewExercises(
   data: AzubiForgeData,
   state: AppState
-): Array<Exercise & { chapterId: string; chapterTitle: string }> {
+): Array<Exercise & { chapterId: string; chapterTitle: string; exerciseIndex: number }> {
   const queue = getReviewQueue(data, state);
   const source = queue.length ? queue : data.chapters.slice(0, 6);
 
-  return source.flatMap((chapter) => getChapterExercises(chapter).map((exercise) => ({
+  return source.flatMap((chapter) => getChapterExercises(chapter).map((exercise, exerciseIndex) => ({
     ...exercise,
     chapterId: chapter.id,
-    chapterTitle: chapter.title
+    chapterTitle: chapter.title,
+    exerciseIndex
   })));
 }
 
@@ -389,6 +390,34 @@ export function getStudyStreak(state: AppState): number {
   }
 
   return streak;
+}
+
+export interface StudyCalendarDay {
+  key: string;
+  label: string;
+  studied: boolean;
+  isToday: boolean;
+}
+
+export function getStudyCalendarDays(state: AppState, days = 14): StudyCalendarDay[] {
+  const studied = new Set(state.studyDates);
+  const today = todayKey();
+  const result: StudyCalendarDay[] = [];
+  const cursor = new Date();
+  cursor.setDate(cursor.getDate() - (days - 1));
+
+  for (let index = 0; index < days; index += 1) {
+    const key = todayKey(cursor);
+    result.push({
+      key,
+      label: String(cursor.getDate()),
+      studied: studied.has(key),
+      isToday: key === today
+    });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return result;
 }
 
 export function getDailyGoalProgress(state: AppState): Progress {

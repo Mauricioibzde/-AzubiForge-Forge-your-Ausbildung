@@ -180,7 +180,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
       </aside>
 
       <div class="mobile-study-dock" aria-label="Acoes da sessao">
-        <div class="mobile-dock-tabs" aria-label="Etapas da sessao">
+        <div class="mobile-dock-tabs" data-swipe-tabs aria-label="Etapas da sessao">
           ${READER_STEPS.map((step) => {
             const visited = getVisitedSteps(ctx.state, chapter.id).includes(step.id);
             const active = step.id === ctx.ui.readerTab;
@@ -430,12 +430,16 @@ function practiceTab(ctx: AppContext, chapter: Chapter): string {
     : chapter.exercises;
   const stats = getChapterExerciseStats(ctx.state, chapter.id, exercises.length);
   const filter = ctx.ui.practiceFilter;
+  const mode = ctx.ui.readerPracticeMode;
   const visible = exercises
     .map((exercise, index) => ({ exercise, index }))
     .filter(({ index }) => {
       if (filter !== "wrong") return true;
       return ctx.state.exerciseChecks[exerciseCheckKey(chapter.id, index)] === "wrong";
     });
+  const total = visible.length;
+  const flashIndex = total ? ((ctx.ui.readerPracticeIndex % total) + total) % total : 0;
+  const current = visible[flashIndex];
 
   return `
     <section class="chapter-section">
@@ -443,17 +447,78 @@ function practiceTab(ctx: AppContext, chapter: Chapter): string {
         <h2>Uebungen</h2>
         <p class="small-note">${stats.answered} respondidas · ${stats.correct} corretas · ${stats.wrong} para revisar</p>
       </div>
-      <div class="segmented-control compact" aria-label="Filtrar exercicios">
-        <button class="${filter === "all" ? "active" : ""}" type="button" data-filter-group="practice-filter" data-filter-value="all">Todos</button>
-        <button class="${filter === "wrong" ? "active" : ""}" type="button" data-filter-group="practice-filter" data-filter-value="wrong">So erros (${stats.wrong})</button>
+      <div class="practice-toolbar">
+        <div class="segmented-control compact" aria-label="Modo das Uebungen">
+          <button class="${mode === "flash" ? "active" : ""}" type="button" data-filter-group="reader-practice-mode" data-filter-value="flash">Flash</button>
+          <button class="${mode === "list" ? "active" : ""}" type="button" data-filter-group="reader-practice-mode" data-filter-value="list">Lista</button>
+        </div>
+        <div class="segmented-control compact" aria-label="Filtrar exercicios">
+          <button class="${filter === "all" ? "active" : ""}" type="button" data-filter-group="practice-filter" data-filter-value="all">Todos</button>
+          <button class="${filter === "wrong" ? "active" : ""}" type="button" data-filter-group="practice-filter" data-filter-value="wrong">So erros (${stats.wrong})</button>
+        </div>
       </div>
       <p>Responda mentalmente, abra a solucao e marque se acertou. Erros entram na revisao.</p>
-      ${visible.length ? visible.map(({ exercise, index }) => exerciseCard(exercise, index, {
+      ${!total ? `<p class="empty-state">${filter === "wrong" ? "Nenhum erro marcado neste capitulo." : "Nenhum exercicio neste capitulo."}</p>` : ""}
+      ${total && mode === "flash" && current ? `
+        <section class="review-focus" aria-label="Flash Uebungen">
+          <div class="focus-stage" data-swipe-deck="reader-practice">
+            ${renderPracticeFlash(ctx, chapter.id, current.exercise, current.index, flashIndex, total)}
+          </div>
+          <div class="focus-controls">
+            <button class="button secondary" type="button" data-reader-practice-step="-1">Anterior</button>
+            <span class="focus-count">${flashIndex + 1} / ${total}</span>
+            <button class="button" type="button" data-reader-practice-step="1">Proximo</button>
+          </div>
+        </section>
+      ` : ""}
+      ${total && mode === "list" ? visible.map(({ exercise, index }) => exerciseCard(exercise, index, {
         chapterId: chapter.id,
         checkKey: exerciseCheckKey(chapter.id, index),
         check: ctx.state.exerciseChecks[exerciseCheckKey(chapter.id, index)]
-      })).join("") : `<p class="empty-state">Nenhum erro marcado neste capitulo.</p>`}
+      })).join("") : ""}
     </section>
+  `;
+}
+
+function renderPracticeFlash(
+  ctx: AppContext,
+  chapterId: string,
+  exercise: { question: string; answer: string; explanation?: string },
+  exerciseIndex: number,
+  displayIndex: number,
+  total: number
+): string {
+  const checkKey = exerciseCheckKey(chapterId, exerciseIndex);
+  const check = ctx.state.exerciseChecks[checkKey];
+  return `
+    <article class="focus-card-big ${check ? `checked-${check}` : ""}">
+      <span class="card-label">Uebung ${displayIndex + 1}/${total}</span>
+      <h2>Aufgabe</h2>
+      <p class="focus-question">${exercise.question}</p>
+      <details class="focus-reveal">
+        <summary>Revelar resposta</summary>
+        <p><strong>Antwort:</strong> ${exercise.answer}</p>
+        ${exercise.explanation ? `<p><strong>Erklaerung:</strong> ${exercise.explanation}</p>` : ""}
+        <div class="self-check-actions">
+          <button
+            class="button secondary ${check === "correct" ? "active-check" : ""}"
+            type="button"
+            data-exercise-check="correct"
+            data-check-key="${checkKey}"
+            data-check-chapter="${chapterId}"
+            data-auto-advance="reader-practice"
+          >Acertei</button>
+          <button
+            class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
+            type="button"
+            data-exercise-check="wrong"
+            data-check-key="${checkKey}"
+            data-check-chapter="${chapterId}"
+            data-auto-advance="reader-practice"
+          >Errei / revisar</button>
+        </div>
+      </details>
+    </article>
   `;
 }
 
