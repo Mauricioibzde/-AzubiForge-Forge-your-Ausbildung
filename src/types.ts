@@ -183,6 +183,8 @@ export interface AppState {
   exerciseChecks: Record<string, ExerciseCheck>;
   vocabChecks: Record<string, ExerciseCheck>;
   reviewSchedule: Record<string, string>;
+  reviewDailyResolved: Record<string, number>;
+  reviewResolvedKeyDay: Record<string, string>;
   examChecklist: Record<string, boolean>;
   mockExam: MockExamAttempt | null;
   mockExamHistory: MockExamHistoryEntry[];

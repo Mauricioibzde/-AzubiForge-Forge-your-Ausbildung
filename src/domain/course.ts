@@ -356,6 +356,28 @@ export function scheduleReviewCheck(
   state.reviewSchedule[key] = new Date(now + days * DAY_MS).toISOString();
 }
 
+export function isReviewKeyDue(state: AppState, key: string): boolean {
+  const dueAt = state.reviewSchedule[key];
+  if (!dueAt) return false;
+  const due = Date.parse(dueAt);
+  return !Number.isNaN(due) && due <= Date.now();
+}
+
+export function markDueReviewResolved(
+  state: AppState,
+  key: string,
+  next: ExerciseCheck,
+  previous?: ExerciseCheck
+): void {
+  if (next !== "correct" || previous === "correct") return;
+  if (!isReviewKeyDue(state, key)) return;
+
+  const today = todayKey();
+  if (state.reviewResolvedKeyDay[key] === today) return;
+  state.reviewResolvedKeyDay[key] = today;
+  state.reviewDailyResolved[today] = (state.reviewDailyResolved[today] || 0) + 1;
+}
+
 export function sortByCheckPriority<T>(
   items: T[],
   getCheck: (item: T) => ExerciseCheck | undefined
@@ -533,6 +555,35 @@ export function getDueReviewItemCount(state: AppState): number {
     const due = Date.parse(dueAt);
     return !Number.isNaN(due) && due <= now;
   }).length;
+}
+
+export function getTodayResolvedReviewCount(state: AppState): number {
+  return state.reviewDailyResolved[todayKey()] || 0;
+}
+
+export function getReviewResolutionStreak(state: AppState): number {
+  const days = new Set(
+    Object.entries(state.reviewDailyResolved)
+      .filter(([, count]) => count > 0)
+      .map(([day]) => day)
+  );
+  let streak = 0;
+  const cursor = new Date();
+
+  for (let index = 0; index < 120; index += 1) {
+    const key = todayKey(cursor);
+    if (!days.has(key)) {
+      if (index === 0) {
+        cursor.setDate(cursor.getDate() - 1);
+        continue;
+      }
+      break;
+    }
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
 }
 
 function hasDueReviewCheck(state: AppState, chapterId: string): boolean {

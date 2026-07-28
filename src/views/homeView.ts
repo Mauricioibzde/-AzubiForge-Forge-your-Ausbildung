@@ -18,6 +18,8 @@ import {
   getSessionProgress,
   getStudyStreak,
   getStudyCalendarDays,
+  getReviewResolutionStreak,
+  getTodayResolvedReviewCount,
   getTodayChapter,
   isCompleted,
   isReviewDue,
@@ -54,6 +56,8 @@ export function renderHomeView(ctx: AppContext): string {
   const review = getReviewQueue(ctx.data, ctx.state).filter((item) => item.id !== chapter.id).slice(0, 5);
   const dueCount = ctx.data.chapters.filter((item) => isReviewDue(ctx.state, item.id)).length;
   const dueItems = getDueReviewItemCount(ctx.state);
+  const resolvedToday = getTodayResolvedReviewCount(ctx.state);
+  const reviewStreak = getReviewResolutionStreak(ctx.state);
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
   const continueResumeTab = getResumeTab(ctx.state, continueChapter.id);
   const moduleProgress = getModuleProgress(ctx.data, ctx.state, module);
@@ -228,6 +232,8 @@ export function renderHomeView(ctx: AppContext): string {
               <div><dt>Sessoes uteis hoje</dt><dd>${daily.completed} / ${daily.total}</dd></div>
               <div><dt>Tempo de estudo</dt><dd>${studyMinutes} min</dd></div>
               <div><dt>Sequencia (streak)</dt><dd>${streak} dia(s)</dd></div>
+              <div><dt>Revisoes resolvidas hoje</dt><dd>${resolvedToday}</dd></div>
+              <div><dt>Streak de revisao</dt><dd>${reviewStreak} dia(s)</dd></div>
               <div><dt>Quase prontos AP1</dt><dd>${readiness.completed}</dd></div>
               <div><dt>Com anotacoes</dt><dd>${notesCount}</dd></div>
             </dl>

@@ -84,6 +84,8 @@ function createFallbackState(data: AzubiForgeData): AppState {
     exerciseChecks: {},
     vocabChecks: {},
     reviewSchedule: {},
+    reviewDailyResolved: {},
+    reviewResolvedKeyDay: {},
     examChecklist: {},
     mockExam: null,
     mockExamHistory: [],
@@ -119,6 +121,8 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     exerciseChecks: sanitizeExerciseChecks(imported.exerciseChecks),
     vocabChecks: sanitizeExerciseChecks(imported.vocabChecks),
     reviewSchedule: sanitizeReviewSchedule(imported.reviewSchedule),
+    reviewDailyResolved: sanitizeDailyCountRecord(imported.reviewDailyResolved),
+    reviewResolvedKeyDay: sanitizeReviewResolvedKeyDay(imported.reviewResolvedKeyDay),
     examChecklist: sanitizeExamChecklist(imported.examChecklist),
     mockExam: sanitizeMockExam(imported.mockExam),
     mockExamHistory: sanitizeMockExamHistory(imported.mockExamHistory),
@@ -251,6 +255,28 @@ function sanitizeReviewSchedule(value: unknown): Record<string, string> {
     if (!Number.isNaN(ts)) record[key] = new Date(ts).toISOString();
   });
 
+  return record;
+}
+
+function sanitizeDailyCountRecord(value: unknown): Record<string, number> {
+  const record: Record<string, number> = {};
+  if (!value || typeof value !== "object") return record;
+  Object.entries(value).forEach(([key, item]) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return;
+    if (typeof item !== "number" || item < 0) return;
+    record[key] = Math.min(9999, Math.round(item));
+  });
+  return record;
+}
+
+function sanitizeReviewResolvedKeyDay(value: unknown): Record<string, string> {
+  const record: Record<string, string> = {};
+  if (!value || typeof value !== "object") return record;
+  Object.entries(value).forEach(([key, item]) => {
+    if (typeof key !== "string" || typeof item !== "string") return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(item)) return;
+    record[key] = item;
+  });
   return record;
 }
 

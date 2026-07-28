@@ -1,8 +1,10 @@
 import type { AppContext } from "../appContext";
 import {
   exerciseCheckKey,
+  getReviewResolutionStreak,
   getReviewExercises,
   getReviewQueue,
+  getTodayResolvedReviewCount,
   getReviewVocabularyDeck,
   sortByCheckPriority,
   vocabCheckKey,
@@ -56,6 +58,8 @@ export function renderReviewView(ctx: AppContext): string {
   const dueTermCount = filteredTerms.filter((term) => isReviewItemDue(ctx.state.reviewSchedule, vocabCheckKey(term.chapterId, term.index))).length;
   const dueCardCount = filteredCards.filter((card) => isReviewItemDue(ctx.state.reviewSchedule, exerciseCheckKey(card.chapterId, card.exerciseIndex))).length;
   const focusDueCount = mode === "flash" ? dueTermCount : dueCardCount;
+  const resolvedToday = getTodayResolvedReviewCount(ctx.state);
+  const reviewStreak = getReviewResolutionStreak(ctx.state);
 
   return `
     <section class="review-shell">
@@ -69,6 +73,7 @@ export function renderReviewView(ctx: AppContext): string {
           <span class="card-label">Fila</span>
           <h2>${queue.length}</h2>
           <p class="small-note">capitulos para revisar</p>
+          <p class="small-note">${resolvedToday} resolvidos hoje · streak ${reviewStreak} dia(s)</p>
           ${wrongExerciseCount || wrongVocabCount
             ? `<p class="small-note">${wrongExerciseCount} exercicios · ${wrongVocabCount} termos para revisar</p>`
             : ""}
