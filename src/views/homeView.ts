@@ -73,7 +73,7 @@ export function renderHomeView(ctx: AppContext): string {
             <strong>${unfinishedMock.status === "grading" ? "Correcao em andamento" : "Simulado em andamento"}</strong>
             <p class="small-note">${getMockExamAnsweredCount(unfinishedMock)}/${unfinishedMock.questions.length} · ${formatMockExamTimer(getMockExamRemainingMs(unfinishedMock))} restantes</p>
           </div>
-          <a class="button" href="#exam" data-go-exam-mock>Retomar simulado</a>
+          <a class="button" href="#exam/mock" data-go-exam-mock>Retomar simulado</a>
         </section>
       ` : ""}
 
@@ -147,8 +147,8 @@ export function renderHomeView(ctx: AppContext): string {
           ` : `<p class="small-note">Nenhum ponto critico na fila. Use o treino AP1 para manter a forma.</p>`}
         </div>
         <div class="session-focus-actions">
-          <a class="button large" href="#exam">${examSummary.weakCount ? "Abrir treino AP1" : "Treinar perguntas AP1"}</a>
-          <a class="button secondary" href="#exam" data-go-exam-mock>Fazer simulado</a>
+          <a class="button large" href="#exam/${examSummary.weakCount ? "weak" : "drill"}">${examSummary.weakCount ? "Abrir treino AP1" : "Treinar perguntas AP1"}</a>
+          <a class="button secondary" href="#exam/mock" data-go-exam-mock>Fazer simulado</a>
           <a class="button secondary" href="#review">Revisao ativa</a>
         </div>
       </section>
@@ -159,7 +159,7 @@ export function renderHomeView(ctx: AppContext): string {
           <h2>Voce concluiu todos os capitulos registrados.</h2>
           <p>Agora o foco e revisao ativa, drills AP1 e subir a prontidao dos temas marcados como revisar.</p>
           <div class="session-focus-actions">
-            <a class="button" href="#exam">Treino AP1</a>
+            <a class="button" href="#exam/${examSummary.weakCount ? "weak" : "drill"}">Treino AP1</a>
             <a class="button secondary" href="#review">Abrir revisao</a>
           </div>
         </section>
@@ -182,11 +182,14 @@ export function renderHomeView(ctx: AppContext): string {
             ${READER_STEPS.map((step, index) => {
               const done = (ctx.state.sessionSteps[chapter.id] || []).includes(step.id);
               return `
-                <div class="session-step ${done ? "done" : ""} ${index === session.completed ? "current" : ""}">
+                <a
+                  class="session-step ${done ? "done" : ""} ${index === session.completed ? "current" : ""}"
+                  href="#reader/${chapter.id}/${step.id}"
+                >
                   <span>${index + 1}</span>
                   <strong>${step.label}</strong>
                   <small>${step.hint}</small>
-                </div>
+                </a>
               `;
             }).join("")}
           </div>
@@ -201,7 +204,7 @@ export function renderHomeView(ctx: AppContext): string {
         <div class="session-focus-actions">
           <a class="button large" href="#reader/${chapter.id}/${resumeTab}">${ctaLabel}</a>
           <a class="button secondary" href="#course">Ver trilha do curso</a>
-          <a class="button secondary" href="#exam">Treino AP1</a>
+          <a class="button secondary" href="#exam/${examSummary.weakCount ? "weak" : "drill"}">Treino AP1</a>
         </div>
       </section>
 
@@ -224,7 +227,7 @@ export function renderHomeView(ctx: AppContext): string {
               const current = continueChapter.id === id;
               return `
                 <li class="${done ? "done" : ""} ${current ? "current" : ""}">
-                  <a href="#reader/${id}">
+                  <a href="#reader/${id}/${getResumeTab(ctx.state, id)}">
                     <span>${index + 1}</span>
                     <strong>${item.title}</strong>
                   </a>
@@ -241,7 +244,7 @@ export function renderHomeView(ctx: AppContext): string {
           <p>Capitulos fracos ou ainda abertos. Tres no maximo para nao sobrecarregar.</p>
           <div class="mini-list">
             ${review.length ? review.map((item) => `
-              <a href="#reader/${item.id}">
+              <a href="#reader/${item.id}/${getResumeTab(ctx.state, item.id)}">
                 <strong>${item.title}</strong>
                 <span>${getChapterModule(ctx.data, item.id)?.subtitle || "Curso"} ${confidenceBadge(ctx.state, item.id)}</span>
               </a>
@@ -282,7 +285,7 @@ function renderGlobalResults(ctx: AppContext): string {
       type: "Capitulo",
       title: chapter.title,
       description: chapter.description,
-      href: `#reader/${chapter.id}`
+      href: `#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}`
     }));
   const glossary = ctx.data.glossary
     .filter((term) => `${term.word} ${term.translation} ${term.explanation}`.toLowerCase().includes(query))

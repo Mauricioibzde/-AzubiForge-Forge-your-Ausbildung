@@ -196,6 +196,7 @@ function renderMockActive(attempt: MockExamAttempt): string {
         </button>
       ` : ""}
 
+      <div class="focus-stage" data-swipe-deck="mock">
       <article class="mock-question-card">
         <span class="card-label">Aufgabe ${index + 1}/${total}</span>
         <p class="exam-chapter-tag">${question.moduleTitle}</p>
@@ -217,6 +218,7 @@ function renderMockActive(attempt: MockExamAttempt): string {
           >${response.answered ? "Respondida" : "Marcar como respondida"}</button>
         </div>
       </article>
+      </div>
 
       <div class="focus-controls">
         <button class="button secondary" type="button" data-mock-step="-1" ${index === 0 ? "disabled" : ""}>Anterior</button>
@@ -272,6 +274,7 @@ function renderMockGrading(ctx: AppContext, attempt: MockExamAttempt): string {
         </button>
       ` : ""}
 
+      <div class="focus-stage" data-swipe-deck="mock">
       <article class="mock-question-card">
         <span class="card-label">Aufgabe ${index + 1}/${total}</span>
         <p class="exam-chapter-tag">${question.moduleTitle} · ${question.chapterTitle}</p>
@@ -304,6 +307,7 @@ function renderMockGrading(ctx: AppContext, attempt: MockExamAttempt): string {
         </div>
         <a class="text-link" href="#reader/${question.chapterId}/${resumeTab}">Abrir capitulo</a>
       </article>
+      </div>
 
       <div class="focus-controls">
         <button class="button secondary" type="button" data-mock-step="-1" ${index === 0 ? "disabled" : ""}>Anterior</button>
@@ -470,19 +474,20 @@ function renderMistakesMode(ctx: AppContext): string {
   const question = wrongs[index];
   const signal = detectSignalWort(question.question);
   const resumeTab = getResumeTab(ctx.state, question.chapterId);
+  const check = attempt?.responses[question.id]?.selfCheck;
 
   return `
     <section class="review-focus panel" aria-label="Erros do simulado">
-      <p class="small-note">Revisao focada nas perguntas que voce marcou como erro no ultimo simulado.</p>
+      <p class="small-note">Revisite o erro. Se agora acertou, marque Acertei para tirar da fila.</p>
       <div class="focus-stage" data-swipe-deck="exam">
-        ${renderMistakeCard(question, index, wrongs.length, signal, resumeTab)}
+        ${renderMistakeCard(question, index, wrongs.length, signal, resumeTab, check)}
       </div>
       <div class="focus-controls">
         <button class="button secondary" type="button" data-exam-step="-1">Anterior</button>
         <span class="focus-count">${index + 1} / ${wrongs.length}</span>
         <button class="button" type="button" data-exam-step="1">Proximo</button>
       </div>
-      <p class="small-note">Espaco revela · setas navegam.</p>
+      <p class="small-note">Espaco revela · 1 Acertei · 2 Errei · setas navegam.</p>
     </section>
   `;
 }
@@ -492,7 +497,8 @@ function renderMistakeCard(
   index: number,
   total: number,
   signal: SignalWort | undefined,
-  resumeTab: string
+  resumeTab: string,
+  check?: string
 ): string {
   return `
     <article class="focus-card-big">
@@ -506,6 +512,20 @@ function renderMistakeCard(
         <p><strong>Antwort:</strong> ${escapeHtml(question.answer)}</p>
         ${question.explanation ? `<p><strong>Erklaerung:</strong> ${escapeHtml(question.explanation)}</p>` : ""}
         ${signal ? `<p class="small-note">Lembrete: ${escapeHtml(signal.tip)}</p>` : ""}
+        <div class="self-check-actions">
+          <button
+            class="button secondary ${check === "correct" ? "active-check" : ""}"
+            type="button"
+            data-mock-grade="correct"
+            data-mock-question="${escapeAttribute(question.id)}"
+          >Acertei agora</button>
+          <button
+            class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
+            type="button"
+            data-mock-grade="wrong"
+            data-mock-question="${escapeAttribute(question.id)}"
+          >Continua errado</button>
+        </div>
         <a class="text-link" href="#reader/${question.chapterId}/${resumeTab}">Abrir capitulo</a>
         <a class="text-link" href="#reader/${question.chapterId}/practice">Abrir Uebungen</a>
       </details>

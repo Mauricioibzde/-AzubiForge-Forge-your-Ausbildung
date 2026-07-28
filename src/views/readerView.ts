@@ -10,6 +10,7 @@ import {
   getEstimatedSessionMinutes,
   getNextSessionTab,
   getReadingMinutes,
+  getResumeTab,
   getSessionProgress,
   getVisitedSteps,
   getVocabStats,
@@ -116,7 +117,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
               </div>
               <div class="session-close-actions">
                 ${renderCompleteButton(ctx, chapter.id, done, session, exerciseStats)}
-                ${next ? `<a class="button secondary" href="#reader/${next.id}">Proximo: ${next.title}</a>` : `<a class="button secondary" href="#exam">Treino AP1</a>`}
+                ${next ? `<a class="button secondary" href="#reader/${next.id}/${getResumeTab(ctx.state, next.id)}">Proximo: ${next.title}</a>` : `<a class="button secondary" href="#exam/drill">Treino AP1</a>`}
               </div>
             `}
           </section>
@@ -140,8 +141,8 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
         <div class="panel">
           <a class="text-link back-link" href="#course">Voltar a trilha</a>
           <div class="actions">
-            ${previous ? `<a class="button secondary" href="#reader/${previous.id}">Anterior</a>` : ""}
-            ${next ? `<a class="button secondary" href="#reader/${next.id}">Proximo capitulo</a>` : ""}
+            ${previous ? `<a class="button secondary" href="#reader/${previous.id}/${getResumeTab(ctx.state, previous.id)}">Anterior</a>` : ""}
+            ${next ? `<a class="button secondary" href="#reader/${next.id}/${getResumeTab(ctx.state, next.id)}">Proximo capitulo</a>` : ""}
             ${renderCompleteButton(ctx, chapter.id, done, session, exerciseStats)}
           </div>
           ${renderCompleteGateNote(ctx, chapter.id, session, exerciseStats)}
@@ -206,8 +207,8 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           ${renderCompleteGateNote(ctx, chapter.id, session, exerciseStats)}
           ${renderCompleteButton(ctx, chapter.id, done, session, exerciseStats)}
           ${next
-            ? `<a class="button secondary" href="#reader/${next.id}">Proximo: ${next.title}</a>`
-            : `<a class="button secondary" href="#exam">Treino AP1</a>`}
+            ? `<a class="button secondary" href="#reader/${next.id}/${getResumeTab(ctx.state, next.id)}">Proximo: ${next.title}</a>`
+            : `<a class="button secondary" href="#exam/drill">Treino AP1</a>`}
         `}
         <div class="mobile-study-meta">
           <span>${session.completed}/${session.total} · ${readiness.label}</span>

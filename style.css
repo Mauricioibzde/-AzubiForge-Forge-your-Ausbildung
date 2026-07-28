@@ -1922,6 +1922,14 @@ summary {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface-soft);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+a.session-step:hover {
+  border-color: rgba(15, 107, 95, 0.45);
+  transform: translateY(-1px);
 }
 
 .session-step span {

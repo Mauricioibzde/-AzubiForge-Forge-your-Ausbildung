@@ -46,12 +46,14 @@ import {
   formatMockExamTimer,
   getMockExamAnsweredCount,
   getMockExamFirstUngradedIndex,
+  getMockExamGradedCount,
   getMockExamRemainingMs,
   setMockExamResponse,
   setMockExamSelfCheck
 } from "./domain/mockExam";
 
 const READER_TABS: ReaderTab[] = ["explain", "praxis", "vocab", "practice", "ap1"];
+const EXAM_MODES: ExamFocusMode[] = ["mock", "weak", "signals", "drill", "checklist", "mistakes"];
 let mockExamTimerId: number | null = null;
 
 export function startApp(): void {
@@ -119,11 +121,16 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
 
   closeSidebar();
 
+  if (expireActiveMockIfNeeded(ctx) && route !== "exam") {
+    // Time ran out while away from exam; keep going to the requested route.
+  }
+
   let chapterId: string | undefined;
   if (route === "course") app.innerHTML = renderCourseView(ctx);
   else if (route === "reader") {
     chapterId = id || ctx.state.lastChapterId || ctx.data.chapters[0].id;
-    if (ctx.ui.readerChapterId !== chapterId) {
+    const chapterChanged = ctx.ui.readerChapterId !== chapterId;
+    if (chapterChanged) {
       ctx.ui.readerChapterId = chapterId;
       ctx.ui.readerTab = getResumeTab(ctx.state, chapterId);
       ctx.ui.completeGateChapterId = "";
@@ -135,6 +142,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
     if (tab && READER_TABS.includes(tab as ReaderTab)) {
       ctx.ui.readerTab = tab as ReaderTab;
     }
+    setReaderHash(chapterId, ctx.ui.readerTab);
     ctx.state.lastChapterId = chapterId;
     markVisitedStep(ctx.state, chapterId, ctx.ui.readerTab);
     touchStudied(ctx.state, chapterId);
@@ -142,8 +150,13 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
     app.innerHTML = renderReaderView(ctx, chapterId);
   } else if (route === "review") app.innerHTML = renderReviewView(ctx);
   else if (route === "glossary") app.innerHTML = renderGlossaryView(ctx);
-  else if (route === "exam") app.innerHTML = renderExamView(ctx);
-  else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
+  else if (route === "exam") {
+    if (id && EXAM_MODES.includes(id as ExamFocusMode)) {
+      ctx.ui.examFocusMode = id as ExamFocusMode;
+    }
+    setExamHash(ctx.ui.examFocusMode);
+    app.innerHTML = renderExamView(ctx);
+  } else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
   else app.innerHTML = renderHomeView(ctx);
 
   syncChrome(ctx, route || "home", chapterId);
@@ -152,7 +165,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
   if (previousRoute && previousRoute !== route) scrollToPageTop();
   maybeScrollReaderStep(route);
   maybeScrollMockPill(route || "home", ctx);
-  syncMockExamTimer(app, ctx, route || "home");
+  syncMockExamTimer(app, ctx);
 }
 
 function maybeScrollReaderStep(route: RouteName): void {
@@ -187,20 +200,37 @@ function setReaderHash(chapterId: string, tab: ReaderTab): void {
   }
 }
 
+function setExamHash(mode: ExamFocusMode): void {
+  const next = `#exam/${mode}`;
+  if (window.location.hash !== next) {
+    history.replaceState(null, "", next);
+  }
+}
+
+function expireActiveMockIfNeeded(ctx: AppContext): boolean {
+  const attempt = ctx.state.mockExam;
+  if (!attempt || attempt.status !== "active") return false;
+  if (getMockExamRemainingMs(attempt) > 0) return false;
+  submitMockExam(ctx);
+  return true;
+}
+
 function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void {
   const target = event.target as Element;
 
   if (target.closest("[data-go-exam-mock]")) {
     ctx.ui.examFocusMode = "mock";
-    // hash navigation continues for <a href="#exam">
+    setExamHash("mock");
+    // hash navigation continues for <a href="#exam/mock">
   }
 
   if (target.closest("[data-review-mistakes]")) {
     event.preventDefault();
     ctx.ui.examFocusMode = "mistakes";
     ctx.ui.examFocusIndex = 0;
+    setExamHash("mistakes");
     if ((window.location.hash.replace("#", "").split("/")[0] || "") !== "exam") {
-      window.location.hash = "#exam";
+      window.location.hash = "#exam/mistakes";
     } else {
       renderRoute(app, ctx);
     }
@@ -211,8 +241,9 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     event.preventDefault();
     ctx.ui.examFocusMode = "mistakes";
     ctx.ui.examFocusIndex = 0;
+    setExamHash("mistakes");
     if ((window.location.hash.replace("#", "").split("/")[0] || "") !== "exam") {
-      window.location.hash = "#exam";
+      window.location.hash = "#exam/mistakes";
     } else {
       renderRoute(app, ctx);
     }
@@ -468,11 +499,46 @@ function handleInput(event: Event, app: HTMLElement, ctx: AppContext): void {
 
   if (target.matches("[data-mock-notes]") && ctx.state.mockExam) {
     const questionId = target.dataset.mockNotes || "";
+    const answered = Boolean(target.value.trim()) || Boolean(ctx.state.mockExam.responses[questionId]?.answered);
     ctx.state.mockExam = setMockExamResponse(ctx.state.mockExam, questionId, {
       notes: target.value,
-      answered: Boolean(target.value.trim()) || ctx.state.mockExam.responses[questionId]?.answered
+      answered
     });
     saveState(ctx.state);
+    syncMockAnsweredUi(app, ctx, questionId, answered);
+  }
+}
+
+function syncMockAnsweredUi(
+  app: HTMLElement,
+  ctx: AppContext,
+  questionId: string,
+  answered: boolean
+): void {
+  const attempt = ctx.state.mockExam;
+  if (!attempt) return;
+  const total = attempt.questions.length;
+  const answeredCount = getMockExamAnsweredCount(attempt);
+  const countNote = app.querySelector<HTMLElement>(".mock-runner-bar .small-note");
+  if (countNote) countNote.textContent = `${answeredCount}/${total} marcadas como respondidas`;
+
+  const questionIndex = attempt.questions.findIndex((item) => item.id === questionId);
+  if (questionIndex >= 0) {
+    const pill = app.querySelector<HTMLElement>(`.mock-q-pill[data-mock-goto="${questionIndex}"]`);
+    pill?.classList.toggle("answered", answered);
+  }
+
+  const answeredButton = app.querySelector<HTMLElement>(`[data-mock-answered="${questionId.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"]`);
+  if (answeredButton) {
+    answeredButton.classList.toggle("active-check", answered);
+    answeredButton.textContent = answered ? "Respondida" : "Marcar como respondida";
+  }
+
+  const jump = app.querySelector<HTMLElement>("[data-mock-jump-unanswered]");
+  if (jump) {
+    const remaining = total - answeredCount;
+    if (remaining <= 0) jump.remove();
+    else jump.textContent = `Ir para a primeira sem resposta (${remaining})`;
   }
 }
 
@@ -541,6 +607,7 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
   if (group === "exam-focus") {
     ctx.ui.examFocusMode = value as ExamFocusMode;
     ctx.ui.examFocusIndex = 0;
+    setExamHash(ctx.ui.examFocusMode);
   }
   if (group === "reading-size") {
     ctx.state.preferences.readingSize = value as ReadingSize;
@@ -662,7 +729,7 @@ function handleFlashHotkeys(event: KeyboardEvent, _app: HTMLElement, ctx: AppCon
   if (event.key === "1" || event.key === "2") {
     const value = event.key === "1" ? "correct" : "wrong";
     const mockGrade = document.querySelector<HTMLElement>(
-      `.mock-question-card [data-mock-grade="${value}"]`
+      `.mock-question-card [data-mock-grade="${value}"], .focus-stage [data-mock-grade="${value}"]`
     );
     if (mockGrade) {
       event.preventDefault();
@@ -739,6 +806,14 @@ function registerSwipe(app: HTMLElement, ctx: AppContext): void {
     if (deck.dataset.swipeDeck === "exam") ctx.ui.examFocusIndex += delta;
     if (deck.dataset.swipeDeck === "reader-vocab") ctx.ui.readerVocabIndex += delta;
     if (deck.dataset.swipeDeck === "reader-practice") ctx.ui.readerPracticeIndex += delta;
+    if (deck.dataset.swipeDeck === "mock" && ctx.state.mockExam && ctx.state.mockExam.status !== "finished") {
+      const attempt = ctx.state.mockExam;
+      const next = Math.max(0, Math.min(attempt.questions.length - 1, attempt.currentIndex + delta));
+      if (next !== attempt.currentIndex) {
+        ctx.state.mockExam = { ...attempt, currentIndex: next };
+        saveState(ctx.state);
+      }
+    }
     renderRoute(app, ctx);
   }, { passive: true });
 }
@@ -866,8 +941,13 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
       }
     }
     const attempt = ctx.state.mockExam;
-    if (attempt.currentIndex < attempt.questions.length - 1) {
+    if (attempt.status === "grading" && attempt.currentIndex < attempt.questions.length - 1) {
       ctx.state.mockExam = { ...attempt, currentIndex: attempt.currentIndex + 1 };
+    } else if (ctx.ui.examFocusMode === "mistakes" && grade.dataset.mockGrade === "correct") {
+      // Stay on same index; list shrinks so next wrong appears here.
+      ctx.ui.examFocusIndex = Math.max(0, ctx.ui.examFocusIndex);
+    } else if (ctx.ui.examFocusMode === "mistakes") {
+      ctx.ui.examFocusIndex += 1;
     }
     saveState(ctx.state);
     renderRoute(app, ctx);
@@ -892,6 +972,17 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
   }
 
   if (target.closest("[data-mock-finish]") && ctx.state.mockExam) {
+    const attempt = ctx.state.mockExam;
+    if (attempt.status === "grading") {
+      const graded = getMockExamGradedCount(attempt);
+      const remaining = attempt.questions.length - graded;
+      if (remaining > 0) {
+        const confirmed = window.confirm(
+          `Ainda faltam ${remaining} pergunta(s) sem correcao. Calcular resultado mesmo assim?`
+        );
+        if (!confirmed) return true;
+      }
+    }
     finishMockExam(ctx);
     renderRoute(app, ctx);
     return true;
@@ -943,15 +1034,14 @@ function finishMockExam(ctx: AppContext): void {
   saveState(ctx.state);
 }
 
-function syncMockExamTimer(app: HTMLElement, ctx: AppContext, route: RouteName): void {
+function syncMockExamTimer(app: HTMLElement, ctx: AppContext): void {
   if (mockExamTimerId !== null) {
     window.clearInterval(mockExamTimerId);
     mockExamTimerId = null;
   }
 
   const attempt = ctx.state.mockExam;
-  const shouldRun = route === "exam" && ctx.ui.examFocusMode === "mock" && attempt?.status === "active";
-  if (!shouldRun || !attempt) return;
+  if (!attempt || attempt.status !== "active") return;
 
   const tick = (): void => {
     const current = ctx.state.mockExam;
@@ -964,7 +1054,7 @@ function syncMockExamTimer(app: HTMLElement, ctx: AppContext, route: RouteName):
     }
 
     const remaining = getMockExamRemainingMs(current);
-    const timer = app.querySelector<HTMLElement>("[data-mock-timer]");
+    const timer = document.querySelector<HTMLElement>("[data-mock-timer]");
     if (timer) {
       timer.textContent = formatMockExamTimer(remaining);
       timer.classList.toggle("urgent", remaining <= 5 * 60_000);
@@ -972,6 +1062,15 @@ function syncMockExamTimer(app: HTMLElement, ctx: AppContext, route: RouteName):
 
     if (remaining <= 0) {
       submitMockExam(ctx);
+      if (mockExamTimerId !== null) {
+        window.clearInterval(mockExamTimerId);
+        mockExamTimerId = null;
+      }
+      const route = (window.location.hash.replace("#", "").split("/")[0] || "home") as RouteName;
+      if (route === "exam") {
+        ctx.ui.examFocusMode = "mock";
+        setExamHash("mock");
+      }
       renderRoute(app, ctx);
     }
   };

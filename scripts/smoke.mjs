@@ -126,6 +126,13 @@ const courseResume = await mobile.evaluate(() => {
 });
 if (!courseResume) issues.push("course: continue CTA missing resume tab deep-link");
 
+await mobile.goto(`${baseUrl}/#exam/drill`, { waitUntil: "networkidle" });
+const examModeHash = await mobile.evaluate(() => {
+  const hash = window.location.hash;
+  return hash.startsWith("#exam/drill") && Boolean(document.querySelector('[data-filter-value="drill"].active, [aria-label="Drill AP1"]'));
+});
+if (!examModeHash) issues.push("exam: mode hash #exam/drill did not open drill mode");
+
 await mobile.goto(`${baseUrl}/#review`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".review-focus", { timeout: 10000 });
 const reviewWrongFilter = await mobile.evaluate(() => Boolean(document.querySelector('[data-filter-group="review-wrong"]')));
