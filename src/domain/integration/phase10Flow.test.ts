@@ -207,4 +207,63 @@ describe("phase 10 integration flow", () => {
     );
     expect(["mastered", "review-due", "provisionally-mastered"]).toContain(progressFromPersisted.status);
   });
+
+  it("keeps mission failed when mastery score is below threshold", () => {
+    const ctx = createContext();
+    const course = getNormalizedCourseData();
+    const mission = course.missions[0];
+
+    const mastery = createMasteryTest(mission.id, course);
+    expect(mastery).toBeTruthy();
+    let attempt = mastery!;
+    attempt.questions.forEach((question) => {
+      attempt = setMasteryTestSelfCheck(attempt, question.id, "wrong");
+    });
+    attempt = { ...attempt, status: "finished", finishedAt: new Date().toISOString(), score: 0 };
+    applyMasteryTestResult(ctx, attempt);
+
+    const progress = missionProgressFromLegacyState(
+      mission.id,
+      ctx.state,
+      mission.phases.learn.blocks.length || 1
+    );
+    expect(progress.status).toBe("test-failed");
+    expect(ctx.state.masteryTestHistory[0]?.passed).toBe(false);
+
+    const checkpoint = getLearningSituationCheckpoints(course).find((item) => item.situationId === mission.learningSituationId);
+    expect(checkpoint).toBeTruthy();
+    expect(isCheckpointUnlocked(ctx.state, checkpoint!)).toBe(false);
+  });
+
+  it("keeps review due when mission review result is below passing score", () => {
+    const ctx = createContext();
+    const course = getNormalizedCourseData();
+    const mission = course.missions[0];
+
+    const mastery = createMasteryTest(mission.id, course);
+    expect(mastery).toBeTruthy();
+    let masteryAttempt = mastery!;
+    masteryAttempt.questions.forEach((question) => {
+      masteryAttempt = setMasteryTestSelfCheck(masteryAttempt, question.id, "correct");
+    });
+    masteryAttempt = { ...masteryAttempt, status: "finished", finishedAt: new Date().toISOString(), score: 100 };
+    applyMasteryTestResult(ctx, masteryAttempt);
+
+    const review = createMissionReview(mission.id, course);
+    expect(review).toBeTruthy();
+    let reviewAttempt = review!;
+    reviewAttempt.questions.forEach((question) => {
+      reviewAttempt = setAssessmentSelfCheck(reviewAttempt, question.id, "wrong");
+    });
+    reviewAttempt = { ...reviewAttempt, status: "finished", finishedAt: new Date().toISOString(), score: 0 };
+    applyMissionReviewResult(ctx, reviewAttempt);
+
+    expect(ctx.state.missionReviews[mission.id]?.status).toBe("due");
+    const progress = missionProgressFromLegacyState(
+      mission.id,
+      ctx.state,
+      mission.phases.learn.blocks.length || 1
+    );
+    expect(progress.status).not.toBe("mastered");
+  });
 });
