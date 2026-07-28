@@ -6582,6 +6582,10 @@ a.session-step:hover {
 
 .mission-xp {
   color: var(--accent);
+  font-weight: 600;
+  max-width: 16rem;
+  text-align: right;
+  line-height: 1.3;
 }
 
 .mission-next-cta {
