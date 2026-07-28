@@ -28,6 +28,13 @@ color: var(--on-primary);    /* text on primary buttons */
 border-color: var(--line-strong); /* interactive outlines */
 ```
 
-## Typography
+## Buttons
 
-Source Sans 3 (UI/body) + Source Serif 4 (display) — clearer hierarchy than Inter/Playfair defaults.
+- Radius: `--btn-radius` (14px) — not pill/full-round
+- Primary: gradient + inset highlight, `--on-primary` text
+- Secondary: surface + strong border; hover tints toward primary
+- Ghost: quiet until hover
+- Accent: amber gradient with dark ink (`#1a1208`) for contrast
+- States: `:hover` lift, `:active` press, `:focus-visible` ring, disabled muted
+
+Prefer classes: `.button`, `.button.secondary`, `.button.ghost`, `.button.accent`, `.button.large`.
