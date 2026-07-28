@@ -376,6 +376,1485 @@ const DEEP_CHAPTER_SPECS = {
     commonMistakes: ["DELETE mit DROP verwechseln.", "WHERE vergessen bei UPDATE/DELETE."],
     revisionChecklist: ["SELECT/WHERE lesen.", "DML vs DDL.", "Ein Beispiel schreiben."],
     related: ["SELECT", "INSERT", "DML", "DDL"]
+  },
+
+  "python-grundlagen": {
+    studyTime: "55-70 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Lesen und erklaeren Sie einfache Python-Programme.",
+      "Unterscheiden Sie Variable, Datentyp, Eingabe und Ausgabe.",
+      "Erkennen Sie Operatoren, Kommentare und typische Fehlermeldungen."
+    ],
+    introduction: [
+      "Python ist im Lernfeld 5 die Einstiegssprache fuer algorithmisches Denken und Datenverarbeitung.",
+      "AP1 prueft oft Code-Leseaufgaben: Was passiert, welche Ausgabe entsteht, wo ist der Fehler?"
+    ],
+    explanation: [
+      {
+        title: "Grundbausteine",
+        paragraphs: [
+          "Variable speichert einen Wert: name = 'Anna'. Datentypen: int, float, str, bool.",
+          "Eingabe: eingabe = input('Name: '). Ausgabe: print('Hallo', name).",
+          "Operatoren: +, -, *, /, //, %, ==, !=, <, >. Kommentar beginnt mit #."
+        ]
+      },
+      {
+        title: "Beispielprogramm",
+        paragraphs: [
+          "name = input('Dein Name: ')",
+          "alter = int(input('Dein Alter: '))",
+          "print('Hallo', name + ', du bist', alter, 'Jahre alt.')",
+          "int() wandelt Text in Ganzzahl. Ohne int() waere alter ein String."
+        ]
+      }
+    ],
+    realWorldExamples: [
+      "JIKU-Skript liest CSV-Zeilen ein und zaehlt offene Support-Tickets.",
+      "Azubi liest Benutzereingaben fuer eine kleine Kalkulations-App."
+    ],
+    practicalExamples: [{
+      title: "JIKU: Begruessung",
+      paragraphs: ["Kleines Python-Programm fuer Schulungs-Check-in."],
+      steps: ["Variable anlegen.", "input() lesen.", "print() ausgeben.", "Typ mit int() pruefen."]
+    }],
+    vocabulary: [
+      mkVocab("Variable", "variavel", "Speicher fuer einen Wert.", "name = 'Anna'"),
+      mkVocab("Datentyp", "tipo de dado", "Art des Werts: int, str, bool.", "alter = 25 ist int."),
+      mkVocab("input", "entrada", "Liest Benutzereingabe als Text.", "name = input('Name: ')"),
+      mkVocab("print", "saida", "Gibt Werte auf der Konsole aus.", "print('Hallo')"),
+      mkVocab("Operator", "operador", "Rechen- oder Vergleichszeichen.", "5 + 3, a == b"),
+      mkVocab("Kommentar", "comentario", "Erklaerung im Code, wird ignoriert.", "# Dies ist ein Kommentar"),
+      mkVocab("int", "inteiro", "Ganzzahl-Datentyp.", "alter = int('25')"),
+      mkVocab("Syntaxfehler", "erro de sintaxe", "Code verletzt Sprachregeln.", "Fehlende Klammer oder Anfuehrungszeichen.")
+    ],
+    summary: ["Python nutzt Variablen, Typen, input und print.", "AP1 verlangt Code verstehen, nicht nur schreiben.", "int() wandelt Eingabe-Text in Zahlen."],
+    mindMap: "Python → Variable/Typ → input/print → Operatoren → Fehler lesen",
+    exercises: {
+      easy: [
+        mkEx("Was macht print('Hallo')?", "Gibt Hallo auf der Konsole aus."),
+        mkEx("Was speichert eine Variable?", "Einen Wert zur spaeteren Nutzung."),
+        mkEx("Wofuer ist # in Python?", "Beginnt einen Kommentar.")
+      ],
+      intermediate: [
+        mkEx("Was gibt aus: x = 3; y = 4; print(x + y)?", "7"),
+        mkEx("Warum int(input(...))?", "input liefert Text; int wandelt in Zahl."),
+        mkEx("Erklaeren Sie name = 'Anna'.", "Variable name speichert String Anna.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Was passiert bei print(2 + '3')?", "Fehler — int und str nicht direkt addierbar."),
+        mkEx("AP1: Lesen Sie: a=10; b=3; print(a // b).", "3 (Ganzzahldivision)."),
+        mkEx("AP1: Nennen Sie zwei Datentypen.", "int und str (oder float, bool).")
+      ]
+    },
+    commonMistakes: ["input ohne int bei Zahlen.", "Einrueckung ignorieren (spaeter bei if/for wichtig)."],
+    revisionChecklist: ["Variable und Typ erklaeren.", "input/print Beispiel lesen.", "Einen Fehler in Code finden."],
+    related: ["Variable", "Datentyp", "input", "print"]
+  },
+
+  "python-kontrollstrukturen": {
+    studyTime: "60-75 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Lesen Sie if/else-Verzweigungen und erklaeren Sie die Ausgabe.",
+      "Verstehen Sie for- und while-Schleifen mit Listen.",
+      "Erkennen Sie Einrueckung als Strukturelement in Python."
+    ],
+    introduction: [
+      "Kontrollstrukturen steuern den Programmablauf: Entscheidungen und Wiederholungen.",
+      "AP1 zeigt oft kurze Codeausschnitte mit if, for, while und Listen."
+    ],
+    explanation: [
+      {
+        title: "Verzweigung if/else",
+        paragraphs: [
+          "if bedingung: — Block wird nur ausgefuehrt wenn True.",
+          "else: — Alternative wenn Bedingung False.",
+          "Einrueckung (4 Spaces) gehoert zum Block — ohne Einrueckung Syntaxfehler."
+        ]
+      },
+      {
+        title: "Schleifen und Listen",
+        paragraphs: [
+          "for element in liste: — jedes Element einmal durchlaufen.",
+          "while bedingung: — wiederholt solange True (Vorsicht Endlosschleife).",
+          "preise = [10, 20, 30]; summe = 0; for p in preise: summe += p → summe = 60."
+        ]
+      }
+    ],
+    realWorldExamples: ["Schleife summiert alle Rechnungsbetraege in einer Liste.", "if prueft ob Passwort laenger als 8 Zeichen ist."],
+    practicalExamples: [{
+      title: "JIKU: Bestellungen summieren",
+      paragraphs: ["preise = [49.99, 12.50, 8.00]", "summe = 0", "for preis in preise:", "    summe += preis", "print(summe)  # 70.49"],
+      steps: ["Liste anlegen.", "for-Schleife.", "summe erhoehen.", "Ergebnis pruefen."]
+    }],
+    vocabulary: [
+      mkVocab("if", "se", "Verzweigung bei wahrer Bedingung.", "if alter >= 18:"),
+      mkVocab("else", "senao", "Alternative zum if.", "else: print('Nein')"),
+      mkVocab("for", "para (loop)", "Schleife ueber Iterable.", "for x in liste:"),
+      mkVocab("while", "enquanto", "Schleife solange Bedingung True.", "while zaehler < 10:"),
+      mkVocab("Liste", "lista", "Geordnete Sammlung von Werten.", "noten = [1, 2, 3, 4]"),
+      mkVocab("Einrueckung", "indentacao", "Definiert Code-Bloecke in Python.", "4 Leerzeichen unter if."),
+      mkVocab("Bedingung", "condicao", "Ausdruck True oder False.", "preis > 100"),
+      mkVocab("Iteration", "iteracao", "Ein Durchlauf einer Schleife.", "Jedes Element der Liste.")
+    ],
+    summary: ["if/else fuer Entscheidungen.", "for/while fuer Wiederholungen.", "Listen speichern mehrere Werte; Einrueckung ist Pflicht."],
+    mindMap: "Kontrolle → if/else → for/while → Liste → Einrueckung",
+    exercises: {
+      easy: [
+        mkEx("Wofuer nutzt man if?", "Um Code nur bei erfuellter Bedingung auszufuehren."),
+        mkEx("Was macht for x in liste?", "Fuehrt Block fuer jedes Element aus."),
+        mkEx("Was ist eine Liste?", "Geordnete Sammlung, z.B. [1,2,3].")
+      ],
+      intermediate: [
+        mkEx("Ausgabe: for i in [1,2,3]: print(i*2)", "2, 4, 6 (je Zeile)."),
+        mkEx("if alter >= 18: print('Ja') else: print('Nein') — alter=16?", "Nein"),
+        mkEx("Summe von [5,10,15] mit for?", "30")
+      ],
+      ap1Style: [
+        mkEx("AP1: Fehler finden — if x > 5 print('gross')", "Fehlende Einrueckung und Doppelpunkt fehlt nach Bedingung."),
+        mkEx("AP1: Was gibt len([4,8,12])?", "3"),
+        mkEx("AP1: while True: print('x') — Problem?", "Endlosschleife, Programm haengt.")
+      ]
+    },
+    commonMistakes: ["Doppelpunkt nach if/for vergessen.", "Einrueckung inkonsistent."],
+    revisionChecklist: ["if und for Code lesen.", "Listensumme berechnen.", "Einrueckung erklaeren."],
+    related: ["if", "for", "Liste", "while"]
+  },
+
+  "programacao": {
+    studyTime: "50-65 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Erklaeren Sie Variablen, Bedingungen, Schleifen und Funktionen.",
+      "Lesen Sie Pseudocode und einfachen Programmfluss.",
+      "Erkennen Sie typische Logikfehler auf AP1-Niveau."
+    ],
+    introduction: [
+      "Programmieren bedeutet, Probleme in klare, testbare Schritte zu uebersetzen.",
+      "AP1 fragt nach Ablauf, nicht nach komplexen Frameworks."
+    ],
+    explanation: [
+      {
+        title: "Grundkonzepte",
+        paragraphs: [
+          "Variable: benannter Speicher. Bedingung: if waehlt Pfad. Schleife: wiederholt Schritte.",
+          "Funktion: benannter Block mit Parametern und Rueckgabewert.",
+          "Algorithmus: geordnete Schritte zum Ziel — Eingabe → Verarbeitung → Ausgabe."
+        ]
+      },
+      {
+        title: "Fluss lesen",
+        paragraphs: [
+          "Sequenz: Schritte nacheinander. Verzweigung: if/else. Wiederholung: for/while.",
+          "Beispiel: Summe aller Noten — Schleife, Akkumulator, am Ende Durchschnitt."
+        ]
+      }
+    ],
+    realWorldExamples: ["Ticket-System zaehlt offene Faele mit Schleife.", "Rabattfunktion berechnet Endpreis nach Bedingung."],
+    practicalExamples: [{
+      title: "Durchschnitt berechnen",
+      paragraphs: ["noten = [2, 3, 1, 2]; summe = 0; for n in noten: summe += n; print(summe / len(noten))"],
+      steps: ["Liste.", "Summe in Schleife.", "Durch len(noten) teilen.", "Ergebnis pruefen."]
+    }],
+    vocabulary: [
+      mkVocab("Algorithmus", "algoritmo", "Geordnete Problemloesungsschritte.", "Sortieren, Suchen, Summieren."),
+      mkVocab("Variable", "variavel", "Speicher fuer Werte.", "zaehler = 0"),
+      mkVocab("Schleife", "loop", "Wiederholt Anweisungen.", "for, while"),
+      mkVocab("Bedingung", "condicao", "Entscheidet Verzweigung.", "if x > 0"),
+      mkVocab("Funktion", "funcao", "Wiederverwendbarer Codeblock.", "def berechne(x): return x*2"),
+      mkVocab("Parameter", "parametro", "Eingabe einer Funktion.", "def gruss(name):"),
+      mkVocab("Rueckgabewert", "valor de retorno", "Ergebnis der Funktion.", "return summe"),
+      mkVocab("Pseudocode", "pseudocodigo", "Plattformneutrale Beschreibung.", "WENN x>0 DANN ...")
+    ],
+    summary: ["Programm = Daten + Logik + Ablauf.", "if, Schleifen, Funktionen sind Kernwerkzeuge.", "AP1: Code lesen und Ausgabe vorhersagen."],
+    mindMap: "Programm → Variable → if/Schleife → Funktion → Algorithmus",
+    exercises: {
+      easy: [
+        mkEx("Wann nutzt man eine Schleife?", "Wenn Schritte wiederholt werden."),
+        mkEx("Was ist eine Funktion?", "Benannter wiederverwendbarer Codeblock."),
+        mkEx("Was ist ein Algorithmus?", "Geordnete Schritte zur Loesung.")
+      ],
+      intermediate: [
+        mkEx("Erklaeren Sie if in einem Satz.", "Fuehrt Code nur bei erfuellter Bedingung aus."),
+        mkEx("Unterschied Parameter und Variable?", "Parameter = Funktionseingabe; Variable = allgemeiner Speicher."),
+        mkEx("Pseudocode: WENN note>=4 DANN bestanden — note=3?", "Nicht bestanden.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Off-by-one — for i in range(5): zaehlt?", "0 bis 4, fuenf Durchlaeufe."),
+        mkEx("AP1: Funktion def doppelt(n): return n*2; doppelt(5)?", "10"),
+        mkEx("AP1: Signalwort 'beschreiben' — Algorithmus Summe?", "Alle Werte addieren, Ergebnis ausgeben.")
+      ]
+    },
+    commonMistakes: ["Endlosschleife bei while.", "Return vergessen in Funktion."],
+    revisionChecklist: ["if/Schleife erklaeren.", "Code-Ausgabe vorhersagen.", "Funktion mit return."],
+    related: ["Algorithmus", "Schleife", "Funktion", "Variable"]
+  },
+
+  "uml": {
+    studyTime: "55-65 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Lesen Sie Klassen-, Anwendungsfall- und Sequenzdiagramme.",
+      "Erklaeren Sie Assoziation, Vererbung und Multiplizitaet.",
+      "Verbinden Sie UML mit Softwareentwurf vor Implementierung."
+    ],
+    introduction: [
+      "UML visualisiert Struktur und Verhalten von Systemen vor oder waehrend der Entwicklung.",
+      "AP1 verlangt Diagramme lesen, nicht komplex zeichnen."
+    ],
+    explanation: [
+      {
+        title: "Klassendiagramm",
+        paragraphs: [
+          "Klasse: Rechteck mit Name, Attributen, Methoden.",
+          "Vererbung: Pfeil mit hohler Spitze (Subklasse erbt von Superklasse).",
+          "Assoziation: Linie zwischen Klassen. Multiplizitaet: 1, *, 0..1 an Enden."
+        ]
+      },
+      {
+        title: "Weitere Diagramme",
+        paragraphs: [
+          "Anwendungsfall: Akteure und Funktionen des Systems.",
+          "Sequenzdiagramm: Nachrichten zwischen Objekten ueber Zeit.",
+          "Aktivitaetsdiagramm: Ablauf mit Entscheidungen (aehnlich Flussdiagramm)."
+        ]
+      }
+    ],
+    realWorldExamples: ["Klasse Kunde mit Attributen name, email und Methode registrieren().", "Sequenz: Login → AuthService → Datenbank."],
+    practicalExamples: [{
+      title: "JIKU: Ticket-System",
+      paragraphs: ["Klasse Ticket mit status, titel; Klasse Mitarbeiter bearbeitet Ticket; 1 Mitarbeiter — * Tickets."],
+      steps: ["Klassen identifizieren.", "Attribute notieren.", "Beziehung und Multiplizitaet.", "Methoden zuordnen."]
+    }],
+    vocabulary: [
+      mkVocab("UML", "linguagem de modelagem", "Unified Modeling Language.", "Standard fuer Softwarediagramme."),
+      mkVocab("Klassendiagramm", "diagrama de classes", "Zeigt Klassen, Attribute, Methoden.", "Strukturmodell."),
+      mkVocab("Attribut", "atributo", "Eigenschaft einer Klasse.", "name: String"),
+      mkVocab("Methode", "metodo", "Verhalten/Funktion der Klasse.", "speichern()"),
+      mkVocab("Vererbung", "heranca", "Subklasse erbt von Superklasse.", "Pfeil mit hohler Spitze."),
+      mkVocab("Assoziation", "associacao", "Beziehung zwischen Klassen.", "Kunde — Bestellung."),
+      mkVocab("Multiplizitaet", "multiplicidade", "Anzahl an Beziehungsende.", "1 zu *"),
+      mkVocab("Anwendungsfall", "caso de uso", "Funktion aus Nutzersicht.", "Ticket anlegen.")
+    ],
+    summary: ["UML kommuniziert Entwurf visuell.", "Klassendiagramm: Struktur; Sequenz: Ablauf.", "Multiplizitaet und Vererbung sind AP1-Klassiker."],
+    mindMap: "UML → Klassendiagramm → Vererbung/Assoziation → Sequenz/Anwendungsfall",
+    exercises: {
+      easy: [
+        mkEx("Wofuer dient UML?", "Visuelle Modellierung von Software."),
+        mkEx("Was zeigt ein Klassendiagramm?", "Klassen, Attribute, Methoden, Beziehungen."),
+        mkEx("Was ist Vererbung?", "Subklasse uebernimmt Eigenschaften der Superklasse.")
+      ],
+      intermediate: [
+        mkEx("Multiplizitaet 1 zu * bei Kunde-Bestellung?", "Ein Kunde, viele Bestellungen."),
+        mkEx("Unterschied Attribut und Methode?", "Attribut = Daten; Methode = Verhalten."),
+        mkEx("Wofuer Sequenzdiagramm?", "Zeigt Nachrichten zwischen Objekten ueber Zeit.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Klasse Auto erbt von Fahrzeug — welches Symbol?", "Vererbungspfeil hohle Spitze zu Fahrzeug."),
+        mkEx("AP1: 0..1 zu * bedeutet?", "Optional eins, viele auf anderer Seite."),
+        mkEx("AP1: Anwendungsfall vs Klassendiagramm?", "Anwendungsfall=Funktionen; Klasse=Struktur.")
+      ]
+    },
+    commonMistakes: ["Vererbung mit Assoziation verwechseln.", "Multiplizitaet falsch lesen."],
+    revisionChecklist: ["Klassendiagramm lesen.", "Vererbung und Multiplizitaet.", "Ein Diagrammtyp erklaeren."],
+    related: ["Klassendiagramm", "Vererbung", "Assoziation", "Multiplizitaet"]
+  },
+
+  "er-modell": {
+    studyTime: "55-70 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Erklaeren Sie Entitaet, Attribut und Beziehung im ER-Modell.",
+      "Lesen Sie Kardinalitaeten 1:1, 1:n, n:m.",
+      "Ueberfuehren Sie ER-Modell gedanklich in relationale Tabellen."
+    ],
+    introduction: [
+      "Das Entity-Relationship-Modell beschreibt Daten fachlich, bevor Tabellen entstehen.",
+      "AP1 fragt haeufig nach Entitaet, Attribut, Beziehung und Kardinalitaet."
+    ],
+    explanation: [
+      {
+        title: "Bausteine",
+        paragraphs: [
+          "Entitaet: fachliches Objekt, z.B. Kunde, Bestellung, Produkt.",
+          "Attribut: Eigenschaft der Entitaet, z.B. Name, Preis, Datum.",
+          "Beziehung: Verbindung zwischen Entitaeten, z.B. Kunde bestellt Produkt."
+        ]
+      },
+      {
+        title: "Kardinalitaet",
+        paragraphs: [
+          "1:1 — genau ein Partner (z.B. Person — Personalausweis).",
+          "1:n — ein Kunde, viele Bestellungen.",
+          "n:m — viele Studenten, viele Kurse → oft Zwischentabelle."
+        ]
+      }
+    ],
+    realWorldExamples: ["Kunde (1) — (*) Bestellung — (*) Produkt ist n:m ueber Bestellposition."],
+    practicalExamples: [{
+      title: "JIKU: Kunde und Geraet",
+      paragraphs: ["Entitaet Kunde, Geraet; Beziehung besitzt; 1 Kunde — * Geraete."],
+      steps: ["Entitaeten zeichnen.", "Attribute eintragen.", "Beziehung mit Kardinalitaet.", "Primaerschluessel markieren."]
+    }],
+    vocabulary: [
+      mkVocab("Entitaet", "entidade", "Fachliches Objekt im Modell.", "Kunde, Ticket."),
+      mkVocab("Attribut", "atributo", "Eigenschaft einer Entitaet.", "Name, Email."),
+      mkVocab("Beziehung", "relacionamento", "Verbindung zwischen Entitaeten.", "bestellt, gehoert zu."),
+      mkVocab("Kardinalitaet", "cardinalidade", "Anzahl moeglicher Verknuepfungen.", "1:n, n:m."),
+      mkVocab("ER-Modell", "modelo ER", "Entity-Relationship-Modell.", "Konzeptionelles Datenmodell."),
+      mkVocab("Primaerschluessel", "chave primaria", "Eindeutige ID der Entitaet.", "Kundennummer."),
+      mkVocab("Schwacher Schluessel", "chave fraca", "Abhaengig von anderer Entitaet.", "Position in Bestellung."),
+      mkVocab("Relation", "relacao", "Umgesetzte Tabelle im relationalen Modell.", "Tabelle Kunde.")
+    ],
+    summary: ["ER = Entitaeten + Attribute + Beziehungen.", "Kardinalitaet bestimmt Tabellenstruktur.", "n:m braucht oft Zwischentabelle."],
+    mindMap: "ER → Entitaet/Attribut → Beziehung → Kardinalitaet → Tabelle",
+    exercises: {
+      easy: [
+        mkEx("Was ist eine Entitaet?", "Fachliches Objekt, z.B. Kunde."),
+        mkEx("Was ist ein Attribut?", "Eigenschaft einer Entitaet."),
+        mkEx("1:n Beispiel?", "Ein Kunde — viele Bestellungen.")
+      ],
+      intermediate: [
+        mkEx("n:m Beispiel Student-Kurs?", "Viele Studenten in vielen Kursen; Zwischentabelle noetig."),
+        mkEx("Primaerschluessel im ER?", "Eindeutiges Attribut pro Entitaet."),
+        mkEx("ER zu Tabelle Kunde-Bestellung?", "Zwei Tabellen; FK KundenID in Bestellung.")
+      ],
+      ap1Style: [
+        mkEx("AP1: 1:1 Person-Ausweis — Tabellen?", "Eine Tabelle oder zwei mit FK."),
+        mkEx("AP1: Kardinalitaet falsch: 1 Kunde 1 Bestellung immer?", "Falsch — meist 1:n."),
+        mkEx("AP1: Entitaet vs Attribut — Email?", "Attribut der Entitaet Kunde/Person.")
+      ]
+    },
+    commonMistakes: ["Entitaet und Attribut verwechseln.", "n:m ohne Zwischentabelle modellieren."],
+    revisionChecklist: ["Entitaet/Attribut/Beziehung.", "1:n und n:m Beispiele.", "ER zu Tabellen uebersetzen."],
+    related: ["Entitaet", "Kardinalitaet", "Primaerschluessel", "Relation"]
+  },
+
+  "relationales-modell": {
+    studyTime: "55-65 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Erklaeren Sie Tabelle, Datensatz, Attribut, Primaer- und Fremdschluessel.",
+      "Beschreiben Sie 1:n und n:m im relationalen Modell.",
+      "Verbinden Sie ER-Modell mit SQL-Tabellen."
+    ],
+    introduction: [
+      "Das relationale Modell speichert Daten in Tabellen mit eindeutigen Schluesseln und Beziehungen ueber Fremdschluessel.",
+      "AP1 erwartet saubere Zuordnung von Begriffen und einfache Modellierung."
+    ],
+    explanation: [
+      {
+        title: "Tabellenstruktur",
+        paragraphs: [
+          "Tabelle (Relation): Spalten = Attribute, Zeilen = Datensaetze.",
+          "Primaerschluessel (PK): eindeutig, nicht null — identifiziert Zeile.",
+          "Fremdschluessel (FK): verweist auf PK anderer Tabelle — realisiert Beziehung."
+        ]
+      },
+      {
+        title: "Beziehungen umsetzen",
+        paragraphs: [
+          "1:n: FK in der 'vielen'-Tabelle (Bestellung.KundenID → Kunde.KundenID).",
+          "n:m: Zwischentabelle mit zwei FKs (StudentKurs: StudentID, KursID).",
+          "Normalisierung: Redundanz reduzieren — AP1 Grundidee reicht."
+        ]
+      }
+    ],
+    realWorldExamples: ["Tabelle Ticket mit FK auf Kunde und Mitarbeiter."],
+    practicalExamples: [{
+      title: "JIKU: Bestellung",
+      paragraphs: ["Kunde(KundenID PK, Name); Bestellung(BestellID PK, KundenID FK, Datum, Betrag)."],
+      steps: ["PK je Tabelle.", "FK fuer 1:n.", "SQL CREATE TABLE gedanklich.", "JOIN zum Abfragen."]
+    }],
+    vocabulary: [
+      mkVocab("Relation", "relacao/tabela", "Tabelle im relationalen Modell.", "Tabelle Kunde."),
+      mkVocab("Datensatz", "registro/tupla", "Eine Zeile.", "Ein Kunde."),
+      mkVocab("Attribut", "atributo/coluna", "Spalte der Tabelle.", "Name, Email."),
+      mkVocab("Primaerschluessel", "chave primaria", "Eindeutige Zeilen-ID.", "KundenID."),
+      mkVocab("Fremdschluessel", "chave estrangeira", "Verweis auf andere Tabelle.", "KundenID in Bestellung."),
+      mkVocab("Normalisierung", "normalizacao", "Redundanz vermeiden.", "Daten in passende Tabellen."),
+      mkVocab("JOIN", "uniao SQL", "Tabellen verknuepfen.", "Kunde JOIN Bestellung ON ..."),
+      mkVocab("Integritaet", "integridade", "Konsistente Beziehungen.", "FK muss existierenden PK referenzieren.")
+    ],
+    summary: ["Relational = Tabellen + PK/FK.", "1:n via FK; n:m via Zwischentabelle.", "Basis fuer SQL-Abfragen."],
+    mindMap: "Relational → Tabelle → PK/FK → 1:n/n:m → SQL",
+    exercises: {
+      easy: [
+        mkEx("Was ist ein Fremdschluessel?", "Verweis auf PK einer anderen Tabelle."),
+        mkEx("Was ist ein Datensatz?", "Eine Zeile in der Tabelle."),
+        mkEx("PK-Eigenschaften?", "Eindeutig und nicht null.")
+      ],
+      intermediate: [
+        mkEx("1:n Kunde-Bestellung — wo FK?", "In Tabelle Bestellung (KundenID)."),
+        mkEx("n:m Produkt-Bestellung?", "Zwischentabelle Bestellposition mit zwei FKs."),
+        mkEx("JOIN Zweck?", "Daten aus verknuepften Tabellen kombinieren.")
+      ],
+      ap1Style: [
+        mkEx("AP1: FK ohne passenden PK — Problem?", "Referentielle Integritaet verletzt."),
+        mkEx("AP1: Attribut vs Datensatz?", "Attribut=Spalte; Datensatz=Zeile."),
+        mkEx("AP1: ER 1:n zu relational?", "FK in der n-Tabelle.")
+      ]
+    },
+    commonMistakes: ["PK und FK vertauschen.", "n:m ohne Zwischentabelle."],
+    revisionChecklist: ["PK/FK erklaeren.", "1:n modellieren.", "Mit SQL verbinden."],
+    related: ["Primaerschluessel", "Fremdschluessel", "JOIN", "ER-Modell"]
+  },
+
+  "sqlite-python": {
+    studyTime: "60-75 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Erklaeren Sie Verbindung, Cursor, SQL und commit in Python.",
+      "Lesen Sie einfache SQLite-Skripte.",
+      "Verbinden Sie Python-Datenverarbeitung mit lokaler Datenbank."
+    ],
+    introduction: [
+      "SQLite ist eine leichtgewichtige relationale Datenbank in einer Datei — ideal fuer Lernprojekte.",
+      "Python nutzt sqlite3-Modul: connect, cursor, execute, fetchall, commit."
+    ],
+    explanation: [
+      {
+        title: "Grundablauf",
+        paragraphs: [
+          "import sqlite3",
+          "conn = sqlite3.connect('azubi.db')",
+          "cursor = conn.cursor()",
+          "cursor.execute('SELECT * FROM kapitel')",
+          "rows = cursor.fetchall(); conn.commit(); conn.close()"
+        ]
+      },
+      {
+        title: "INSERT und Parameter",
+        paragraphs: [
+          "cursor.execute('INSERT INTO kapitel (titel) VALUES (?)', ('LF5',))",
+          "Platzhalter ? verhindert SQL-Injection — Werte als Tuple uebergeben.",
+          "commit() speichert Aenderungen dauerhaft."
+        ]
+      }
+    ],
+    realWorldExamples: ["AzubiForge speichert Lernfortschritt lokal in SQLite."],
+    practicalExamples: [{
+      title: "JIKU: Fortschritt speichern",
+      paragraphs: [
+        "cursor.execute('CREATE TABLE IF NOT EXISTS progress (id INTEGER PRIMARY KEY, chapter TEXT, done INTEGER)')",
+        "cursor.execute('INSERT INTO progress (chapter, done) VALUES (?, ?)', ('sql', 1))"
+      ],
+      steps: ["connect.", "CREATE TABLE.", "INSERT mit ?.", "commit und close."]
+    }],
+    vocabulary: [
+      mkVocab("SQLite", "banco SQLite", "Dateibasierte relationale DB.", "azubi.db"),
+      mkVocab("connect", "conectar", "Oeffnet DB-Verbindung.", "sqlite3.connect('db')"),
+      mkVocab("Cursor", "cursor", "Fuehrt SQL-Befehle aus.", "conn.cursor()"),
+      mkVocab("execute", "executar", "SQL ausfuehren.", "cursor.execute('SELECT ...')"),
+      mkVocab("fetchall", "buscar todos", "Alle Ergebniszeilen holen.", "rows = cursor.fetchall()"),
+      mkVocab("commit", "confirmar", "Aenderungen speichern.", "conn.commit()"),
+      mkVocab("Platzhalter", "placeholder", "Sichere Parameter (?).", "VALUES (?, ?)"),
+      mkVocab("SQL-Injection", "injecao SQL", "Angriff durch unsichere Strings.", "? verhindert das.")
+    ],
+    summary: ["SQLite + Python: connect → cursor → execute → commit.", "Platzhalter ? fuer sichere Werte.", "Ideal fuer lokale Lern-Apps."],
+    mindMap: "SQLite → connect → cursor → execute → fetchall → commit",
+    exercises: {
+      easy: [
+        mkEx("Was macht sqlite3.connect?", "Oeffnet Verbindung zur DB-Datei."),
+        mkEx("Wofuer commit?", "Speichert Aenderungen dauerhaft."),
+        mkEx("Was liefert fetchall?", "Alle Zeilen der Abfrage.")
+      ],
+      intermediate: [
+        mkEx("Warum ? statt String-Konkatenation?", "Schutz vor SQL-Injection."),
+        mkEx("Reihenfolge: execute INSERT ohne commit — gespeichert?", "Nein, erst nach commit."),
+        mkEx("cursor.execute('SELECT name FROM kunde') — naechster Schritt?", "fetchall() oder fetchone().")
+      ],
+      ap1Style: [
+        mkEx("AP1: conn.close() vergessen — Problem?", "Ressourcen leak; Aenderungen evtl. nicht gesichert."),
+        mkEx("AP1: CREATE TABLE gehoert zu?", "DDL — definiert Struktur."),
+        mkEx("AP1: Tuple ('Anna',) bei execute — warum Komma?", "Ein-Element-Tuple in Python.")
+      ]
+    },
+    commonMistakes: ["commit vergessen.", "SQL-Strings mit Nutzerinput ohne Platzhalter."],
+    revisionChecklist: ["connect/cursor/execute kennen.", "INSERT mit ?.", "commit erklaeren."],
+    related: ["SQLite", "SQL", "Cursor", "commit"]
+  },
+
+  "softwaretests": {
+    studyTime: "55-65 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Erklaeren Sie Testfall, Testdaten, Soll- und Ist-Ergebnis.",
+      "Unterscheiden Sie manuelle und automatisierte Tests auf AP1-Niveau.",
+      "Dokumentieren Sie Fehler nachvollziehbar."
+    ],
+    introduction: [
+      "Tests pruefen, ob Software das erwartete Verhalten liefert — Qualitaetssicherung, nicht Misstrauen.",
+      "AP1 fragt nach Testfallaufbau und Fehlerdokumentation."
+    ],
+    explanation: [
+      {
+        title: "Testfall-Struktur",
+        paragraphs: [
+          "Testfall: konkrete Pruefung mit Eingabe, erwartetem und tatsaechlichem Ergebnis.",
+          "Testdaten: Werte fuer die Pruefung (z.B. Nettopreis 100, MwSt 19%).",
+          "Soll-Ergebnis: erwartet. Ist-Ergebnis: gemessen. Abweichung = Fehler."
+        ]
+      },
+      {
+        title: "Testarten (Grundniveau)",
+        paragraphs: [
+          "Modultest: einzelne Funktion/Klasse.",
+          "Integrationstest: Zusammenspiel mehrerer Teile.",
+          "Abnahmetest: Kunde prueft Anforderungen.",
+          "Regressionstest: nach Aenderung erneut pruefen."
+        ]
+      }
+    ],
+    realWorldExamples: ["Test: brutto(100, 19) muss 119 liefern — Ist 118.90 = Fehler."],
+    practicalExamples: [{
+      title: "JIKU: Preisberechnung",
+      paragraphs: ["Eingabe: netto=50, mwst=19. Erwartet: 59.50. Funktion liefert 59.50 → bestanden."],
+      steps: ["Anforderung lesen.", "Testdaten waehlen.", "Ausfuehren.", "Soll/Ist vergleichen.", "Fehler dokumentieren."]
+    }],
+    vocabulary: [
+      mkVocab("Testfall", "caso de teste", "Konkrete Pruefung mit Erwartung.", "Eingabe + Soll-Ergebnis."),
+      mkVocab("Testdaten", "dados de teste", "Werte fuer den Test.", "netto=100"),
+      mkVocab("Soll-Ergebnis", "resultado esperado", "Erwartetes Verhalten.", "119.00"),
+      mkVocab("Ist-Ergebnis", "resultado obtido", "Tatsaechliches Ergebnis.", "118.90"),
+      mkVocab("Fehler", "defeito/bug", "Abweichung Soll/Ist.", "Falsche Rundung."),
+      mkVocab("Modultest", "teste de modulo", "Test einer Einheit.", "Eine Funktion."),
+      mkVocab("Regressionstest", "teste de regressao", "Erneut testen nach Aenderung.", "Alte Funktionen noch OK?"),
+      mkVocab("Testprotokoll", "protocolo de teste", "Dokumentation der Tests.", "Datum, Ergebnis, Tester.")
+    ],
+    summary: ["Testfall = Eingabe + Soll vs Ist.", "Fehler dokumentieren mit Schritten.", "Tests frueh spart Kosten."],
+    mindMap: "Test → Testfall → Soll/Ist → Fehler → Modul/Integration",
+    exercises: {
+      easy: [
+        mkEx("Was ist ein Testfall?", "Konkrete Pruefung mit erwartetem Ergebnis."),
+        mkEx("Soll vs Ist?", "Erwartet vs tatsaechlich gemessen."),
+        mkEx("Warum testen?", "Fehler frueh finden, Qualitaet sichern.")
+      ],
+      intermediate: [
+        mkEx("Test: login('admin','falsch') → Zugriff verweigert. Ist: Zugriff erlaubt?", "Fehler — Test nicht bestanden."),
+        mkEx("Modultest vs Integrationstest?", "Modul=einzeln; Integration=Zusammenspiel."),
+        mkEx("Was gehoert in Fehlerbericht?", "Schritte, Soll/Ist, Umgebung, Datum.")
+      ],
+      ap1Style: [
+        mkEx("AP1: 'Testen ist optional' — richtig?", "Falsch — Qualitaetssicherung ist Teil des Prozesses."),
+        mkEx("AP1: Regressionstest nach Bugfix?", "Ja — pruefen ob Fix wirkt und nichts anderes bricht."),
+        mkEx("AP1: Testdaten Grenzwert 0 und -1 fuer Alter?", "Grenzwerttests — gueltig/ungueltig pruefen.")
+      ]
+    },
+    commonMistakes: ["Nur Happy Path testen.", "Fehler ohne Reproduktionsschritte dokumentieren."],
+    revisionChecklist: ["Testfall-Struktur.", "Soll/Ist erklaeren.", "Einen Fehlerbericht skizzieren."],
+    related: ["Testfall", "Soll-Ergebnis", "Modultest", "TDD"]
+  },
+
+  "tdd": {
+    studyTime: "45-55 Minuten",
+    stars: "★★★☆☆",
+    objectives: [
+      "Erklaeren Sie die Grundidee Testgetriebene Entwicklung (TDD).",
+      "Beschreiben Sie den Zyklus Rot-Grün-Refactor.",
+      "Verbinden Sie TDD mit klaren Anforderungen."
+    ],
+    introduction: [
+      "TDD bedeutet: zuerst Test schreiben, dann minimalen Code, dann verbessern (Refactoring).",
+      "AP1 erwartet die Grundidee, kein komplexes Test-Framework."
+    ],
+    explanation: [
+      {
+        title: "Rot-Grün-Refactor",
+        paragraphs: [
+          "Rot: Test schreiben — schlaegt fehl, weil Funktion noch fehlt.",
+          "Gruen: minimaler Code, damit Test besteht.",
+          "Refactor: Code verbessern, Tests muessen weiter gruen sein."
+        ]
+      },
+      {
+        title: "Vorteile",
+        paragraphs: [
+          "Erwartetes Verhalten wird vor Implementierung klar.",
+          "Regressionstests entstehen nebenbei.",
+          "Kleine Schritte reduzieren Risiko."
+        ]
+      }
+    ],
+    realWorldExamples: ["Vor Rabattfunktion Test: rabatt(100, 10) == 90."],
+    practicalExamples: [{
+      title: "JIKU: Rabatt",
+      paragraphs: ["1) Test: assert brutto(100,19)==119. 2) Funktion implementieren. 3) Code vereinfachen."],
+      steps: ["Test zuerst.", "Minimal implementieren.", "Refactoring.", "Alle Tests gruen."]
+    }],
+    vocabulary: [
+      mkVocab("TDD", "desenvolvimento guiado por testes", "Test-Driven Development.", "Test vor Code."),
+      mkVocab("Rot-Gruen-Refactor", "vermelho-verde-refatorar", "TDD-Zyklus.", "Fail → Pass → Improve."),
+      mkVocab("Refactoring", "refatoracao", "Struktur verbessern ohne Verhalten aendern.", "Code aufraeumen."),
+      mkVocab("Unit-Test", "teste unitario", "Automatisierter Modultest.", "assert equal."),
+      mkVocab("Assert", "asserção", "Prueft Bedingung im Test.", "assert x == 5"),
+      mkVocab("Minimalimplementierung", "implementacao minima", "Gerade genug fuer gruen.", "Einfachster Code."),
+      mkVocab("Regression", "regressao", "Alte Funktion bricht.", "Tests verhindern das."),
+      mkVocab("Test First", "teste primeiro", "Kernprinzip von TDD.", "Anforderung als Test.")
+    ],
+    summary: ["TDD: Test → Code → Refactor.", "Rot-Grün-Refactor ist der Zyklus.", "Klares erwartetes Verhalten zuerst."],
+    mindMap: "TDD → Test zuerst → Rot/Gruen → Refactor → Qualitaet",
+    exercises: {
+      easy: [
+        mkEx("Was bedeutet TDD?", "Testgetriebene Entwicklung — Test vor Code."),
+        mkEx("Rot-Gruen-Refactor — Reihenfolge?", "Erst fehlender Test, dann gruen, dann refactor."),
+        mkEx("Was ist Refactoring?", "Verbessern ohne Funktion aendern.")
+      ],
+      intermediate: [
+        mkEx("Vorteil Test zuerst?", "Anforderung wird explizit und pruefbar."),
+        mkEx("Refactor bei rotem Test?", "Nein — erst wieder gruen machen."),
+        mkEx("TDD vs nachtraeglich testen?", "TDD integriert Tests von Anfang an.")
+      ],
+      ap1Style: [
+        mkEx("AP1: TDD = keine Dokumentation noetig?", "Falsch — Tests ersetzen Doku nicht vollstaendig."),
+        mkEx("AP1: Minimalcode bei gruen — warum?", "Nicht ueber-engineeren; Schritt fuer Schritt."),
+        mkEx("AP1: assert in Test — Zweck?", "Automatischer Vergleich Soll/Ist.")
+      ]
+    },
+    commonMistakes: ["TDD mit 'nur am Ende testen' verwechseln.", "Refactoring mit neuer Funktion verwechseln."],
+    revisionChecklist: ["Rot-Gruen-Refactor erklaeren.", "Beispiel mit Rabatt/Test.", "Vorteil in einem Satz."],
+    related: ["TDD", "Refactoring", "Unit-Test", "Softwaretests"]
+  },
+
+  "eva-prinzip": {
+    studyTime: "45-55 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Erklaeren Sie Eingabe, Verarbeitung und Ausgabe (EVA).",
+      "Ordnen Sie Hardware und Peripherie dem EVA-Prinzip zu.",
+      "Wenden Sie EVA auf einfache IT-Szenarien an."
+    ],
+    introduction: [
+      "Das EVA-Prinzip (Eingabe-Verarbeitung-Ausgabe) ordnet grundlegende Datenverarbeitung.",
+      "AP1 nutzt EVA, um Computerfunktionen und Peripherie zu erklaeren."
+    ],
+    explanation: [
+      {
+        title: "Die drei Schritte",
+        paragraphs: [
+          "Eingabe (E): Daten kommen ins System — Tastatur, Maus, Scanner, Mikrofon.",
+          "Verarbeitung (V): CPU und RAM bearbeiten Daten — Rechnen, Vergleichen, Speichern.",
+          "Ausgabe (A): Ergebnis wird sichtbar/hoerbar — Monitor, Drucker, Lautsprecher."
+        ]
+      },
+      {
+        title: "Speicherung",
+        paragraphs: [
+          "Speicher (SSD/HDD) haelt Daten dauerhaft — kein EVA-Schritt, aber wichtig.",
+          "RAM ist Arbeitsspeicher waehrend der Verarbeitung.",
+          "Beispiel: Tastatur(E) → CPU/RAM(V) → Monitor(A); Datei speichern auf SSD."
+        ]
+      }
+    ],
+    realWorldExamples: ["Barcode-Scanner(E) → Kasse berechnet(V) → Bon druckt(A)."],
+    practicalExamples: [{
+      title: "JIKU: Arbeitsplatz",
+      paragraphs: ["Azubi tippt Ticketnummer(E), System sucht(V), Monitor zeigt Ticket(A)."],
+      steps: ["Eingabegeraet nennen.", "Verarbeitung.", "Ausgabegeraet.", "Optional Speicher."]
+    }],
+    vocabulary: [
+      mkVocab("Eingabe", "entrada", "Daten ins System.", "Tastatur, Maus."),
+      mkVocab("Verarbeitung", "processamento", "CPU/RAM bearbeiten.", "Berechnung, Suche."),
+      mkVocab("Ausgabe", "saida", "Ergebnis praesentieren.", "Monitor, Drucker."),
+      mkVocab("EVA-Prinzip", "principio EVA", "Eingabe-Verarbeitung-Ausgabe.", "Grundmodell."),
+      mkVocab("Peripherie", "periferico", "Ein-/Ausgabegeraete.", "Tastatur, Monitor."),
+      mkVocab("CPU", "processador", "Zentrale Verarbeitung.", "Rechenwerk."),
+      mkVocab("RAM", "memoria RAM", "Arbeitsspeicher.", "Temporaer waehrend V."),
+      mkVocab("Speicher", "armazenamento", "Dauerhafte Ablage.", "SSD, HDD.")
+    ],
+    summary: ["EVA = Eingabe → Verarbeitung → Ausgabe.", "Peripherie liefert E und A.", "Speicher ergaenzt das Modell."],
+    mindMap: "EVA → Eingabe → Verarbeitung → Ausgabe → Speicher",
+    exercises: {
+      easy: [
+        mkEx("Was bedeutet EVA?", "Eingabe, Verarbeitung, Ausgabe."),
+        mkEx("Monitor — E, V oder A?", "Ausgabe."),
+        mkEx("Tastatur — E, V oder A?", "Eingabe.")
+      ],
+      intermediate: [
+        mkEx("CPU gehoert zu?", "Verarbeitung."),
+        mkEx("SSD primaer EVA?", "Speicherung, nicht E/V/A direkt."),
+        mkEx("Drucker im EVA?", "Ausgabe.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Scanner + CPU + Monitor — ordnen.", "E, V, A."),
+        mkEx("AP1: 'RAM ist Ausgabe' — richtig?", "Falsch — RAM ist Arbeitsspeicher fuer Verarbeitung."),
+        mkEx("AP1: EVA bei Online-Bestellung?", "E=Eingabe Artikel, V=System, A=Bestaetigung/Bildschirm.")
+      ]
+    },
+    commonMistakes: ["Speicher als Ausgabe sehen.", "Netzteil dem EVA zuordnen wollen."],
+    revisionChecklist: ["EVA erklaeren.", "3 Geraete zuordnen.", "JIKU-Beispiel."],
+    related: ["Eingabe", "Verarbeitung", "Ausgabe", "Peripherie"]
+  },
+
+  "kundenanforderungen": {
+    studyTime: "50-60 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Unterscheiden Sie Muss-, Soll- und Kann-Anforderungen.",
+      "Erklaeren Sie technische, wirtschaftliche und organisatorische Anforderungen.",
+      "Dokumentieren Sie Kundenwuensche pruefbar."
+    ],
+    introduction: [
+      "Ohne klare Anforderungen entsteht die falsche IT-Loesung. Professionelle Arbeit beginnt mit Fragen stellen.",
+      "AP1 prueft Prioritaeten und saubere Formulierung."
+    ],
+    explanation: [
+      {
+        title: "Anforderungstypen",
+        paragraphs: [
+          "Muss: zwingend — ohne geht die Loesung nicht (z.B. DSGVO-konform).",
+          "Soll: wichtig, aber verhandelbar (z.B. leiser PC).",
+          "Kann: optional, Nice-to-have (z.B. RGB-Tastatur)."
+        ]
+      },
+      {
+        title: "Dimensionen",
+        paragraphs: [
+          "Technisch: Leistung, Speicher, Sicherheit, Kompatibilitaet.",
+          "Wirtschaftlich: Budget, TCO, Lieferzeit.",
+          "Organisatorisch: Schulung, Support, Wartungsfenster."
+        ]
+      }
+    ],
+    realWorldExamples: ["Kunde sagt 'schneller PC' — Azubi klaert Programme, Budget, Mobilitaet."],
+    practicalExamples: [{
+      title: "JIKU: Notebook-Bedarf",
+      paragraphs: ["Muss: Windows 11, VPN. Soll: 16 GB RAM. Kann: Dockingstation."],
+      steps: ["Wuensche sammeln.", "Prioritaet setzen.", "Messbar formulieren.", "Dokumentieren."]
+    }],
+    vocabulary: [
+      mkVocab("Kundenanforderung", "requisito do cliente", "Was der Kunde braucht.", "Leistungsanforderung."),
+      mkVocab("Muss-Anforderung", "requisito obrigatorio", "Zwingend erfuellt.", "Sicherheit, Budget-Max."),
+      mkVocab("Soll-Anforderung", "requisito desejavel", "Wichtig, verhandelbar.", "Leiser Betrieb."),
+      mkVocab("Kann-Anforderung", "requisito opcional", "Optional.", "Zusaetzliches Zubehoer."),
+      mkVocab("Leistungsprozess", "processo de servico", "Ablauf der Leistungserbringung.", "Vom Bedarf zur Uebergabe."),
+      mkVocab("Ist-Zustand", "estado atual", "Aktuelle Situation.", "Alte PCs, langsam."),
+      mkVocab("Soll-Zustand", "estado desejado", "Zielzustand.", "Neue Arbeitsplaetze."),
+      mkVocab("Anforderungsdokument", "documento de requisitos", "Schriftliche Festhaltung.", "Anforderungsliste.")
+    ],
+    summary: ["Muss/Soll/Kann priorisieren.", "Technisch + wirtschaftlich + organisatorisch.", "Vage Wuensche praezisieren."],
+    mindMap: "Anforderung → Muss/Soll/Kann → technisch/wirtschaftlich → Dokument",
+    exercises: {
+      easy: [
+        mkEx("Muss vs Soll?", "Muss=zwingend; Soll=wichtig aber verhandelbar."),
+        mkEx("Warum Anforderungen dokumentieren?", "Missverstaendnisse vermeiden, Loesung pruefbar."),
+        mkEx("Beispiel Muss-Anforderung?", "Budget max 800 Euro oder DSGVO-konform.")
+      ],
+      intermediate: [
+        mkEx("'Schneller PC' praezisieren?", "CPU-Typ, RAM, SSD, Anwendungen nennen."),
+        mkEx("Technische vs wirtschaftliche Anforderung?", "Technisch=Leistung; wirtschaftlich=Preis/TCO."),
+        mkEx("Kann-Beispiel?", "Zusaetzlicher Monitor.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Muss in Soll aendern um Kosten zu sparen — ohne Kunde?", "Falsch — Muss bleibt oder Kunde aendert."),
+        mkEx("AP1: Anforderung messbar: 'sehr schnell'?", "Schlecht — besser: 'Start unter 10 Sekunden'."),
+        mkEx("AP1: Leistungsprozess erklaeren.", "Vom Kundenbedarf bis zur erbrachten Leistung.")
+      ]
+    },
+    commonMistakes: ["Vage Formulierungen.", "Muss/Soll verwechseln."],
+    revisionChecklist: ["Muss/Soll/Kann.", "Ein Beispiel praezisieren.", "Drei Dimensionen."],
+    related: ["Muss-Anforderung", "Anforderungsanalyse", "Lastenheft"]
+  },
+
+  "anforderungsanalyse": {
+    studyTime: "55-65 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Erklaeren Sie Bedarf, Ist-Zustand und Soll-Zustand.",
+      "Beschreiben Sie Schritte der Anforderungsanalyse.",
+      "Formulieren Sie pruefbare Anforderungen."
+    ],
+    introduction: [
+      "Anforderungsanalyse uebersetzt Kundenbedarf in klare, testbare Kriterien.",
+      "AP1 verlangt strukturiertes Vorgehen und Fachbegriffe."
+    ],
+    explanation: [
+      {
+        title: "Vom Bedarf zur Anforderung",
+        paragraphs: [
+          "Bedarf: Problem oder Ziel ('wir brauchen mobile Arbeitsplaetze').",
+          "Ist-Zustand: Was ist heute? Soll-Zustand: Was soll erreicht werden?",
+          "Anforderung: pruefbares Kriterium ('Notebook max 1,5 kg, 8h Akku')."
+        ]
+      },
+      {
+        title: "Analyse-Schritte",
+        paragraphs: [
+          "Stakeholder und Zielgruppe identifizieren.",
+          "Ist erheben, Soll definieren, Luecken analysieren.",
+          "Prioritaeten, Risiken, Rahmenbedingungen dokumentieren."
+        ]
+      }
+    ],
+    realWorldExamples: ["10 Laptops: Anzahl, Software, Budget, Liefertermin, Sicherheit dokumentieren."],
+    practicalExamples: [{
+      title: "JIKU: Laptop-Rollout",
+      paragraphs: ["Ist: 5 Jahre alte PCs. Soll: 20 neue Notebooks mit VPN. Anforderungen liste erstellen."],
+      steps: ["Ist erheben.", "Soll definieren.", "Anforderungen formulieren.", "Priorisieren."]
+    }],
+    vocabulary: [
+      mkVocab("Bedarf", "necessidade", "Grundlegendes Problem/Ziel.", "Mobiles Arbeiten."),
+      mkVocab("Anforderung", "requisito", "Praezises, pruefbares Kriterium.", "16 GB RAM."),
+      mkVocab("Ist-Zustand", "estado atual", "Heutige Situation.", "Alte Hardware."),
+      mkVocab("Soll-Zustand", "estado alvo", "Zielbild.", "Neue Arbeitsplaetze."),
+      mkVocab("Stakeholder", "parte interessada", "Betroffene Personen/Gruppen.", "IT, Einkauf, Nutzer."),
+      mkVocab("Prioritaet", "prioridade", "Wichtigkeit/Reihenfolge.", "Muss vor Kann."),
+      mkVocab("Rahmenbedingung", "condicao restritiva", "Einschraenkungen.", "Budget, Frist."),
+      mkVocab("Risiko", "risco", "Moegliches Problem.", "Lieferverzoegerung.")
+    ],
+    summary: ["Bedarf → Ist/Soll → pruefbare Anforderungen.", "Stakeholder und Prioritaeten.", "Dokumentation ist Pflicht."],
+    mindMap: "Analyse → Bedarf → Ist/Soll → Anforderung → Prioritaet",
+    exercises: {
+      easy: [
+        mkEx("Bedarf vs Anforderung?", "Bedarf=Problem; Anforderung=pruefbares Kriterium."),
+        mkEx("Was ist Ist-Zustand?", "Aktuelle Situation."),
+        mkEx("Warum Stakeholder?", "Alle Betroffenen einbeziehen.")
+      ],
+      intermediate: [
+        mkEx("Soll: 'bessere IT' — verbessern?", "Soll: messbare Ziele wie Ausfallzeit < 1h/Monat."),
+        mkEx("Risiko bei Beschaffung?", "Lieferverzoegerung, Budgetueberschreitung."),
+        mkEx("Analyse-Schritte nennen?", "Ist erheben, Soll definieren, Anforderungen dokumentieren.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Anforderung 'benutzerfreundlich' ohne Kriterium?", "Unzureichend — nicht pruefbar."),
+        mkEx("AP1: Ist/Soll verwechselt?", "Ist=heute; Soll=Ziel — nicht vertauschen."),
+        mkEx("AP1: Signalwort 'ermitteln' — was tun?", "Informationen sammeln und strukturieren.")
+      ]
+    },
+    commonMistakes: ["Bedarf als Anforderung schreiben.", "Ist und Soll verwechseln."],
+    revisionChecklist: ["Bedarf/Anforderung.", "Ist/Soll Beispiel.", "Pruefbare Formulierung."],
+    related: ["Bedarf", "Ist-Zustand", "Soll-Zustand", "Kundenanforderungen"]
+  },
+
+  "pflichtenheft": {
+    studyTime: "50-60 Minuten",
+    stars: "★★★★★",
+    objectives: [
+      "Unterscheiden Sie Lastenheft und Pflichtenheft.",
+      "Erklaeren Sie Auftraggeber und Auftragnehmer-Perspektive.",
+      "Beschreiben Sie typische Inhalte beider Dokumente."
+    ],
+    introduction: [
+      "Lastenheft und Pflichtenheft sind Klassiker in AP1: Was will der Kunde, wie setzt der Anbieter um?",
+      "Saubere Unterscheidung verhindert Missverstaendnisse in Projekten."
+    ],
+    explanation: [
+      {
+        title: "Lastenheft",
+        paragraphs: [
+          "Sicht des Auftraggebers (Kunde): Was soll erreicht werden?",
+          "Enthaelt Ziele, Anforderungen, Rahmenbedingungen aus Kundensicht.",
+          "Frage: WAS und WOFUER?"
+        ]
+      },
+      {
+        title: "Pflichtenheft",
+        paragraphs: [
+          "Sicht des Auftragnehmers (Anbieter/JIKU): Wie wird umgesetzt?",
+          "Enthaelt Loesungskonzept, Technik, Schnittstellen, Planung.",
+          "Frage: WIE und WOMIT?"
+        ]
+      }
+    ],
+    realWorldExamples: ["Lastenheft: sichere mobile Arbeitsplaetze. Pflichtenheft: Notebookmodell, VPN, Verschluesselung."],
+    practicalExamples: [{
+      title: "JIKU: Mobile Arbeitsplaetze",
+      paragraphs: ["Lastenheft: 20 Nutzer, Homeoffice, DSGVO. Pflichtenheft: Lenovo X, Intune, AES-256."],
+      steps: ["Lastenheft lesen (Kunde).", "Loesung planen.", "Pflichtenheft schreiben.", "Abstimmen."]
+    }],
+    vocabulary: [
+      mkVocab("Lastenheft", "documento de requisitos (cliente)", "Kundensicht — Was.", "Anforderungen Auftraggeber."),
+      mkVocab("Pflichtenheft", "documento de solucao (fornecedor)", "Anbietersicht — Wie.", "Umsetzungskonzept."),
+      mkVocab("Auftraggeber", "contratante", "Gibt Auftrag.", "Kunde."),
+      mkVocab("Auftragnehmer", "contratado", "Erbringt Leistung.", "JIKU IT-Solutions."),
+      mkVocab("Anforderung", "requisito", "In Lastenheft zentral.", "Funktionale Anforderung."),
+      mkVocab("Loesungskonzept", "conceito de solucao", "In Pflichtenheft.", "Technische Umsetzung."),
+      mkVocab("Schnittstelle", "interface", "Verbindung zwischen Systemen.", "API, VPN."),
+      mkVocab("Abnahme", "aceitacao", "Kunde prueft Ergebnis.", "Nach Pflichtenheft-Umsetzung.")
+    ],
+    summary: ["Lastenheft = Kunde/WAS. Pflichtenheft = Anbieter/WIE.", "Beide dokumentieren Projekt.", "AP1: Zuordnung ist Pflicht."],
+    mindMap: "Lastenheft (Kunde/WAS) ↔ Pflichtenheft (Anbieter/WIE)",
+    exercises: {
+      easy: [
+        mkEx("Lastenheft — wessen Sicht?", "Auftraggeber/Kunde."),
+        mkEx("Pflichtenheft — wessen Sicht?", "Auftragnehmer/Anbieter."),
+        mkEx("Lastenheft fragt?", "WAS und WOFUER.")
+      ],
+      intermediate: [
+        mkEx("Notebook-Modell — Lasten- oder Pflichtenheft?", "Pflichtenheft — technische Umsetzung."),
+        mkEx("'20 sichere Arbeitsplaetze' — wo?", "Lastenheft — Kundenanforderung."),
+        mkEx("Warum beide Dokumente?", "Klarheit zwischen Wunsch und Umsetzung.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Pflichtenheft vom Kunden geschrieben — richtig?", "Falsch — Kunde schreibt Lastenheft."),
+        mkEx("AP1: Lastenheft enthaelt Quellcode?", "Falsch — das waere Pflichtenheft/Implementierung."),
+        mkEx("AP1: Ordnen Sie Lastenheft, Pflichtenheft, Abnahme.", "Plan → Umsetzung → Pruefung durch Kunde.")
+      ]
+    },
+    commonMistakes: ["Lasten- und Pflichtenheft vertauschen.", "Technische Details ins Lastenheft."],
+    revisionChecklist: ["Lasten vs Pflicht.", "Auftraggeber vs Auftragnehmer.", "JIKU-Beispiel."],
+    related: ["Lastenheft", "Pflichtenheft", "Anforderungsanalyse"]
+  },
+
+  "projektmanagement-iperka": {
+    studyTime: "50-60 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Nennen Sie die sechs Phasen von IPERKA.",
+      "Erklaeren Sie berufliches Vorgehen statt impulsives Handeln.",
+      "Wenden Sie IPERKA auf IT-Aufgaben an."
+    ],
+    introduction: [
+      "IPERKA strukturiert vollstaendige berufliche Handlungen: Informieren, Planen, Entscheiden, Realisieren, Kontrollieren, Auswerten.",
+      "In der Ausbildung und AP1 ist planvolles Arbeiten zentral."
+    ],
+    explanation: [
+      {
+        title: "Die sechs Phasen",
+        paragraphs: [
+          "I — Informieren: Informationen sammeln, Auftrag verstehen.",
+          "P — Planen: Ablauf, Material, Zeit, Rollen planen.",
+          "E — Entscheiden: Optionen abwaegen, Loesung waehlen.",
+          "R — Realisieren: Plan ausfuehren.",
+          "K — Kontrollieren: Ergebnis gegen Anforderung pruefen.",
+          "A — Auswerten: Reflektieren, verbessern, dokumentieren."
+        ]
+      },
+      {
+        title: "IT-Beispiel",
+        paragraphs: [
+          "Arbeitsplatzinstallation: Anforderungen lesen(I), Schritte planen(P), Konfiguration waehlen(E), einrichten(R), testen(K), Protokoll(A).",
+          "Nicht sofort loslegen — erst verstehen und planen."
+        ]
+      }
+    ],
+    realWorldExamples: ["Ticket loesen ohne Kontrolle → Fehler bleibt — IPERKA verhindert das."],
+    practicalExamples: [{
+      title: "JIKU: PC-Einrichtung",
+      paragraphs: ["I: Kundenwunsch. P: Checkliste. E: Windows vs Linux. R: Installation. K: Login-Test. A: Protokoll."],
+      steps: ["IPERKA auf Aufgabe mappen.", "Jede Phase benennen.", "Ergebnis dokumentieren."]
+    }],
+    vocabulary: [
+      mkVocab("IPERKA", "metodo IPERKA", "Informieren-Planen-Entscheiden-Realisieren-Kontrollieren-Auswerten.", "Handlungsmodell."),
+      mkVocab("Informieren", "informar", "Informationen beschaffen.", "Erste Phase."),
+      mkVocab("Planen", "planejar", "Vorgehen strukturieren.", "Checkliste, Zeitplan."),
+      mkVocab("Entscheiden", "decidir", "Loesung waehlen.", "Option A oder B."),
+      mkVocab("Realisieren", "realizar", "Umsetzen.", "Installation durchfuehren."),
+      mkVocab("Kontrollieren", "controlar", "Ergebnis pruefen.", "Funktionstest."),
+      mkVocab("Auswerten", "avaliar", "Reflektieren und lernen.", "Was lief gut?"),
+      mkVocab("Handlungsprodukt", "produto da acao", "Ergebnis der Aufgabe.", "Protokoll, Angebot.")
+    ],
+    summary: ["IPERKA = 6 Phasen strukturiert.", "Kontrollieren und Auswerten nicht vergessen.", "Planen vor Realisieren."],
+    mindMap: "IPERKA → I → P → E → R → K → A",
+    exercises: {
+      easy: [
+        mkEx("Was bedeutet I in IPERKA?", "Informieren."),
+        mkEx("Letzte Phase IPERKA?", "Auswerten."),
+        mkEx("Warum Planen?", "Strukturiertes, nachvollziehbares Vorgehen.")
+      ],
+      intermediate: [
+        mkEx("Kontrollieren vs Auswerten?", "Kontrolle=Ergebnis ok?; Auswerten=Reflexion/Lernen."),
+        mkEx("Entscheiden — Beispiel?", "Welches Notebookmodell bei Budget X."),
+        mkEx("IPERKA bei Ticket?", "I=Symptom lesen, P=Schritte, R=Fix, K=Test, A=Doku.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Sofort installieren ohne Plan — IPERKA?", "Fehlt I, P, E — unprofessionell."),
+        mkEx("AP1: Reihenfolge R vor P?", "Falsch — Realisieren nach Planen."),
+        mkEx("AP1: Handlungsprodukt nennen.", "Protokoll, Angebot, Testbericht.")
+      ]
+    },
+    commonMistakes: ["K und A ueberspringen.", "IPERKA mit Projektmanagement-Software verwechseln."],
+    revisionChecklist: ["6 Phasen auswendig.", "IT-Beispiel durch IPERKA.", "K vs A erklaeren."],
+    related: ["IPERKA", "Planen", "Kontrollieren", "Handlungsprodukt"]
+  },
+
+  "kalkulation": {
+    studyTime: "55-70 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Berechnen Sie einfache Angebote mit Material und Arbeitszeit.",
+      "Unterscheiden Sie Netto, Brutto, Umsatzsteuer und Stundensatz.",
+      "Erklaeren Sie Gewinn und Wirtschaftlichkeit auf AP1-Niveau."
+    ],
+    introduction: [
+      "IT-Leistungen kosten Hardware plus Arbeitszeit plus Overhead. Kalkulation macht Preise nachvollziehbar.",
+      "AP1 kann einfache Rechenaufgaben und Begriffe abfragen."
+    ],
+    explanation: [
+      {
+        title: "Angebotsbestandteile",
+        paragraphs: [
+          "Materialkosten: Hardware, Lizenzen.",
+          "Lohnkosten: Stunden × Stundensatz.",
+          "Gemeinkosten/Zuschlag: Overhead des Betriebs.",
+          "Gewinnaufschlag: Marge des Unternehmens."
+        ]
+      },
+      {
+        title: "Netto und Brutto",
+        paragraphs: [
+          "Netto: ohne Umsatzsteuer (MwSt). Brutto: inkl. MwSt.",
+          "Brutto = Netto × (1 + MwSt/100). In DE oft 19% MwSt.",
+          "Beispiel: 100 € netto + 19% = 119 € brutto."
+        ]
+      }
+    ],
+    realWorldExamples: ["3h Installation à 85 €/h + PC 600 € netto → Angebot kalkulieren."],
+    practicalExamples: [{
+      title: "JIKU: Angebot",
+      paragraphs: ["PC 600 € + 2h × 90 € = 780 € netto. Brutto 780 × 1,19 = 928,20 €."],
+      steps: ["Material.", "Stunden × Satz.", "Summe netto.", "MwSt addieren."]
+    }],
+    vocabulary: [
+      mkVocab("Kalkulation", "calculo/orcamento", "Preisermittlung.", "Angebot erstellen."),
+      mkVocab("Stundensatz", "taxa horaria", "Preis pro Arbeitsstunde.", "85 €/h."),
+      mkVocab("Netto", "liquido (sem IVA)", "Ohne MwSt.", "100 € netto."),
+      mkVocab("Brutto", "bruto (com IVA)", "Mit MwSt.", "119 € brutto."),
+      mkVocab("Umsatzsteuer", "IVA", "Mehrwertsteuer.", "19% in DE."),
+      mkVocab("Gewinn", "lucro", "Ueberschuss.", "Preis minus Kosten."),
+      mkVocab("Gemeinkosten", "custos indiretos", "Betriebskosten-Zuschlag.", "Miete, Verwaltung."),
+      mkVocab("Angebotspreis", "preco da proposta", "Endpreis fuer Kunde.", "Brutto in Angebot.")
+    ],
+    summary: ["Material + Arbeitszeit + Zuschlag = Angebot.", "Netto + MwSt = Brutto.", "Sauber rechnen und begruenden."],
+    mindMap: "Kalkulation → Material + Stunden → Netto → MwSt → Brutto",
+    exercises: {
+      easy: [
+        mkEx("Netto vs Brutto?", "Netto ohne MwSt; Brutto mit MwSt."),
+        mkEx("2h à 50 €/h?", "100 €."),
+        mkEx("MwSt 19% auf 100 € netto?", "19 € — brutto 119 €.")
+      ],
+      intermediate: [
+        mkEx("PC 500 € + 3h × 80 € netto?", "500 + 240 = 740 € netto."),
+        mkEx("Brutto 119 € — netto bei 19%?", "100 € netto."),
+        mkEx("Warum Stundensatz?", "Arbeitszeit bewerten und verrechnen.")
+      ],
+      ap1Style: [
+        mkEx("AP1: Angebot nur Hardware — fehlt?", "Arbeitszeit/Support-Kosten."),
+        mkEx("AP1: 100 € brutto = 100 € netto?", "Falsch — brutto ist hoeher bei MwSt."),
+        mkEx("AP1: Gewinn erklaeren.", "Erlös minus Kosten — Ueberschuss fuer Betrieb.")
+      ]
+    },
+    commonMistakes: ["Netto/Brutto verwechseln.", "Arbeitszeit vergessen."],
+    revisionChecklist: ["Netto/Brutto rechnen.", "Stundensatz anwenden.", "Angebotssumme."],
+    related: ["Stundensatz", "Netto", "Brutto", "Angebot"]
+  },
+
+  "osi": {
+    studyTime: "60-75 Minuten",
+    stars: "★★★★★",
+    objectives: [
+      "Nennen Sie die sieben OSI-Schichten in Reihenfolge.",
+      "Ordnen Sie Geraete und Protokolle den Schichten zu.",
+      "Nutzen Sie OSI zur strukturierten Fehlersuche."
+    ],
+    introduction: [
+      "Das OSI-Modell teilt Netzwerkkommunikation in 7 Schichten — konzeptionell, aber AP1-relevant.",
+      "Switch = Schicht 2, Router = Schicht 3, TCP/UDP = 4, HTTP/DNS = 7."
+    ],
+    explanation: [
+      {
+        title: "Die 7 Schichten (Merksatz: AllPeopleSeemToNeedDataProcessing)",
+        paragraphs: [
+          "7 Anwendung — HTTP, DNS, SMTP. 6 Darstellung — Kodierung, Verschluesselung.",
+          "5 Sitzung — Session-Management. 4 Transport — TCP, UDP.",
+          "3 Vermittlung — IP, Router. 2 Sicherung — MAC, Switch.",
+          "1 Bituebertragung — Kabel, Funk, Bits."
+        ]
+      },
+      {
+        title: "Praxis",
+        paragraphs: [
+          "OSI ist Referenzmodell — TCP/IP ist praxisnaeher mit 4 Schichten.",
+          "Fehlersuche von unten: Kabel(1) → Link(2) → IP(3) → Transport(4) → DNS(7)."
+        ]
+      }
+    ],
+    realWorldExamples: ["IP ok, Name nicht → Verdacht Schicht 7 (DNS) oder 4."],
+    practicalExamples: [{
+      title: "JIKU: Fehlersuche",
+      paragraphs: ["Kein Netz: Schicht 1 Kabel? Schicht 2 Link? Schicht 3 IP/Gateway? Schicht 7 DNS?"],
+      steps: ["Symptom.", "Schicht zuordnen.", "Test pro Schicht.", "Dokumentieren."]
+    }],
+    vocabulary: [
+      mkVocab("OSI-Modell", "modelo OSI", "7-Schichten-Referenzmodell.", "Open Systems Interconnection."),
+      mkVocab("Schicht", "camada", "Ebene mit Aufgabe.", "Layer 1-7."),
+      mkVocab("Bituebertragungsschicht", "camada fisica", "Schicht 1.", "Kabel, Hub."),
+      mkVocab("Sicherungsschicht", "camada de enlace", "Schicht 2.", "MAC, Switch."),
+      mkVocab("Vermittlungsschicht", "camada de rede", "Schicht 3.", "IP, Router."),
+      mkVocab("Transportschicht", "camada de transporte", "Schicht 4.", "TCP, UDP."),
+      mkVocab("Anwendungsschicht", "camada de aplicacao", "Schicht 7.", "HTTP, DNS."),
+      mkVocab("Protokoll", "protocolo", "Regeln der Kommunikation.", "TCP, IP, HTTP.")
+    ],
+    summary: ["7 Schichten von Bits bis Anwendung.", "Geraete/Protokolle zuordnen.", "Fehlersuche bottom-up."],
+    mindMap: "OSI → 1-Physical → 2-Data → 3-Network → 4-Transport → 5-7-App",
+    exercises: {
+      easy: [
+        mkEx("Wie viele OSI-Schichten?", "7."),
+        mkEx("Router — welche Schicht?", "Schicht 3 (Vermittlung)."),
+        mkEx("Switch — welche Schicht?", "Schicht 2 (Sicherung).")
+      ],
+      intermediate: [
+        mkEx("TCP — Schicht?", "4 Transport."),
+        mkEx("HTTP — Schicht?", "7 Anwendung."),
+        mkEx("Cabo desconectado — Schicht?", "1 Bituebertragung.")
+      ],
+      ap1Style: [
+        mkEx("AP1: DNS — Schicht?", "7 Anwendung (Namensaufloesung fuer Apps)."),
+        mkEx("AP1: OSI vs TCP/IP?", "OSI=7 Schichten Referenz; TCP/IP=4 Schichten Praxis."),
+        mkEx("AP1: IP falsch — Schicht?", "3 Vermittlung.")
+      ]
+    },
+    commonMistakes: ["Schichtennummern verwechseln.", "OSI mit TCP/IP identisch sehen."],
+    revisionChecklist: ["7 Schichten nennen.", "Switch/Router/TCP/DNS zuordnen.", "Fehlersuche-Beispiel."],
+    related: ["Schicht", "Router", "Switch", "TCP"]
+  },
+
+  "tcp": {
+    studyTime: "50-60 Minuten",
+    stars: "★★★★☆",
+    objectives: [
+      "Erklaeren Sie TCP als verbindungsorientiertes, zuverlaessiges Protokoll.",
+      "Unterscheiden Sie TCP und UDP.",
+      "Ordnen Sie TCP der OSI-Schicht 4 zu."
+    ],
+    introduction: [
+      "TCP (Transmission Control Protocol) garantiert Reihenfolge, Bestaetigung und erneute Uebertragung.",
+      "HTTPS und viele Anwendungen nutzen TCP wegen Zuverlaessigkeit."
+    ],
+    explanation: [
+      {
+        title: "Eigenschaften",
+        paragraphs: [
+          "Verbindungsaufbau: 3-Way-Handshake (SYN, SYN-ACK, ACK).",
+          "Quell- und Zielport identifizieren Anwendung (z.B. 443 HTTPS).",
+          "Fehlerhafte Pakete werden erneut gesendet — zuverlaessig aber langsamer als UDP."
+        ]
+      }
+    ],
+    realWorldExamples: ["Webseite laden per HTTPS — TCP Port 443."],
+    practicalExamples: [{ title: "JIKU: Webserver", paragraphs: ["TCP 443 zwischen Client und Server — Reihenfolge der HTTP-Daten garantiert."], steps: ["Port 443.", "Handshake.", "Datenuebertragung.", "Verbindung beenden."] }],
+    vocabulary: [
+      mkVocab("TCP", "protocolo TCP", "Transmission Control Protocol.", "Zuverlaessig, verbindungsorientiert."),
+      mkVocab("Port", "porta", "Service-Identifikator.", "443 HTTPS."),
+      mkVocab("Handshake", "handshake", "Verbindungsaufbau.", "SYN, SYN-ACK, ACK."),
+      mkVocab("Bestaetigung", "confirmacao", "ACK bestaetigt Empfang.", "Zuverlaessigkeit."),
+      mkVocab("Reihenfolge", "ordem", "Pakete in richtiger Order.", "TCP garantiert."),
+      mkVocab("Transportschicht", "camada 4", "OSI Layer 4.", "TCP und UDP."),
+      mkVocab("Verbindungsorientiert", "orientado a conexao", "Erst Verbindung, dann Daten.", "Gegenteil: UDP."),
+      mkVocab("Paket", "pacote", "Dateneinheit der Vermittlung.", "Wird von TCP segmentiert.")
+    ],
+    summary: ["TCP = zuverlaessig, Schicht 4.", "Ports fuer Dienste.", "HTTPS nutzt TCP."],
+    mindMap: "TCP → Schicht 4 → Port → Handshake → Zuverlaessig",
+    exercises: {
+      easy: [mkEx("TCP — OSI-Schicht?", "4."), mkEx("TCP vs UDP — zuverlaessig?", "TCP."), mkEx("HTTPS Port?", "443.")],
+      intermediate: [mkEx("3-Way-Handshake Zweck?", "Verbindung aufbauen."), mkEx("Warum TCP fuer Web?", "Daten muessen vollstaendig und geordnet ankommen."), mkEx("Port vs IP?", "IP=Host; Port=Service auf Host.")],
+      ap1Style: [mkEx("AP1: TCP ohne Verbindungsaufbau?", "Falsch — verbindungsorientiert."), mkEx("AP1: UDP fuer E-Mail?", "Unueblich — E-Mail nutzt meist TCP (SMTP)."), mkEx("AP1: TCP Schicht 7?", "Falsch — Schicht 4.")]
+    },
+    commonMistakes: ["TCP mit IP verwechseln.", "Port mit IP verwechseln."],
+    revisionChecklist: ["TCP Eigenschaften.", "Schicht 4.", "TCP vs UDP."],
+    related: ["UDP", "Port", "Transportschicht", "HTTPS"]
+  },
+
+  "udp": {
+    studyTime: "45-55 Minuten",
+    stars: "★★★☆☆",
+    objectives: ["Erklaeren Sie UDP als verbindungslos und schnell.", "Nennen Sie Einsatzfaelle Streaming/VoIP.", "Unterscheiden Sie TCP und UDP."],
+    introduction: ["UDP sendet ohne Garantie — schneller, weniger Overhead.", "AP1: Geschwindigkeit vs Zuverlaessigkeit."],
+    explanation: [{ title: "Eigenschaften", paragraphs: ["Kein Handshake, keine Bestaetigung, keine Reihenfolgegarantie.", "Gut fuer Echtzeit: VoIP, Streaming, DNS-Anfragen (kurz).", "Packet loss moeglich — Anwendung muss ggf. tolerieren."] }],
+    realWorldExamples: ["Video-Stream — einzelne verlorene Frames weniger kritisch als Stopp."],
+    practicalExamples: [{ title: "DNS per UDP", paragraphs: ["DNS-Anfrage oft UDP Port 53 — schnelle Antwort, kleine Daten."], steps: ["Anfrage senden.", "Antwort empfangen.", "Bei Timeout erneut oder TCP."] }],
+    vocabulary: [
+      mkVocab("UDP", "protocolo UDP", "User Datagram Protocol.", "Verbindungslos."),
+      mkVocab("Verbindungslos", "sem conexao", "Kein Handshake.", "Sofort senden."),
+      mkVocab("Echtzeit", "tempo real", "Niedrige Latenz wichtig.", "VoIP, Gaming."),
+      mkVocab("Packet Loss", "perda de pacotes", "Daten kommen nicht an.", "Bei UDP moeglich."),
+      mkVocab("Overhead", "sobrecarga", "Zusaetzlicher Protokollaufwand.", "TCP hat mehr Overhead."),
+      mkVocab("Streaming", "streaming", "Kontinuierliche Medien.", "Oft UDP."),
+      mkVocab("DNS", "DNS", "Namensaufloesung.", "Oft UDP 53."),
+      mkVocab("Latenz", "latencia", "Verzoegerung.", "UDP oft niedriger.")
+    ],
+    summary: ["UDP = schnell, unzuverlaessig, Schicht 4.", "TCP vs UDP: Zuverlaessigkeit vs Geschwindigkeit."],
+    mindMap: "UDP → Schicht 4 → schnell → Streaming/DNS",
+    exercises: {
+      easy: [mkEx("UDP verbindungsorientiert?", "Nein — verbindungslos."), mkEx("UDP Schicht?", "4."), mkEx("TCP vs UDP Geschwindigkeit?", "UDP oft schneller.")],
+      intermediate: [mkEx("VoIP — TCP oder UDP?", "Oft UDP — Latenz wichtig."), mkEx("Nachteil UDP?", "Keine Liefergarantie."), mkEx("DNS Port?", "53.")],
+      ap1Style: [mkEx("AP1: UDP fuer Bankueberweisung?", "Unpassend — TCP wegen Zuverlaessigkeit."), mkEx("AP1: UDP garantiert Reihenfolge?", "Nein."), mkEx("AP1: Beide Schicht 4?", "Ja — TCP und UDP sind Transportprotokolle.")]
+    },
+    commonMistakes: ["UDP als 'schlecht' ohne Kontext.", "DNS nur UDP — kann auch TCP."],
+    revisionChecklist: ["UDP Eigenschaften.", "Anwendungsfall.", "TCP Vergleich."],
+    related: ["TCP", "Port", "DNS", "Latenz"]
+  },
+
+  "ipv4": {
+    studyTime: "55-70 Minuten",
+    stars: "★★★★★",
+    objectives: ["Erklaeren Sie IPv4-Adresse und Subnetzmaske.", "Berechnen Sie Netzwerk und Hostbereich auf AP1-Niveau.", "Unterscheiden Sie private und oeffentliche Adressen."],
+    introduction: ["IPv4: 32 Bit, vier Oktette (z.B. 192.168.1.10). Maske trennt Netz- und Hostteil.", "AP1: IP, Maske, Gateway, Broadcast."],
+    explanation: [
+      { title: "Adresse und Maske", paragraphs: ["IP identifiziert Host. Subnetzmaske (z.B. 255.255.255.0 = /24) definiert Netz.", "Gleiche Netzadresse = gleiches Subnetz — direkte Kommunikation.", "Standardgateway: Router-IP fuer andere Netze."] },
+      { title: "Private Bereiche", paragraphs: ["10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 — nicht routbar im Internet.", "NAT uebersetzt privat → oeffentlich."] }
+    ],
+    realWorldExamples: ["192.168.1.10/24 — Netz 192.168.1.0, Hosts .1-.254, Gateway oft .1."],
+    practicalExamples: [{ title: "JIKU: Buero-LAN", paragraphs: ["PC 192.168.10.5, Maske 255.255.255.0, Gateway 192.168.10.1."], steps: ["IP pruefen.", "Maske.", "Gateway ping.", "Erreichbarkeit Server."] }],
+    vocabulary: [
+      mkVocab("IPv4", "endereco IPv4", "32-Bit-Adresse.", "192.168.1.10"),
+      mkVocab("Subnetzmaske", "mascara de sub-rede", "Trennt Netz und Host.", "255.255.255.0"),
+      mkVocab("Standardgateway", "gateway padrao", "Router ins andere Netz.", "192.168.1.1"),
+      mkVocab("Broadcastadresse", "endereco broadcast", "Alle Hosts im Netz.", "192.168.1.255"),
+      mkVocab("Netzwerkadresse", "endereco de rede", "Erste Adresse des Netzes.", "192.168.1.0"),
+      mkVocab("private Adresse", "endereco privado", "Nicht internetroutbar.", "192.168.x.x"),
+      mkVocab("Oktett", "octeto", "Ein Byte der IP.", "Vier Oktette."),
+      mkVocab("/24", "CIDR /24", "24 Bit Netzanteil.", "255.255.255.0")
+    ],
+    summary: ["IP + Maske = Netz und Host.", "Gateway fuer Routing.", "Private IPs + NAT."],
+    mindMap: "IPv4 → Maske → Netz/Host → Gateway → privat/oeffentlich",
+    exercises: {
+      easy: [mkEx("Wofuer Subnetzmaske?", "Trennt Netz- und Hostteil."), mkEx("Gateway Zweck?", "Route in andere Netze."), mkEx("Private IP Beispiel?", "192.168.1.10")],
+      intermediate: [mkEx("192.168.1.10/24 — Netz?", "192.168.1.0"), mkEx("Gleiches Netz bei /24?", "Erste drei Oktette gleich."), mkEx("Broadcast 192.168.1.0/24?", "192.168.1.255")],
+      ap1Style: [mkEx("AP1: IP 192.168.1.10, Maske 255.255.255.0, Server 192.168.2.5 — Problem?", "Anderes Netz — braucht Router/Gateway."), mkEx("AP1: 169.254.x.x?", "APIPA — DHCP fehlgeschlagen."), mkEx("AP1: /24 entspricht Maske?", "255.255.255.0")]
+    },
+    commonMistakes: ["Gateway vergessen.", "Netz- und Hostteil verwechseln."],
+    revisionChecklist: ["IP/Maske erklaeren.", "Netz berechnen.", "Gateway und privat."],
+    related: ["Subnetzmaske", "Gateway", "NAT", "DHCP"]
+  },
+
+  "nat": {
+    studyTime: "45-55 Minuten",
+    stars: "★★★★☆",
+    objectives: ["Erklaeren Sie NAT als Uebersetzung privater in oeffentliche IPs.", "Beschreiben Sie Heimrouter-Szenario.", "Verbinden Sie NAT mit IPv4-Adressknappheit."],
+    introduction: ["NAT (Network Address Translation) — Router uebersetzt interne IPs nach extern.", "Typisch: viele Geraete, eine oeffentliche IP."],
+    explanation: [{ title: "Funktion", paragraphs: ["Intern: 192.168.x.x privat. Extern: eine oeffentliche IP des Routers.", "NAT-Tabelle mappt interne Port/IP auf externe.", "Ermoeglicht Internetzugang ohne oeffentliche IP pro Geraet."] }],
+    realWorldExamples: ["Heim-WLAN: Handy, PC, TV teilen eine oeffentliche IP des Routers."],
+    practicalExamples: [{ title: "JIKU: Buero", paragraphs: ["Mitarbeiter-PCs privat, Firewall/Router mit NAT ins Internet."], steps: ["Private IPs.", "Router NAT.", "Oeffentliche IP.", "Rueckuebersetzung."] }],
+    vocabulary: [
+      mkVocab("NAT", "NAT", "Network Address Translation.", "IP-Uebersetzung."),
+      mkVocab("private IP", "IP privada", "Internes Netz.", "192.168.1.5"),
+      mkVocab("oeffentliche IP", "IP publica", "Internet-routbar.", "Vom ISP."),
+      mkVocab("Router", "roteador", "Fuehrt NAT oft aus.", "Heimrouter."),
+      mkVocab("Portweiterleitung", "encaminhamento de porta", "Spezifischer Dienst nach innen.", "Port 443 → Server."),
+      mkVocab("NAT-Tabelle", "tabela NAT", "Zuordnung intern/extern.", "Session tracking."),
+      mkVocab("ISP", "provedor", "Internet Service Provider.", "Vergibt oeffentliche IP."),
+      mkVocab("Firewall", "firewall", "Oft mit NAT kombiniert.", "Filtert und uebersetzt.")
+    ],
+    summary: ["NAT = privat → oeffentlich.", "Heimrouter klassisches Beispiel.", "Spart oeffentliche IPv4-Adressen."],
+    mindMap: "NAT → private IP → Router → oeffentliche IP",
+    exercises: {
+      easy: [mkEx("Was macht NAT?", "Uebersetzt IP-Adressen zwischen Netzen."), mkEx("Warum NAT zuhause?", "Eine oeffentliche IP fuer viele Geraete."), mkEx("NAT wo?", "Router/Firewall.")],
+      intermediate: [mkEx("NAT und private Adressen?", "Private IPs brauchen NAT fuer Internet."), mkEx("Portweiterleitung?", "Externer Port → interner Host."), mkEx("NAT Sicherheit?", "Versteckt interne Struktur — kein Ersatz fuer Firewall.")],
+      ap1Style: [mkEx("AP1: Jedes Geraet braucht oeffentliche IP?", "Nein — NAT erlaubt Sharing."), mkEx("AP1: NAT auf Schicht 3?", "Ja — Vermittlung/Routing-Ebene."), mkEx("AP1: NAT = Verschluesselung?", "Falsch — nur Adressuebersetzung.")]
+    },
+    commonMistakes: ["NAT mit VPN verwechseln.", "NAT als Sicherheitsfeature allein."],
+    revisionChecklist: ["NAT erklaeren.", "Heimrouter Beispiel.", "privat/oeffentlich."],
+    related: ["IPv4", "Router", "private Adresse", "Firewall"]
+  },
+
+  "vpn": {
+    studyTime: "50-60 Minuten",
+    stars: "★★★★☆",
+    objectives: ["Erklaeren Sie VPN als verschluesselten Tunnel.", "Beschreiben Sie Remote Access.", "Unterscheiden Sie VPN und NAT."],
+    introduction: ["VPN (Virtual Private Network) — sichere Verbindung ueber unsicheres Netz (Internet).", "Homeoffice: Mitarbeiter → VPN → Firmennetz."],
+    explanation: [{ title: "Funktion", paragraphs: ["Tunnel verschluesselt Daten zwischen Client und VPN-Gateway.", "Remote Access: externer Nutzer erhaelt Zugang wie im Buero.", "Site-to-Site: verbindet zwei Standorte."] }],
+    realWorldExamples: ["Azubi arbeitet von zuhause, verbindet VPN, erreicht interne Server."],
+    practicalExamples: [{ title: "JIKU: Homeoffice", paragraphs: ["VPN-Client, Firmenzertifikat, Tunnel zu JIKU-Gateway, interne Tools erreichbar."], steps: ["VPN starten.", "Authentifizieren.", "Tunnel pruefen.", "Interne Dienste nutzen."] }],
+    vocabulary: [
+      mkVocab("VPN", "VPN", "Virtual Private Network.", "Verschluesselter Tunnel."),
+      mkVocab("Tunnel", "tunel", "Virtuelle Verbindung.", "Ueber Internet."),
+      mkVocab("Verschluesselung", "criptografia", "Schutz der Daten.", "IPSec, SSL-VPN."),
+      mkVocab("Remote Access", "acesso remoto", "Zugang von aussen.", "Homeoffice."),
+      mkVocab("VPN-Gateway", "gateway VPN", "Serverseite des VPN.", "Firmen-Firewall."),
+      mkVocab("Authentifizierung", "autenticacao", "Nutzer nachweisen.", "Benutzer/Passwort, Zertifikat."),
+      mkVocab("Split Tunneling", "split tunneling", "Nur Firmen-Traffic durch VPN.", "Rest direkt Internet."),
+      mkVocab("Site-to-Site", "site-to-site", "Standort verbindet Standort.", "Filialen vernetzen.")
+    ],
+    summary: ["VPN = sicherer Tunnel ueber Internet.", "Remote Access fuer Homeoffice.", "Nicht verwechseln mit NAT."],
+    mindMap: "VPN → Tunnel → Verschluesselung → Remote Access",
+    exercises: {
+      easy: [mkEx("Wofuer VPN?", "Sicherer Fernzugriff auf Firmennetz."), mkEx("VPN ueber welches Netz?", "Oft oeffentliches Internet."), mkEx("VPN = physisches Kabel?", "Nein — virtuell.")],
+      intermediate: [mkEx("VPN vs NAT?", "NAT=Adressuebersetzung; VPN=verschluesselter Tunnel."), mkEx("Warum Verschluesselung?", "Daten auf oeffentlichem Weg schuetzen."), mkEx("VPN-Client?", "Software auf Endgeraet.")],
+      ap1Style: [mkEx("AP1: VPN ohne Authentifizierung?", "Unsicher — Identitaet pruefen."), mkEx("AP1: VPN ersetzt Firewall?", "Nein — ergaenzt Sicherheit."), mkEx("AP1: Remote Access Beispiel?", "Homeoffice Mitarbeiter → Firmen-Intranet.")]
+    },
+    commonMistakes: ["VPN mit Proxy verwechseln.", "VPN allein = totale Sicherheit."],
+    revisionChecklist: ["VPN erklaeren.", "Homeoffice Beispiel.", "VPN vs NAT."],
+    related: ["Verschluesselung", "Remote Access", "Firewall", "NAT"]
+  },
+
+  "dns": {
+    studyTime: "55-65 Minuten",
+    stars: "★★★★★",
+    objectives: ["Erklaeren Sie DNS als Namensaufloesung.", "Nennen Sie A, CNAME, MX auf Grundniveau.", "Fehlersuche: IP ok, Name nicht."],
+    introduction: ["DNS uebersetzt Namen (www.example.com) in IP-Adressen.", "AP1: DNS-Server, Cache, Resolver, FQDN."],
+    explanation: [
+      { title: "Ablauf", paragraphs: ["Client fragt DNS-Server (Resolver).", "Rekursiv oder iterativ bis autoritative Antwort.", "Antwort wird gecacht — TTL begrenzt Gueltigkeit."] },
+      { title: "Record-Typen", paragraphs: ["A: Name → IPv4. AAAA: IPv6. CNAME: Alias. MX: Mail-Server.", "FQDN: vollqualifizierter Domainname."] }
+    ],
+    realWorldExamples: ["Browser www.jiku.de — DNS liefert IP — dann HTTP-Verbindung."],
+    practicalExamples: [{ title: "JIKU: Intranet", paragraphs: ["intranet.jiku.local loest nicht auf — nslookup pruefen, DNS-Eintrag fehlt."], steps: ["nslookup.", "DNS-Server pruefen.", "Eintrag pruefen.", "Cache leeren testen."] }],
+    vocabulary: [
+      mkVocab("DNS", "DNS", "Domain Name System.", "Name zu IP."),
+      mkVocab("DNS-Server", "servidor DNS", "Beantwortet Anfragen.", "8.8.8.8 Google."),
+      mkVocab("Resolver", "resolvedor", "Loest Namen auf.", "Client oder lokal."),
+      mkVocab("A-Record", "registro A", "Hostname → IPv4.", "www → 93.184.216.34"),
+      mkVocab("CNAME", "CNAME", "Alias auf anderen Namen.", "shop → www."),
+      mkVocab("FQDN", "FQDN", "Vollqualifizierter Name.", "server1.jiku.de."),
+      mkVocab("TTL", "TTL", "Time to Live im Cache.", "Sekunden gueltig."),
+      mkVocab("nslookup", "nslookup", "DNS-Abfrage-Tool.", "Fehlersuche.")
+    ],
+    summary: ["DNS: Name → IP.", "IP erreichbar, Name nicht → DNS-Verdacht.", "A, CNAME, MX Grundbegriffe."],
+    mindMap: "DNS → Resolver → A/CNAME/MX → Cache → nslookup",
+    exercises: {
+      easy: [mkEx("DNS Hauptaufgabe?", "Namen in IP-Adressen aufloesen."), mkEx("A-Record?", "Name zu IPv4."), mkEx("Tool DNS testen?", "nslookup oder dig.")],
+      intermediate: [mkEx("IP geht, Name nicht?", "DNS-Problem wahrscheinlich."), mkEx("CNAME?", "Alias auf anderen Hostnamen."), mkEx("DNS bei DHCP?", "DHCP liefert oft DNS-Server-Adresse.")],
+      ap1Style: [mkEx("AP1: DNS Schicht 7?", "Ja — Anwendungsprotokoll."), mkEx("AP1: DNS ersetzt IP?", "Nein — ergaenzt fuer Menschen lesbare Namen."), mkEx("AP1: MX-Record?", "Mail-Exchange fuer E-Mail.")]
+    },
+    commonMistakes: ["DNS mit DHCP verwechseln.", "Browser-Cache vs DNS-Cache."],
+    revisionChecklist: ["DNS Ablauf.", "A-Record.", "IP ok Name nicht."],
+    related: ["IP-Adresse", "DHCP", "nslookup", "HTTP"]
+  },
+
+  "dhcp": {
+    studyTime: "50-60 Minuten",
+    stars: "★★★★☆",
+    objectives: ["Erklaeren Sie DHCP als automatische IP-Konfiguration.", "Nennen Sie Lease, Gateway, DNS aus DHCP.", "Erkennen Sie 169.254.x.x APIPA."],
+    introduction: ["DHCP verteilt IP, Maske, Gateway, DNS automatisch an Clients.", "Ohne DHCP: manuelle Konfiguration noetig."],
+    explanation: [
+      { title: "DHCP-Ablauf", paragraphs: ["DISCOVER → OFFER → REQUEST → ACK (DORA).", "Lease: IP ist zeitlich geliehen — Renewal vor Ablauf.", "DHCP-Server kann im Router oder Windows Server laufen."] },
+      { title: "Fehler", paragraphs: ["Kein DHCP: APIPA 169.254.x.x — Link-Local, kein Gateway.", "Konflikt: zwei Geraete gleiche IP — Netz stoert."] }
+    ],
+    realWorldExamples: ["Notebook ins WLAN — erhaelt automatisch IP, Maske, Gateway, DNS."],
+    practicalExamples: [{ title: "JIKU: Buero", paragraphs: ["Neuer PC: DHCP aktiv — ipconfig zeigt IPv4, Gateway, DNS-Server."], steps: ["DHCP aktiv?", "ipconfig /all.", "Lease pruefen.", "Reservierung fuer Server."] }],
+    vocabulary: [
+      mkVocab("DHCP", "DHCP", "Dynamic Host Configuration Protocol.", "Automatische IP-Vergabe."),
+      mkVocab("Lease", "locacao/concessao", "Mietdauer der IP.", "Erneuerung vor Ablauf."),
+      mkVocab("DHCP-Server", "servidor DHCP", "Verteilt Konfiguration.", "Im Router."),
+      mkVocab("APIPA", "APIPA", "169.254.x.x ohne DHCP.", "Link-Local."),
+      mkVocab("Reservierung", "reserva", "Feste IP fuer MAC.", "Server immer gleiche IP."),
+      mkVocab("Scope", "escopo", "IP-Bereich des DHCP.", "192.168.1.100-200"),
+      mkVocab("Standardgateway", "gateway", "Wird mit DHCP verteilt.", "Router-IP."),
+      mkVocab("ipconfig", "ipconfig", "Windows IP-Konfiguration.", "DHCP-Status anzeigen.")
+    ],
+    summary: ["DHCP: IP + Maske + Gateway + DNS automatisch.", "Lease und Renewal.", "169.254 = kein DHCP."],
+    mindMap: "DHCP → DORA → Lease → Gateway/DNS → APIPA",
+    exercises: {
+      easy: [mkEx("Was verteilt DHCP?", "IP, Maske, Gateway, DNS, Lease."), mkEx("APIPA Adresse?", "169.254.x.x"), mkEx("DHCP Vorteil?", "Keine manuelle Konfiguration pro Client.")],
+      intermediate: [mkEx("DORA?", "Discover, Offer, Request, Ack."), mkEx("Lease abgelaufen?", "Client fordert Erneuerung oder neue IP."), mkEx("Reservierung wofuer?", "Feste IP fuer bestimmtes Geraet (Server).")],
+      ap1Style: [mkEx("AP1: DHCP und DNS?", "DHCP kann DNS-Server-Adresse mitgeben."), mkEx("AP1: Statische IP fuer Drucker?", "Moeglich — Reservation oder manuell."), mkEx("AP1: 169.254 — Ursache?", "DHCP nicht erreichbar.")]
+    },
+    commonMistakes: ["DHCP mit DNS verwechseln.", "APIPA als normales Netz sehen."],
+    revisionChecklist: ["DHCP Parameter.", "DORA.", "APIPA erkennen."],
+    related: ["IPv4", "DNS", "Gateway", "ipconfig"]
+  },
+
+  "osi-camada-1": {
+    studyTime: "35-45 Minuten", stars: "★★★☆☆",
+    objectives: ["Beschreiben Sie Schicht 1 — Bituebertragung.", "Nennen Sie Kabel, Funk, Hub.", "Erkennen Sie physische Fehler."],
+    introduction: ["Schicht 1: Bits auf dem Medium — elektrisch, optisch oder Funk."],
+    explanation: [{ title: "Schicht 1", paragraphs: ["Physikalische Uebertragung: Twisted Pair, Glasfaser, WLAN-Funk.", "Hub (legacy) — alles auf Schicht 1, keine Intelligenz.", "Fehler: Kabel defekt, Stecker lose, Dämpfung."] }],
+    realWorldExamples: ["Netzwerkkabel nicht eingesteckt — klassischer Layer-1-Fehler."],
+    practicalExamples: [{ title: "Kabel pruefen", paragraphs: ["Link-LED am Port? Kabel tauschen?"], steps: ["LED.", "Kabel.", "Stecker.", "Medienwahl."] }],
+    vocabulary: [mkVocab("Bituebertragungsschicht", "camada fisica", "OSI Layer 1.", "Bits auf Medium."), mkVocab("Twisted Pair", "par trancado", "Kupferkabel.", "Cat6."), mkVocab("Glasfaser", "fibra optica", "Licht ueber Faser.", "Lange Distanz."), mkVocab("Hub", "hub", "Legacy Schicht 1.", "Alle Ports gleich."), mkVocab("Signal", "sinal", "Physische Repraesentation.", "Spannung/Licht."), mkVocab("Daempfung", "atenuacao", "Signal schwaecher.", "Lange Kabel.")],
+    summary: ["Layer 1 = physisches Medium.", "Kabel/Funk/Stecker.", "Erste Stelle bei 'kein Link'."],
+    mindMap: "L1 → Kabel/Funk → Bits → Hub",
+    exercises: { easy: [mkEx("Schicht 1 Aufgabe?", "Bituebertragung."), mkEx("Switch Schicht 1?", "Nein — Switch ist Schicht 2."), mkEx("Glasfaser Schicht?", "1")], intermediate: [mkEx("Hub vs Switch?", "Hub L1; Switch L2."), mkEx("WLAN Schicht?", "1 (Funk medium).")], ap1Style: [mkEx("AP1: IP-Konfiguration korrekt, kein Link?", "Verdacht Schicht 1/2 — physische Verbindung.")] },
+    commonMistakes: ["Switch als Schicht 1.", "Layer 1 mit Layer 3 verwechseln."],
+    revisionChecklist: ["L1 definieren.", "Medien nennen.", "Fehlerbeispiel."],
+    related: ["OSI", "Verkabelung", "Netzwerkmedien"]
+  },
+
+  "osi-camada-2": {
+    studyTime: "40-50 Minuten", stars: "★★★★☆",
+    objectives: ["Erklaeren Sie Schicht 2 — MAC, Frames, Switch.", "Unterscheiden Sie Schicht 2 und 3."],
+    introduction: ["Schicht 2 (Sicherung): Frames, MAC-Adressen, Switching im LAN."],
+    explanation: [{ title: "Schicht 2", paragraphs: ["MAC-Adresse: hardwarebezogen, 48 Bit.", "Switch lernt MAC-Tabelle — leitet Frames gezielt.", "VLAN (Grundidee): logische Trennung auf L2."] }],
+    realWorldExamples: ["Switch leitet Frame nur an Port mit Ziel-MAC."],
+    practicalExamples: [{ title: "MAC-Tabelle", paragraphs: ["Switch speichert welche MAC an welchem Port."], steps: ["Frame empfangen.", "MAC lernen.", "Ziel-MAC lookup.", "Weiterleiten."] }],
+    vocabulary: [mkVocab("Sicherungsschicht", "camada de enlace", "OSI Layer 2.", "Frames/MAC."), mkVocab("MAC-Adresse", "endereco MAC", "Hardware-Adresse.", "AA:BB:CC:DD:EE:FF"), mkVocab("Frame", "quadro", "L2-Dateneinheit.", "Mit MAC-Header."), mkVocab("Switch", "switch", "L2-Weiterleitung.", "MAC-Tabelle."), mkVocab("VLAN", "VLAN", "Logisches LAN.", "Trennung."), mkVocab("Broadcast-Domain", "dominio broadcast", "L2-Bereich.", "Switch-Port.")],
+    summary: ["L2 = MAC + Switch.", "LAN-Weiterleitung.", "Nicht IP — das ist L3."],
+    mindMap: "L2 → MAC → Frame → Switch",
+    exercises: { easy: [mkEx("Switch Schicht?", "2"), mkEx("MAC vs IP?", "MAC=L2 Hardware; IP=L3 logisch."), mkEx("Frame?", "L2-Paket.")], intermediate: [mkEx("Router auf L2?", "Nein — Router L3."), mkEx("Switch auf L2?", "Ja.")], ap1Style: [mkEx("AP1: Gleiche MAC auf zwei Ports?", "Switch lernt Port-Wechsel — kurz Stoerung moeglich.")] },
+    commonMistakes: ["MAC mit IP verwechseln.", "Switch als Router."],
+    revisionChecklist: ["L2/MAC/Switch.", "MAC vs IP.", "Frame."],
+    related: ["Switch", "MAC-Adresse", "OSI", "LAN"]
+  },
+
+  "osi-camada-3": {
+    studyTime: "45-55 Minuten", stars: "★★★★☆",
+    objectives: ["Erklaeren Sie Schicht 3 — IP, Routing.", "Beschreiben Sie Router-Funktion."],
+    introduction: ["Schicht 3 (Vermittlung): logische Adressierung (IP), Routing zwischen Netzen."],
+    explanation: [{ title: "Schicht 3", paragraphs: ["IP-Pakete werden zwischen Netzen geroutet.", "Router entscheidet naechsten Hop via Routing-Tabelle.", "Subnetze und Gateway gehoeren zu L3."] }],
+    realWorldExamples: ["Paket von 192.168.1.5 zu Server in anderem Subnetz — Router noetig."],
+    practicalExamples: [{ title: "Routing", paragraphs: ["Default Route 0.0.0.0/0 → Gateway."], steps: ["Ziel-IP.", "Lokal oder remote?", "Routing-Tabelle.", "Weiterleiten."] }],
+    vocabulary: [mkVocab("Vermittlungsschicht", "camada de rede", "OSI Layer 3.", "IP/Routing."), mkVocab("Router", "roteador", "L3-Geraet.", "Zwischen Netzen."), mkVocab("Routing", "roteamento", "Pfadwahl.", "Routing-Tabelle."), mkVocab("Hop", "salto", "Zwischenstation.", "Next hop."), mkVocab("Paket", "pacote", "L3-Einheit.", "Mit IP-Header."), mkVocab("Subnetz", "sub-rede", "IP-Bereich.", "/24")],
+    summary: ["L3 = IP + Router.", "Netze verbinden.", "Subnetz und Gateway."],
+    mindMap: "L3 → IP → Router → Routing",
+    exercises: { easy: [mkEx("Router Schicht?", "3"), mkEx("IP Schicht?", "3"), mkEx("Routing?", "Pakete zwischen Netzen leiten.")], intermediate: [mkEx("Gleiches Subnetz — Router?", "Nein — direkt L2."), mkEx("Default Gateway?", "Router fuer unbekannte Netze.")], ap1Style: [mkEx("AP1: Switch routet zwischen VLANs ohne L3?", "Braucht L3-Switch oder Router.")] },
+    commonMistakes: ["Router auf L2.", "Routing mit Switching verwechseln."],
+    revisionChecklist: ["L3/Router/IP.", "Subnetz.", "Gateway."],
+    related: ["Router", "IPv4", "Subnetz", "NAT"]
+  },
+
+  "osi-camada-4": {
+    studyTime: "45-55 Minuten", stars: "★★★★☆",
+    objectives: ["Erklaeren Sie Schicht 4 — TCP/UDP, Ports.", "Verbinden Sie End-zu-End-Transport mit Anwendungen."],
+    introduction: ["Schicht 4 (Transport): TCP/UDP, Portnummern, End-zu-End-Kommunikation."],
+    explanation: [{ title: "Schicht 4", paragraphs: ["TCP/UDP segmentieren und liefern an Anwendungen via Port.", "Port 80 HTTP, 443 HTTPS, 53 DNS, 25 SMTP.", "Firewall filtert oft auf L4 (Port/IP)."] }],
+    realWorldExamples: ["192.168.1.10:443 — IP L3, Port 443 L4 HTTPS."],
+    practicalExamples: [{ title: "Port pruefen", paragraphs: ["telnet server 443 oder Test-Netzwerk — Port offen?"], steps: ["IP erreichen.", "Port testen.", "Dienst identifizieren."] }],
+    vocabulary: [mkVocab("Transportschicht", "camada de transporte", "OSI Layer 4.", "TCP/UDP."), mkVocab("Port", "porta", "Dienst auf Host.", "443"), mkVocab("Segment", "segmento", "L4-Einheit TCP.", "Mit Port."), mkVocab("End-zu-End", "ponta a ponta", "Vollstaendiger Transport.", "TCP."), mkVocab("Multiplexing", "multiplexacao", "Mehrere Dienste eine IP.", "Verschiedene Ports.")],
+    summary: ["L4 = TCP/UDP + Ports.", "Anwendungen erreichen via Port.", "Firewall L3/L4."],
+    mindMap: "L4 → TCP/UDP → Port → Segment",
+    exercises: { easy: [mkEx("TCP Schicht?", "4"), mkEx("Port 443?", "HTTPS."), mkEx("UDP Schicht?", "4")], intermediate: [mkEx("IP und Port zusammen?", "Host + Dienst."), mkEx("HTTP Port?", "80")], ap1Style: [mkEx("AP1: Block Port 443 — Auswirkung?", "HTTPS nicht erreichbar — L4 Filter.")] },
+    commonMistakes: ["Port mit IP verwechseln.", "TCP als L7 sehen."],
+    revisionChecklist: ["L4/TCP/UDP/Port.", "Port 80/443/53.", "Segment."],
+    related: ["TCP", "UDP", "Port", "Firewall"]
+  },
+
+  "osi-camada-5": {
+    studyTime: "35-45 Minuten", stars: "★★★☆☆",
+    objectives: ["Beschreiben Sie Schicht 5 — Sitzung/Session.", "Erklaeren Sie Session-Management auf Konzeptebene."],
+    introduction: ["Schicht 5 (Sitzung): aufbauen, halten, beenden von Kommunikationssitzungen."],
+    explanation: [{ title: "Schicht 5", paragraphs: ["Koordiniert Dialog zwischen Anwendungen.", "Login-Session, RPC-Sitzungen — konzeptionell.", "In TCP/IP oft in Anwendungsschicht integriert — OSI bleibt Lehrmodell."] }],
+    realWorldExamples: ["Authentifizierte Web-Session — Cookie/Token haelt Sitzung."],
+    practicalExamples: [{ title: "Session Timeout", paragraphs: ["Nach 30 Min Inaktivität — Session beendet, erneut Login."], steps: ["Session start.", "Aktivitaet.", "Timeout.", "Neu anmelden."] }],
+    vocabulary: [mkVocab("Sitzungsschicht", "camada de sessao", "OSI Layer 5.", "Session."), mkVocab("Session", "sessao", "Kommunikationsphase.", "Login bis Logout."), mkVocab("Dialog", "dialogo", "Zweiseitige Kommunikation.", "Client-Server."), mkVocab("Synchronisation", "sincronizacao", "Session-Koordination.", "Checkpoint.")],
+    summary: ["L5 = Session-Management.", "Lehrmodell — praktisch oft in L7.", "Login-Session als Beispiel."],
+    mindMap: "L5 → Session → Dialog → Timeout",
+    exercises: { easy: [mkEx("Schicht 5 Name?", "Sitzungsschicht."), mkEx("Session Beispiel?", "Eingeloggter Web-Nutzer."), mkEx("Schicht 5 in TCP/IP?", "Oft in Anwendung integriert.")], intermediate: [mkEx("Session vs Verbindung TCP?", "TCP=L4 Verbindung; Session=L5 Anwendungskontext.")], ap1Style: [mkEx("AP1: Session Timeout Sicherheit?", "Reduziert Risiko offener Sessions.")] },
+    commonMistakes: ["L5 mit TCP-Verbindung identisch.", "L5 praktisch ignorieren — aber AP1 kann fragen."],
+    revisionChecklist: ["L5 Session.", "Beispiel.", "OSI Lehrmodell."],
+    related: ["OSI", "Session", "Anwendungsschicht"]
+  },
+
+  "osi-camada-6": {
+    studyTime: "35-45 Minuten", stars: "★★★☆☆",
+    objectives: ["Beschreiben Sie Schicht 6 — Darstellung/Praesentation.", "Nennen Sie Kodierung und Verschluesselung."],
+    introduction: ["Schicht 6 (Darstellung): Format, Kodierung, Kompression, Verschluesselung fuer Anwendung."],
+    explanation: [{ title: "Schicht 6", paragraphs: ["UTF-8 fuer Text, JPEG fuer Bild — Daten verstaendlich machen.", "SSL/TLS Verschluesselung konzeptionell hier oder L7 diskutiert.", "AP1: Grundidee — Format wandelt Daten."] }],
+    realWorldExamples: ["HTTPS — TLS verschluesselt HTTP-Daten (Darstellung/Sicherheit)."],
+    practicalExamples: [{ title: "UTF-8", paragraphs: ["Textdatei mit Umlauten — UTF-8 Kodierung noetig."], steps: ["Zeichen.", "Kodierung waehlen.", "Speichern.", "Lesen pruefen."] }],
+    vocabulary: [mkVocab("Darstellungsschicht", "camada de apresentacao", "OSI Layer 6.", "Format/Kodierung."), mkVocab("Kodierung", "codificacao", "Zeichen zu Bytes.", "UTF-8."), mkVocab("Verschluesselung", "criptografia", "Daten unlesbar ohne Schluessel.", "TLS."), mkVocab("Kompression", "compressao", "Daten verkleinern.", "gzip."), mkVocab("TLS", "TLS", "Transport Layer Security.", "HTTPS.")],
+    summary: ["L6 = Format/Kodierung/Verschluesselung.", "UTF-8, TLS Beispiele.", "Lehrmodell."],
+    mindMap: "L6 → Kodierung → TLS → Format",
+    exercises: { easy: [mkEx("Schicht 6 Aufgabe?", "Darstellung — Format/Kodierung."), mkEx("UTF-8?", "Zeichenkodierung."), mkEx("HTTPS Verschluesselung?", "TLS — konzeptionell L6/L7.")], intermediate: [mkEx("JPEG Schicht 6?", "Bildformat — Darstellung.")], ap1Style: [mkEx("AP1: Klartext-Passwort — welche Schicht hilft?", "Verschluesselung (TLS) — L6/7 Konzept.")] },
+    commonMistakes: ["L6 mit L7 identisch.", "Verschluesselung nur L6 — oft L4/L7 diskutiert."],
+    revisionChecklist: ["L6 Darstellung.", "UTF-8/TLS.", "Beispiel."],
+    related: ["Verschluesselung", "UTF-8", "HTTPS", "OSI"]
+  },
+
+  "osi-camada-7": {
+    studyTime: "45-55 Minuten", stars: "★★★★☆",
+    objectives: ["Nennen Sie Protokolle der Anwendungsschicht.", "Erklaeren Sie HTTP, DNS, SMTP auf AP1-Niveau."],
+    introduction: ["Schicht 7 (Anwendung): Protokolle nahe am Nutzer — HTTP, DNS, SMTP, FTP."],
+    explanation: [{ title: "Schicht 7", paragraphs: ["HTTP/HTTPS — Web. DNS — Namen. SMTP — E-Mail senden. IMAP/POP3 — E-Mail abholen.", "Nutzer interagiert mit Anwendungen — darunter liegen L4-L1.", "Fehler 'Webseite nicht erreichbar' — oft L7 oder darunter DNS(L7)/Netz."] }],
+    realWorldExamples: ["Browser nutzt HTTP(S) auf L7, darunter TCP L4, IP L3."],
+    practicalExamples: [{ title: "Web und DNS", paragraphs: ["URL eingeben → DNS(L7) → TCP(L4) → HTTP(L7)."], steps: ["URL.", "DNS Aufloesung.", "TCP Verbindung.", "HTTP Request."] }],
+    vocabulary: [mkVocab("Anwendungsschicht", "camada de aplicacao", "OSI Layer 7.", "HTTP, DNS."), mkVocab("HTTP", "HTTP", "Hypertext Transfer Protocol.", "Web."), mkVocab("HTTPS", "HTTPS", "HTTP mit TLS.", "Sicher Web."), mkVocab("SMTP", "SMTP", "E-Mail versenden.", "Port 25/587."), mkVocab("FTP", "FTP", "Dateiuebertragung.", "Port 21."), mkVocab("API", "API", "Schnittstelle fuer Anwendungen.", "REST JSON.")],
+    summary: ["L7 = HTTP, DNS, SMTP, FTP.", "Nutzer-sichtbare Dienste.", "Fehlersuche: DNS/HTTP zuerst pruefen."],
+    mindMap: "L7 → HTTP → DNS → SMTP → API",
+    exercises: { easy: [mkEx("HTTP Schicht?", "7"), mkEx("DNS Schicht?", "7"), mkEx("Web-Protokoll?", "HTTP/HTTPS")], intermediate: [mkEx("SMTP Zweck?", "E-Mail senden."), mkEx("HTTPS vs HTTP?", "HTTPS verschluesselt.")], ap1Style: [mkEx("AP1: ping ok, Browser nein?", "Verdacht L7 Dienst oder DNS/HTTP Konfiguration."), mkEx("AP1: Port 80?", "HTTP.")] },
+    commonMistakes: ["HTTP als L4.", "Alle Apps nur L7 ohne Transport."],
+    revisionChecklist: ["L7 Protokolle.", "HTTP/DNS/SMTP.", "Stack Beispiel."],
+    related: ["HTTP", "DNS", "SMTP", "TCP"]
   }
 };
 
@@ -385,8 +1864,7 @@ const DEEP_CHAPTER_IDS = [
   "organisation-rechtsformen", "geschaeftsprozesse", "marktumfeld", "praesentation-teamarbeit",
   "datenschutz", "it-grundschutz", "schutzbedarf", "bedrohungen", "social-engineering",
   "tom", "sicherheitskonzept", "seguranca",
-  "softwareentwicklung-umfeld", "daten-informationen", "zahlensysteme", "er-modell",
-  "python-grundlagen", "softwaretests"
+  "softwareentwicklung-umfeld", "daten-informationen", "zahlensysteme"
 ];
 
 function buildMetaDeepSpec(chapter) {
