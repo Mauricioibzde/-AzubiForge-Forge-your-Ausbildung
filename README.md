@@ -62,6 +62,12 @@ Especificação completa do sistema de aprendizagem (missões, planejador, revis
 
 [docs/azubiforge_planejamento_prompts/](docs/azubiforge_planejamento_prompts/)
 
+## Docs AI (handoff para ChatGPT / DeepSeek)
+
+Pacote para colar em outra IA e pedir análise estratégica (melhorias, pontos fortes/fracos, roadmap):
+
+[docs/ai/](docs/ai/) — comece por [`AZUBIFORGE_HANDOFF_COMPLETO.md`](docs/ai/AZUBIFORGE_HANDOFF_COMPLETO.md) + [`PROMPT_PARA_IA.md`](docs/ai/PROMPT_PARA_IA.md).
+
 ## Arquitetura
 
 Veja [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
