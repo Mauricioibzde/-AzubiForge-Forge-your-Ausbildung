@@ -56,6 +56,12 @@ O site precisa do **build do Vite** (`dist/`), nao do codigo-fonte.
 
 Com `base: "./"` no Vite, CSS/JS e o service worker resolvem no subcaminho do repositorio.
 
+## Planejamento e prompts
+
+Especificação completa do sistema de aprendizagem (missões, planejador, revisão, schemas):
+
+[docs/azubiforge_planejamento_prompts/](docs/azubiforge_planejamento_prompts/)
+
 ## Arquitetura
 
 Veja [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
