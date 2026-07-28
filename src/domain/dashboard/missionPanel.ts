@@ -22,6 +22,7 @@ import {
   resolveNextLearningAction,
   type NextLearningAction
 } from "../learning/nextLearningAction";
+import { getMissionLearningEvidence, type MissionLearningEvidence } from "../learning/learningEvidence";
 
 export type MissionStepState = "done" | "current" | "upcoming";
 
@@ -34,7 +35,6 @@ export interface MissionStepView {
   estimatedMinutes: number;
   href: string;
   learnings: string[];
-  xp: number;
 }
 
 export interface MissionCelebration {
@@ -66,11 +66,17 @@ export interface MissionPanelModel {
   celebration: MissionCelebration;
   nextMission: { title: string; href: string } | null;
   rewards: {
-    xp: number;
+    potentialXp: number;
+    earnedXp: number;
+    xpLabel: string;
     competencyLabel: string;
     reviewLabel: string;
+    practiceLabel: string;
+    masteryLabel: string;
     nextMissionLabel: string;
+    evidenceSummary: string;
   };
+  evidence: MissionLearningEvidence | null;
   summary: {
     learningField: string;
     situation: string;
@@ -173,8 +179,7 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const estimatedMinutes = mission?.estimatedMinutes || getEstimatedSessionMinutes(chapter);
   const stepMinutes = Math.max(8, Math.round(estimatedMinutes / READER_STEPS.length));
-  const xpTotal = mission?.rewards.xp || 80 + Math.max(0, ctx.data.chapters.findIndex((item) => item.id === chapter.id)) * 10;
-  const stepXp = Math.max(20, Math.round(xpTotal / READER_STEPS.length));
+  const evidence = mission ? getMissionLearningEvidence(mission, ctx.state) : null;
   const studyStreak = getStudyStreak(ctx.state);
 
   const steps: MissionStepView[] = READER_STEPS.map((step) => {
@@ -189,8 +194,7 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       state: "upcoming" as MissionStepState,
       estimatedMinutes: stepMinutes,
       href: `#reader/${chapter.id}/${step.id}`,
-      learnings: objectives.length ? objectives.slice(0, 3) : display.learnings,
-      xp: stepXp
+      learnings: objectives.length ? objectives.slice(0, 3) : display.learnings
     };
   });
 
@@ -258,13 +262,15 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     ? {
         show: true,
         title: "Missão concluída",
-        detail: `+${xpTotal} XP · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
+        detail: evidence
+          ? `${evidence.summaryLabel} · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
+          : (nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada")
       }
     : lastDone
       ? {
           show: true,
           title: "Etapa concluída",
-          detail: `✓ ${lastDone.shortLabel} · +${lastDone.xp} XP · Próxima: ${currentStep.shortLabel}`
+          detail: `✓ ${lastDone.shortLabel} · Próxima: ${currentStep.shortLabel}`
         }
       : { show: false, title: "", detail: "" };
 
@@ -298,15 +304,23 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     celebration,
     nextMission,
     rewards: {
-      xp: xpTotal,
-      competencyLabel: "1 competência",
-      reviewLabel: "Revisão em 3 dias",
-      nextMissionLabel: nextMission ? nextMission.title : "Fim do módulo atual"
+      potentialXp: evidence?.potentialXp || 0,
+      earnedXp: evidence?.earnedXp || 0,
+      xpLabel: evidence?.rewardXpLabel || "XP só após domínio comprovado",
+      competencyLabel: evidence?.competencyLabel || "Competências do capítulo",
+      reviewLabel: evidence?.reviewLabel || "Após o domínio",
+      practiceLabel: evidence?.practiceLabel || "Sem exercícios marcados",
+      masteryLabel: evidence?.masteryLabel || "Teste ainda não feito",
+      nextMissionLabel: nextMission ? nextMission.title : "Fim do módulo atual",
+      evidenceSummary: evidence?.summaryLabel || "Ainda sem evidência registrada"
     },
+    evidence,
     summary: {
       learningField: `${module.title} · ${module.subtitle}`,
       situation: truncate(module.description || module.subtitle, 72),
-      status: completed ? "Concluída" : session.completed > 0 ? "Em andamento" : "Disponível",
+      status: evidence
+        ? evidence.summaryLabel
+        : completed ? "Concluída" : session.completed > 0 ? "Em andamento" : "Disponível",
       startedLabel,
       lastActivityLabel: readiness.label
     },

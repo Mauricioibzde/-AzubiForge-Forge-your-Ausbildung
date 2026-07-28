@@ -6693,9 +6693,13 @@ a.session-step:hover {
   background: var(--surface);
 }
 
+.mission-evidence-lead {
+  margin: 0 0 12px;
+}
+
 .mission-rewards-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 

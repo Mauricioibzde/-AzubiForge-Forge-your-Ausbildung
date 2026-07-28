@@ -8,3 +8,12 @@ export type {
   NextLearningAction,
   ResolveNextLearningActionInput
 } from "./nextLearningAction";
+export {
+  getMissionLearningEvidence,
+  getCourseLearningEvidence
+} from "./learningEvidence";
+export type {
+  MissionLearningEvidence,
+  CourseLearningEvidence,
+  EvidenceTone
+} from "./learningEvidence";

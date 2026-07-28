@@ -14,7 +14,7 @@ import { escapeAttribute, escapeHtml } from "../ui/html";
 
 export function buildTodayPlan(ctx: AppContext): DailyPlan {
   const course = getNormalizedCourseData();
-  const userState = userLearningStateFromAppState(ctx.state);
+  const userState = userLearningStateFromAppState(ctx.state, course);
   return generateDailyPlan({
     course,
     state: ctx.state,
