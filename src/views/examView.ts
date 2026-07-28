@@ -266,7 +266,7 @@ function renderMockActive(attempt: MockExamAttempt): string {
       </article>
       </div>
 
-      <div class="focus-controls">
+      <div class="focus-controls mobile-sticky-actions">
         <button class="button secondary" type="button" data-mock-step="-1" ${index === 0 ? "disabled" : ""}>Anterior</button>
         <span class="focus-count">${index + 1} / ${total}</span>
         ${index < total - 1
@@ -355,7 +355,7 @@ function renderMockGrading(ctx: AppContext, attempt: MockExamAttempt): string {
       </article>
       </div>
 
-      <div class="focus-controls">
+      <div class="focus-controls mobile-sticky-actions">
         <button class="button secondary" type="button" data-mock-step="-1" ${index === 0 ? "disabled" : ""}>Anterior</button>
         <span class="focus-count">${index + 1} / ${total}</span>
         ${index < total - 1

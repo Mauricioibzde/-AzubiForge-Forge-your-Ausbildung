@@ -68,7 +68,7 @@ function renderAssessmentActive(
         </label>
       </article>
 
-      <div class="study-session-actions">
+      <div class="study-session-actions mobile-sticky-actions">
         ${index > 0 ? `<button class="button secondary" type="button" data-assessment-step="-1">Anterior</button>` : ""}
         ${index < total - 1
           ? `<button class="button" type="button" data-assessment-step="1">Proxima</button>`
@@ -110,7 +110,7 @@ function renderAssessmentGrading(
         </div>
       </article>
 
-      <div class="study-session-actions">
+      <div class="study-session-actions mobile-sticky-actions">
         ${index > 0 ? `<button class="button secondary" type="button" data-assessment-step="-1">Anterior</button>` : ""}
         ${index < total - 1
           ? `<button class="button" type="button" data-assessment-step="1">Proxima</button>`

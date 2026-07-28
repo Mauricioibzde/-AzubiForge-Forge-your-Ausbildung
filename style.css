@@ -2159,6 +2159,7 @@ summary {
   .bottom-nav,
   .more-sheet,
   .mobile-study-dock,
+  .mobile-sticky-actions,
   .skip-link,
   .connectivity-banner {
     display: none !important;
@@ -3538,8 +3539,17 @@ a.session-step:hover {
     padding-bottom: 220px;
   }
 
+  body.immersive-study .bottom-nav,
   body[data-route="reader"] .bottom-nav {
     display: none;
+  }
+
+  body.immersive-study:not([data-route="reader"]) .page {
+    padding-bottom: 160px;
+  }
+
+  body.immersive-study[data-route="exam"] .page {
+    padding-bottom: 180px;
   }
 
   .session-stepper,
@@ -3574,7 +3584,7 @@ a.session-step:hover {
     position: fixed;
     left: 10px;
     right: 10px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     z-index: 25;
     display: grid;
     gap: 8px;
@@ -3583,6 +3593,7 @@ a.session-step:hover {
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.95);
     box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
   }
 
   :root[data-theme="dark"] .mobile-study-dock {
@@ -3816,10 +3827,6 @@ a.session-step:hover {
 @media (max-width: 820px) {
   .vocab-recall-grid {
     grid-template-columns: 1fr;
-  }
-
-  .mobile-study-dock {
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -5425,5 +5432,302 @@ a.session-step:hover {
     max-width: 96px;
     font-size: 0.68rem;
     padding-inline: 6px;
+  }
+}
+
+/* --- Mobile pass 2: immersive study + AP1 touch UX --- */
+
+@media (max-width: 820px) {
+  body.immersive-study {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Reader: dock owns steps; reduce duplicate chrome */
+  body[data-route="reader"] .session-guide-track {
+    display: none;
+  }
+
+  body[data-route="reader"] .step-coach {
+    padding: 14px;
+  }
+
+  body[data-route="reader"] .step-coach h2 {
+    font-size: 1.15rem;
+  }
+
+  body[data-route="reader"] .step-coach-actions {
+    display: grid;
+    gap: 8px;
+  }
+
+  body[data-route="reader"] .step-coach-actions .button {
+    width: 100%;
+  }
+
+  body[data-route="reader"] .journey-reader-bar {
+    display: grid;
+    gap: 10px;
+  }
+
+  body[data-route="reader"] .journey-reader-bar .button {
+    width: 100%;
+  }
+
+  body[data-route="reader"] .reader-side {
+    margin-bottom: 12px;
+  }
+
+  body[data-route="reader"] .reader-side .panel {
+    padding: 14px;
+  }
+
+  .mobile-dock-tab {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+  }
+
+  /* Sticky action dock for session / mastery / assessment / mock */
+  .mobile-sticky-actions {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 25;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin: 0;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+  }
+
+  :root[data-theme="dark"] .mobile-sticky-actions {
+    background: rgba(27, 36, 34, 0.96);
+  }
+
+  .mobile-sticky-actions.focus-controls {
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+  }
+
+  .mobile-sticky-actions .button,
+  .mobile-sticky-actions a.button {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+  }
+
+  .mobile-sticky-actions.focus-controls .button {
+    width: auto;
+    min-width: 0;
+  }
+
+  .mobile-sticky-actions.focus-controls .button:last-child {
+    justify-self: end;
+  }
+
+  .mobile-sticky-actions .focus-count {
+    order: 0;
+    text-align: center;
+  }
+
+  /* When sticky dock is present, hide redundant in-flow footer strip on mock */
+  .mock-runner .mock-footer-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .mock-runner .mock-footer-actions .button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* Journey timeline: full-width tap targets */
+  .journey-node {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 10px 12px;
+    align-items: start;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .journey-node > .button {
+    grid-column: 2;
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .journey-node.module {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .journey-node.session-step {
+    margin-left: 28px;
+  }
+
+  .journey-timeline {
+    max-height: none;
+  }
+
+  .journey-marker {
+    top: 14px;
+  }
+
+  /* Home: tighter hero + full-width CTAs */
+  .ds-hero-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .ds-hero .button,
+  .home-priority-item .button {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .home-nav-links a {
+    min-height: 44px;
+  }
+
+  /* AP1 exam controls */
+  .exam-mode-control {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 2px 10px;
+    margin-inline: -2px;
+  }
+
+  .exam-mode-control button {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 10px 14px;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  .mock-question-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+  }
+
+  .mock-q-pill {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .mock-runner {
+    padding-bottom: 24px;
+  }
+
+  .mock-runner-bar {
+    position: sticky;
+    top: calc(var(--topbar-height, 56px) + 4px);
+    z-index: 8;
+    padding: 10px 12px;
+    margin: 0 -2px 8px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .mock-question-actions .button,
+  .self-check-actions .button {
+    min-height: 44px;
+    flex: 1 1 140px;
+  }
+
+  .self-check-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .check-row {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .note-area,
+  .mock-notes,
+  .notes-input {
+    font-size: 16px; /* avoid iOS zoom on focus */
+  }
+
+  /* Course filter chips */
+  .filter-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+
+  .filter-chips button {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  /* Context bar denser on phones */
+  .context-bar {
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .context-back,
+  .context-action {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .mobile-sticky-actions.focus-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-sticky-actions.focus-controls .focus-count {
+    order: -1;
+  }
+
+  .mobile-sticky-actions.focus-controls .button,
+  .mobile-sticky-actions.focus-controls .button:last-child {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  body.immersive-study:not([data-route="reader"]) .page {
+    padding-bottom: 200px;
+  }
+
+  body[data-route="reader"] .page {
+    padding-bottom: 240px;
+  }
+
+  .mobile-study-dock,
+  .mobile-sticky-actions {
+    left: 8px;
+    right: 8px;
   }
 }
