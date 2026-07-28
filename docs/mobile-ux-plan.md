@@ -61,7 +61,7 @@ A Trilha no telefone está organizada como um **dashboard desktop empilhado**. O
 
 ## Fases de implementação
 
-### Fase A — Trilha (este PR)
+### Fase A — Trilha ✅
 - Hero curto: capítulo atual + progresso linear + 1 CTA
 - Workflow → lista compacta (não grid de cards)
 - KPIs em grade 2×2 com altura reduzida
@@ -69,11 +69,12 @@ A Trilha no telefone está organizada como um **dashboard desktop empilhado**. O
 - Módulos: linhas compactas (tap = focar), sem Focar+Retomar duplicados
 - Topbar: esconder chips Continuar/Revisar em Home e Trilha
 
-### Fase B — Home
-- Remover atalhos que duplicam bottom-nav
-- Uma seção “Hoje” com plano + CTA
-- Prioridades em lista, não 3 cards altos
-- Timeline só do módulo ativo, nós compactos
+### Fase B — Home ✅
+- Topbar mobile: só menu + marca (corrige overlap `display` vs `[hidden]`)
+- Faixa Continuar com capítulo atual + 1 CTA
+- Prioridades em lista compacta
+- Timeline só do módulo ativo; CTA empilhado (sem esmagar “Capítulo”)
+- Progresso / busca / backup em `<details>`
 
 ### Fase C — Reader / Sessão / AP1
 - Já iniciado no mobile pass 2 (dock imersivo)
@@ -89,8 +90,8 @@ A Trilha no telefone está organizada como um **dashboard desktop empilhado**. O
 
 ## Critérios de sucesso
 
-- [ ] First viewport da Trilha mostra **só** próxima ação + progresso + CTA
-- [ ] No máximo **1** botão accent visível por tela (exceto docks de sessão)
+- [x] First viewport da Trilha mostra **só** próxima ação + progresso + CTA
+- [x] No máximo **1** botão accent visível por tela (exceto docks de sessão)
+- [x] Topbar não repete CTAs da página
 - [ ] Scroll até o capítulo atual &lt; 1 viewport após o hero
 - [ ] Lista de módulos cabe ~5 itens sem scroll interno absurdo
-- [ ] Topbar não repete CTAs da página

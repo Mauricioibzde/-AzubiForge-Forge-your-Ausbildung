@@ -12,100 +12,96 @@ import { getHomeTodayInsights } from "../domain/dashboard/homeToday";
 import type { JourneyNode } from "../domain/journey";
 import { getJourneyNodes, getJourneyProgress } from "../domain/journey";
 import { formatMockExamTimer, getMockExamAnsweredCount, getMockExamRemainingMs } from "../domain/mockExam";
-import { donutProgress, escapeAttribute } from "../ui/html";
+import { escapeAttribute } from "../ui/html";
 import { renderTodayPlanSection } from "./todayPlanView";
 
 export function renderHomeView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
   const journey = getJourneyProgress(ctx.data, ctx.state);
-  const nodes = filterJourneyNodes(getJourneyNodes(ctx.data, ctx.state), getActiveModule(ctx.data, ctx.state).id);
+  const activeModule = getActiveModule(ctx.data, ctx.state);
+  const nodes = filterJourneyNodes(getJourneyNodes(ctx.data, ctx.state), activeModule.id);
   const chapter = getTodayChapter(ctx.data, ctx.state);
   const resumeTab = getResumeTab(ctx.state, chapter.id);
   const nextHref = `#reader/${chapter.id}/${resumeTab}`;
   const daily = getDailyGoalProgress(ctx.state);
   const calendar = getStudyCalendarDays(ctx.state, 14);
-  const studyGoal = ctx.state.preferences.studyGoal || "Dominar a AP1 e organizar os fundamentos.";
   const unfinishedMock = ctx.state.mockExam && ctx.state.mockExam.status !== "finished" ? ctx.state.mockExam : null;
   const insights = getHomeTodayInsights(getNormalizedCourseData(), ctx.state);
 
   return `
-    <section class="ds-page dashboard journey-page">
+    <section class="ds-page dashboard journey-page home-redesign">
       ${renderAlerts(ctx, unfinishedMock)}
-      ${renderTodayPlanSection(ctx)}
-      <nav class="home-nav-links rise-in" aria-label="Atalhos de hoje">
-        <a href="#home">Hoje</a>
-        <a href="#course">Missoes</a>
-        <a href="#review">Revisoes</a>
-        <a href="#exam/lernfeld">Simulados</a>
-        <a href="#home/progress">Progresso</a>
-      </nav>
 
-      <header class="ds-hero-layout rise-in">
-        <div class="ds-hero">
-          <p class="ds-caption">Jornada guiada AP1</p>
-          <h1>Sua linha do tempo de estudo</h1>
-          <p class="ds-lead">${studyGoal}</p>
-          <p class="ds-aux">Capitulo atual: <strong>${chapter.title}</strong> · ${journey.completed}/${journey.total} concluidos (${journey.percent}%)</p>
-          <a class="button accent" href="${nextHref}" data-dashboard-cta>Continuar jornada</a>
+      <section class="home-now-strip rise-in" aria-label="Continuar jornada">
+        <div class="home-now-copy">
+          <p class="ds-caption">Agora · ${activeModule.title}</p>
+          <h1 class="home-now-title">${chapter.title}</h1>
+          <p class="ds-aux">${journey.completed}/${journey.total} concluídos · ${journey.percent}% da trilha</p>
+          <div class="home-now-progress" aria-hidden="true">
+            <span style="width:${Math.max(progress.percent, journey.percent)}%"></span>
+          </div>
         </div>
-        <aside class="ds-card ds-progress-rail" id="dashboard-progress" aria-label="Progresso">
-          ${donutProgress(progress, "Trilha")}
-          <div class="streak-calendar compact" aria-label="Ultimos 14 dias">
-            ${calendar.map((day) => `
-              <span class="streak-day ${day.studied ? "studied" : ""} ${day.isToday ? "today" : ""}" title="${day.key}">${day.label}</span>
-            `).join("")}
-          </div>
-          <p class="ds-aux">${daily.completed}/${daily.total} sessoes uteis hoje</p>
-        </aside>
-      </header>
-
-      <section class="ds-section home-priority-grid rise-in" style="animation-delay:24ms" aria-label="Prioridades de hoje">
-        <article class="ds-card home-priority-item">
-          <span class="ds-caption">Revisoes pendentes</span>
-          <strong>${insights.dueMissionReviews}</strong>
-          <p class="ds-aux">${insights.dueLegacyReviewItems} itens vencidos na fila total</p>
-          <a class="button secondary" href="${insights.dueMissionReviews > 0 ? "#review-mission" : "#review"}">${insights.dueMissionReviews > 0 ? "Revisar missao" : "Abrir revisao"}</a>
-        </article>
-        <article class="ds-card home-priority-item">
-          <span class="ds-caption">Missao em andamento</span>
-          <strong>${insights.inProgressMissionTitle || "Nenhuma ativa"}</strong>
-          <p class="ds-aux">${insights.inProgressMissionId ? "Retome de onde parou na sessao de estudo." : "Inicie uma nova missao no plano de hoje."}</p>
-          <a class="button secondary" href="${insights.inProgressMissionId ? `#reader/${insights.inProgressMissionId}/${getResumeTab(ctx.state, insights.inProgressMissionId)}` : "#session/start"}">${insights.inProgressMissionId ? "Retomar missao" : "Iniciar sessao"}</a>
-        </article>
-        <article class="ds-card home-priority-item">
-          <span class="ds-caption">Dominio por Lernfeld</span>
-          <div class="home-lf-list">
-            ${insights.learningFieldMastery.slice(0, 4).map((item) => `
-              <p class="ds-aux"><strong>${item.title}</strong>: ${item.mastered}/${item.total} (${item.percent}%)</p>
-            `).join("")}
-          </div>
-          <a class="button secondary" href="#course">Ver trilha por Lernfeld</a>
-        </article>
+        <a class="button accent home-now-cta" href="${nextHref}" data-dashboard-cta>Continuar jornada</a>
       </section>
 
-      <section class="ds-section journey-timeline-section rise-in" style="animation-delay:40ms" aria-label="Linha do tempo completa">
+      ${renderTodayPlanSection(ctx)}
+
+      <section class="home-priority-list rise-in" style="animation-delay:16ms" aria-label="Prioridades">
+        <a class="home-priority-row" href="${insights.dueMissionReviews > 0 ? "#review-mission" : "#review"}">
+          <span class="ds-caption">Revisões</span>
+          <strong>${insights.dueMissionReviews}</strong>
+          <span class="home-priority-action">${insights.dueMissionReviews > 0 ? "Revisar" : "Fila"}</span>
+        </a>
+        <a class="home-priority-row" href="${insights.inProgressMissionId ? `#reader/${insights.inProgressMissionId}/${getResumeTab(ctx.state, insights.inProgressMissionId)}` : "#session/start"}">
+          <span class="ds-caption">Missão</span>
+          <strong>${insights.inProgressMissionTitle || "Iniciar sessão"}</strong>
+          <span class="home-priority-action">${insights.inProgressMissionId ? "Retomar" : "Iniciar"}</span>
+        </a>
+        <a class="home-priority-row" href="#course">
+          <span class="ds-caption">Trilha</span>
+          <strong>${activeModule.subtitle}</strong>
+          <span class="home-priority-action">Abrir</span>
+        </a>
+      </section>
+
+      <section class="ds-section journey-timeline-section rise-in" style="animation-delay:28ms" aria-label="Fluxo do módulo">
         <div class="ds-section-head">
           <div>
-            <h2 class="ds-section-title">Fluxo completo</h2>
-            <p class="ds-aux">Modulo atual expandido. Capitulos concluidos de modulos anteriores ficam ocultos — <a href="#course">trilha completa</a>.</p>
+            <h2 class="ds-section-title">Fluxo do módulo</h2>
+            <p class="ds-aux">${activeModule.title} · ${daily.completed}/${daily.total} sessões úteis hoje</p>
           </div>
-          <a class="text-link" href="#course">Ver trilha detalhada →</a>
+          <a class="text-link" href="#course">Trilha completa →</a>
         </div>
         <ol class="journey-timeline" id="journey-timeline">
           ${nodes.map((node) => renderJourneyNode(node)).join("")}
         </ol>
       </section>
 
-      <section class="ds-section ds-search-block rise-in" style="animation-delay:56ms" aria-label="Busca">
-        <input id="global-search-input" class="search-input premium-search" type="search" placeholder="Buscar capitulo, termo ou glossario..." aria-label="Busca global" data-global-search value="${escapeAttribute(ctx.ui.globalQuery)}">
-        ${ctx.ui.globalQuery ? renderGlobalResults(ctx) : ""}
-      </section>
-
-      <details class="offline-tools-panel ds-details rise-in" style="animation-delay:72ms">
-        <summary>Ferramentas offline e backup</summary>
-        <div class="progress-backup">
-          <button class="button secondary" type="button" data-export-progress>Exportar progresso</button>
-          <label class="button secondary file-button">Importar<input type="file" accept="application/json,.json" data-import-progress></label>
+      <details class="home-more-panel ds-details rise-in" style="animation-delay:40ms" id="dashboard-progress">
+        <summary>Progresso e ferramentas</summary>
+        <div class="home-more-grid">
+          <div class="home-more-stats">
+            <p class="ds-aux"><strong>${progress.percent}%</strong> da trilha · ${progress.completed}/${progress.total} capítulos</p>
+            <p class="ds-aux"><strong>${daily.completed}/${daily.total}</strong> sessões úteis hoje</p>
+            <div class="streak-calendar compact" aria-label="Últimos 14 dias">
+              ${calendar.map((day) => `
+                <span class="streak-day ${day.studied ? "studied" : ""} ${day.isToday ? "today" : ""}" title="${day.key}">${day.label}</span>
+              `).join("")}
+            </div>
+            <div class="home-lf-list">
+              ${insights.learningFieldMastery.slice(0, 5).map((item) => `
+                <p class="ds-aux"><strong>${item.title}</strong>: ${item.mastered}/${item.total} (${item.percent}%)</p>
+              `).join("")}
+            </div>
+          </div>
+          <div class="home-more-tools">
+            <input id="global-search-input" class="search-input premium-search" type="search" placeholder="Buscar capítulo ou termo..." aria-label="Busca global" data-global-search value="${escapeAttribute(ctx.ui.globalQuery)}">
+            ${ctx.ui.globalQuery ? renderGlobalResults(ctx) : ""}
+            <div class="progress-backup">
+              <button class="button secondary" type="button" data-export-progress>Exportar progresso</button>
+              <label class="button secondary file-button">Importar<input type="file" accept="application/json,.json" data-import-progress></label>
+            </div>
+          </div>
         </div>
       </details>
     </section>
@@ -114,9 +110,10 @@ export function renderHomeView(ctx: AppContext): string {
 
 function filterJourneyNodes(nodes: JourneyNode[], activeModuleId: string): JourneyNode[] {
   return nodes.filter((node) => {
-    if (node.kind !== "chapter") return true;
+    if (node.kind === "module") return node.moduleId === activeModuleId || node.status === "current";
+    if (node.kind !== "chapter" && node.kind !== "session-step") return true;
     if (node.moduleId === activeModuleId) return true;
-    return node.status !== "done";
+    return node.status === "current";
   });
 }
 
@@ -145,16 +142,16 @@ function renderJourneyNode(node: JourneyNode): string {
         <strong>${node.title}</strong>
         <p class="ds-aux">${node.subtitle}</p>
       </div>
-      ${node.kind === "module" ? "" : `<a class="button ${node.status === "current" ? "accent" : "secondary"}" href="${node.href}">${nodeActionLabel(node)}</a>`}
+      ${node.kind === "module" ? "" : `<a class="button ${node.status === "current" ? "accent" : "secondary"} journey-node-cta" href="${node.href}">${nodeActionLabel(node)}</a>`}
     </li>
   `;
 }
 
 function nodeKindLabel(kind: JourneyNode["kind"]): string {
-  if (kind === "module") return "Modulo";
-  if (kind === "chapter") return "Capitulo";
+  if (kind === "module") return "Módulo";
+  if (kind === "chapter") return "Capítulo";
   if (kind === "session-step") return "Etapa";
-  if (kind === "review-gate") return "Revisao";
+  if (kind === "review-gate") return "Revisão";
   return "AP1";
 }
 
@@ -170,12 +167,12 @@ function renderAlerts(ctx: AppContext, unfinishedMock: AppContext["state"]["mock
   const parts: string[] = [];
   if (!ctx.state.preferences.onboardingDone) {
     parts.push(`
-      <section class="ds-card ds-alert rise-in" aria-label="Primeiros passos">
+      <section class="ds-card ds-alert home-onboarding rise-in" aria-label="Primeiros passos">
         <h2 class="ds-card-title">Como usar a jornada</h2>
         <ol class="onboarding-steps ds-aux">
-          <li>Siga a linha do tempo de cima para baixo.</li>
-          <li>Cada capitulo tem 5 etapas guiadas no leitor.</li>
-          <li>Marque Acertei/Errei para montar sua revisao.</li>
+          <li>Toque em Continuar para a próxima etapa.</li>
+          <li>Cada capítulo tem 5 passos no leitor.</li>
+          <li>Marque Acertei/Errei para montar a revisão.</li>
         </ol>
         <button class="button secondary" type="button" data-dismiss-onboarding>Entendi</button>
       </section>
@@ -201,7 +198,7 @@ function renderGlobalResults(ctx: AppContext): string {
     .filter((chapter) => `${chapter.title} ${chapter.description}`.toLowerCase().includes(query))
     .slice(0, 6)
     .map((chapter) => ({
-      type: "Capitulo",
+      type: "Capítulo",
       title: chapter.title,
       description: chapter.description,
       href: `#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}`
@@ -210,7 +207,7 @@ function renderGlobalResults(ctx: AppContext): string {
     .filter((term) => `${term.word} ${term.translation}`.toLowerCase().includes(query))
     .slice(0, 4)
     .map((term) => ({
-      type: "Glossario",
+      type: "Glossário",
       title: `${term.word} - ${term.translation}`,
       description: term.explanation,
       href: "#glossary"
