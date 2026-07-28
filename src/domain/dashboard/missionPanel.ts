@@ -13,7 +13,6 @@ import {
   getSessionProgress,
   getStudyStreak,
   getTodayChapter,
-  getVisitedSteps,
   isCompleted,
   stampToLocalDayKey
 } from "../course";
@@ -23,6 +22,7 @@ import {
   type NextLearningAction
 } from "../learning/nextLearningAction";
 import { getMissionLearningEvidence, type MissionLearningEvidence } from "../learning/learningEvidence";
+import { hasStepLearningEvidence } from "../learning/didacticTasks";
 import { hasMasteryEvidence } from "../learning/masteryGate";
 
 export type MissionStepState = "done" | "current" | "upcoming";
@@ -56,6 +56,9 @@ export interface MissionPanelModel {
   continueHref: string;
   continueLabel: string;
   sessionPercent: number;
+  evidencePercent: number;
+  masteryPassed: boolean;
+  hierarchyCrumb: string;
   currentStepIndex: number;
   stepsTotal: number;
   remainingMinutes: number;
@@ -176,7 +179,6 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     mission = null;
   }
   const session = getSessionProgress(ctx.state, chapter.id);
-  const visited = new Set(getVisitedSteps(ctx.state, chapter.id));
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const estimatedMinutes = mission?.estimatedMinutes || getEstimatedSessionMinutes(chapter);
   const stepMinutes = Math.max(8, Math.round(estimatedMinutes / READER_STEPS.length));
@@ -207,7 +209,7 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
 
   let assignedCurrent = false;
   for (const step of steps) {
-    if (visited.has(step.id)) {
+    if (hasStepLearningEvidence(ctx.state, chapter.id, step.id, mission)) {
       step.state = "done";
       continue;
     }
@@ -266,6 +268,9 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       ? formatDay(lastStudiedKey)
       : "Ainda não iniciada";
 
+  const evidenceDoneCount = doneSteps.length;
+  const evidencePercent = Math.round((evidenceDoneCount / Math.max(steps.length, 1)) * 100);
+
   const celebration: MissionCelebration = mastered
     ? {
         show: true,
@@ -274,19 +279,21 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
           ? `${evidence.summaryLabel} · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
           : (nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada")
       }
-    : studyDone
+    : evidenceDoneCount === steps.length
       ? {
           show: true,
-          title: "Estudo concluído",
-          detail: "Próximo passo: prove o domínio no teste (prática + apply não bastam sozinhas)."
+          title: "Percurso com evidência",
+          detail: "Todas as etapas têm produção. Próximo: prove o domínio no teste."
         }
       : lastDone
         ? {
             show: true,
-            title: "Etapa concluída",
+            title: "Evidência da etapa ok",
             detail: `✓ ${lastDone.shortLabel} · Próxima: ${currentStep.shortLabel}`
           }
         : { show: false, title: "", detail: "" };
+
+  const hierarchyCrumb = `${module.title} › ${chapter.title}`;
 
   return {
     chapter,
@@ -305,14 +312,17 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
         ? (nextMission ? "Próxima missão" : "Abrir trilha")
         : studyDone
           ? "Provar domínio"
-          : session.completed > 0
+          : evidenceDoneCount > 0
             ? "Continuar missão"
             : "Começar missão",
-    sessionPercent: session.percent,
+    sessionPercent: evidencePercent,
+    evidencePercent,
+    masteryPassed: mastered,
+    hierarchyCrumb,
     currentStepIndex: steps.findIndex((step) => step.id === currentStep.id) + 1,
     stepsTotal: steps.length,
     remainingMinutes,
-    doneCount: doneSteps.length,
+    doneCount: evidenceDoneCount,
     studyStreak,
     steps,
     currentStep,

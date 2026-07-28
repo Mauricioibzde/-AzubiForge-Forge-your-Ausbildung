@@ -1,5 +1,6 @@
 import type { AppContext } from "../../appContext";
 import type { DailyPlan } from "../../schemas/userLearningState";
+import type { Mission } from "../../schemas/mission";
 import type {
   AppState,
   Progress,
@@ -8,6 +9,8 @@ import type {
   StudySessionSummary
 } from "../../types";
 import { getResumeTab, getVisitedSteps, READER_STEPS } from "../course";
+import { hasStepLearningEvidence, stepEvidenceLabel } from "../learning/didacticTasks";
+import { hasMasteryEvidence } from "../learning/masteryGate";
 
 export function buildSessionActivities(plan: DailyPlan, ctx: AppContext): StudySessionActivity[] {
   const activities: StudySessionActivity[] = [];
@@ -132,12 +135,44 @@ export function resumeStudySession(session: StudySession): StudySession {
   };
 }
 
+/** Whether the current session activity may be marked complete with real evidence. */
+export function canCompleteSessionActivity(
+  state: AppState,
+  activity: StudySessionActivity,
+  mission?: Mission | null
+): { allowed: boolean; reason: string } {
+  if (activity.kind === "mastery-test") {
+    if (hasMasteryEvidence(state, activity.missionId)) {
+      return { allowed: true, reason: "Domínio comprovado nesta missão." };
+    }
+    return { allowed: false, reason: "Conclua o teste de domínio antes de marcar esta atividade." };
+  }
+
+  if (activity.kind === "review") {
+    const review = state.missionReviews[activity.missionId];
+    if (review?.status === "completed") {
+      return { allowed: true, reason: "Revisão concluída." };
+    }
+    return { allowed: false, reason: "Conclua a revisão de retenção antes de marcar esta atividade." };
+  }
+
+  const tab = activity.readerTab || "explain";
+  if (hasStepLearningEvidence(state, activity.missionId, tab, mission)) {
+    return { allowed: true, reason: "Evidência da etapa registrada." };
+  }
+  return { allowed: false, reason: stepEvidenceLabel(tab) };
+}
+
 export function completeCurrentActivity(
   session: StudySession,
-  state: AppState
+  state: AppState,
+  mission?: Mission | null
 ): StudySession {
   const current = getCurrentActivity(session);
   if (!current) return session;
+
+  const gate = canCompleteSessionActivity(state, current, mission);
+  if (!gate.allowed) return session;
 
   const completedIds = session.completedActivityIds.includes(current.id)
     ? session.completedActivityIds

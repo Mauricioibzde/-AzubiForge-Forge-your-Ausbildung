@@ -4358,6 +4358,61 @@ button.button.active-check.wrong {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
+.reader-proof-checklist {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reader-proof-checklist li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.reader-proof-checklist li.is-done {
+  border-color: color-mix(in srgb, var(--success) 40%, var(--line));
+  color: color-mix(in srgb, var(--success) 75%, var(--text));
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+}
+
+.reader-proof-caption {
+  margin: 6px 0 0;
+}
+
+.session-evidence-note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-soft, var(--surface));
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.session-evidence-note.is-ready {
+  border-color: color-mix(in srgb, var(--success) 40%, var(--line));
+  color: color-mix(in srgb, var(--success) 70%, var(--text));
+}
+
+.mission-method-strip {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
 @media (max-width: 720px) {
   .situation-checkpoint {
     grid-template-columns: 1fr;
@@ -4365,6 +4420,15 @@ button.button.active-check.wrong {
 
   .study-method-strip {
     font-size: 0.74rem;
+  }
+
+  .ds-main-layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .course-module-switcher {
+    order: -1;
   }
 }
 

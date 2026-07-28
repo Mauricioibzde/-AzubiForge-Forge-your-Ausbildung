@@ -15,16 +15,20 @@ export function renderMissionHero(model: MissionPanelModel): string {
   return `
     <section class="mission-hero rise-in" aria-label="Missão atual">
       <div class="mission-hero-copy">
-        <p class="ds-caption">Missão atual · ${escapeHtml(model.module.title)}</p>
+        <p class="ds-caption">${escapeHtml(model.hierarchyCrumb)}</p>
         <h1 class="mission-hero-title">${escapeHtml(model.title)}</h1>
         <p class="mission-hero-lead">${escapeHtml(model.description)}</p>
         <div class="mission-hero-meta" aria-label="Metadados da missão">
           <span class="mission-meta-chip">${model.estimatedMinutes} min</span>
           <span class="mission-meta-chip">${escapeHtml(model.difficultyLabel)}</span>
           <span class="mission-meta-chip mission-meta-chip-accent">${escapeHtml(model.importanceLabel)}</span>
-          <span class="mission-meta-chip">Passo ${model.currentStepIndex}/${model.stepsTotal}</span>
+          <span class="mission-meta-chip">Evidência ${model.doneCount}/${model.stepsTotal}</span>
+          <span class="mission-meta-chip">${model.masteryPassed ? "Domínio ok" : "Domínio pendente"}</span>
           ${model.studyStreak > 0 ? `<span class="mission-meta-chip">Streak ${model.studyStreak}d</span>` : ""}
         </div>
+        <p class="mission-method-strip" aria-label="Como estudar">
+          Aprender → Recuperar → Praticar → Aplicar → Provar
+        </p>
         <a class="button accent mission-hero-cta" href="${escapeAttribute(model.continueHref)}" data-dashboard-cta data-mission-focus>
           ${escapeHtml(model.continueLabel)}
         </a>
@@ -68,15 +72,15 @@ function renderStepperItem(step: MissionStepView, index: number, total: number):
 export function renderNextStepCard(model: MissionPanelModel): string {
   if (model.completed) {
     return `
-      <article class="mission-next-card is-complete rise-in" style="animation-delay:20ms" aria-label="Missão concluída">
+      <article class="mission-next-card is-complete rise-in" style="animation-delay:20ms" aria-label="Domínio comprovado">
         <div class="mission-next-copy">
-          <p class="ds-caption">Missão concluída</p>
+          <p class="ds-caption">Domínio comprovado</p>
           <h2 class="mission-next-title">${model.nextMission ? "Próxima missão pronta" : "Trilha avançada"}</h2>
           <p class="ds-aux">${model.nextMission
-            ? `Você finalizou esta missão. Segue: ${escapeHtml(model.nextMission.title)}.`
-            : "Você percorreu as 5 etapas. Continue pela trilha ou revise pontos fracos."}</p>
+            ? `Você provou esta missão. Segue: ${escapeHtml(model.nextMission.title)}.`
+            : "Domínio confirmado. Continue pela trilha ou revise pontos fracos."}</p>
           <div class="mission-next-meta">
-            <span>${model.stepsTotal}/${model.stepsTotal} etapas</span>
+            <span>${model.stepsTotal}/${model.stepsTotal} com evidência</span>
             <span class="mission-xp">${escapeHtml(model.rewards.evidenceSummary)}</span>
           </div>
           <a class="button mission-next-cta" href="${escapeAttribute(model.continueHref)}">${escapeHtml(model.continueLabel)}</a>
@@ -181,9 +185,9 @@ export function renderMissionRewards(model: MissionPanelModel): string {
 
 export function renderProgressIndicator(model: MissionPanelModel): string {
   const circumference = 2 * Math.PI * 42;
-  const offset = circumference * (1 - model.sessionPercent / 100);
+  const offset = circumference * (1 - model.evidencePercent / 100);
   return `
-    <section class="mission-progress-card ds-card" id="dashboard-progress" aria-label="Progresso da missão">
+    <section class="mission-progress-card ds-card" id="dashboard-progress" aria-label="Progresso com evidência">
       <div class="mission-progress-ring-wrap">
         <svg class="mission-progress-ring" viewBox="0 0 100 100" aria-hidden="true">
           <circle class="mission-progress-ring-bg" cx="50" cy="50" r="42"></circle>
@@ -192,14 +196,14 @@ export function renderProgressIndicator(model: MissionPanelModel): string {
             stroke-dashoffset="${offset.toFixed(1)}"></circle>
         </svg>
         <div class="mission-progress-ring-label">
-          <strong>${model.sessionPercent}%</strong>
-          <span>da missão</span>
+          <strong>${model.evidencePercent}%</strong>
+          <span>percurso</span>
         </div>
       </div>
       <div class="mission-progress-stats">
-        <p><span class="ds-caption">Passo</span><strong>${model.currentStepIndex} de ${model.stepsTotal}</strong></p>
+        <p><span class="ds-caption">Evidência</span><strong>${model.doneCount} de ${model.stepsTotal}</strong></p>
+        <p><span class="ds-caption">Domínio</span><strong>${model.masteryPassed ? "Aprovado" : "Pendente"}</strong></p>
         <p><span class="ds-caption">Restam</span><strong>${model.remainingMinutes ? `~ ${model.remainingMinutes} min` : "0 min"}</strong></p>
-        <p><span class="ds-caption">Concluídas</span><strong>${model.doneCount}/${model.stepsTotal}</strong></p>
       </div>
     </section>
   `;

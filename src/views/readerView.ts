@@ -79,7 +79,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
       <article class="article">
         <div class="reader-kicker">
           <p class="eyebrow">${module?.subtitle || ctx.data.course.title}</p>
-          <span class="reader-session-pill">${session.completed}/${session.total} etapas · ${minutes} min</span>
+          <span class="reader-session-pill">${READER_STEPS.filter((step) => hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission)).length}/${session.total} evidência · ${minutes} min</span>
         </div>
         <h1>${chapter.title}</h1>
         <div class="reader-meta">
@@ -113,9 +113,24 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
               `;
             }).join("")}
           </div>
-          <div class="session-progress-line" aria-hidden="true">
-            <div style="width: ${session.percent}%"></div>
-          </div>
+          ${(() => {
+            const evidencedCount = READER_STEPS.filter((step) =>
+              hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission)
+            ).length;
+            const evidencePercent = Math.round((evidencedCount / READER_STEPS.length) * 100);
+            return `
+              <ul class="reader-proof-checklist" aria-label="Comprovação das etapas">
+                ${READER_STEPS.map((step) => {
+                  const evidenced = hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission);
+                  return `<li class="${evidenced ? "is-done" : ""}">${evidenced ? "✓" : "○"} ${step.label}</li>`;
+                }).join("")}
+              </ul>
+              <div class="session-progress-line" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${evidencePercent}" aria-label="Percurso com evidência">
+                <div style="width: ${evidencePercent}%"></div>
+              </div>
+              <p class="ds-aux reader-proof-caption">${evidencedCount}/${READER_STEPS.length} etapas com evidência · ${hasMasteryEvidence(ctx.state, chapter.id) ? "domínio ok" : "domínio pendente"}</p>
+            `;
+          })()}
         </section>
 
         <section class="journey-reader-bar panel" aria-label="Posicao na jornada">

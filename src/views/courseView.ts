@@ -436,7 +436,7 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter): stri
           </div>
           <p class="ds-aux path-desc">${escapeHtml(chapter.description)}</p>
           ${evidenceHtml}
-          ${proofHint}
+          ${status === "current" || mastered ? proofHint : ""}
           ${(() => {
             const note = (ctx.state.notes[chapter.id] || "").trim();
             if (!note) return "";

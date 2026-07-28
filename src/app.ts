@@ -323,9 +323,24 @@ function expireActiveMockIfNeeded(ctx: AppContext): boolean {
 function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void {
   const target = event.target as Element;
 
+  if (target.closest("[data-session-evidence-needed]")) {
+    event.preventDefault();
+    const session = ctx.state.activeStudySession;
+    const current = session ? session.activities[session.currentIndex] : null;
+    window.alert(current?.instruction || "Faça a tarefa no leitor antes de concluir.");
+    if (current?.readerTab) {
+      window.location.hash = `#reader/${current.missionId}/${current.readerTab}`;
+    }
+    return;
+  }
+
   if (target.closest("[data-session-complete]")) {
     event.preventDefault();
-    handleSessionComplete(ctx);
+    const result = handleSessionComplete(ctx);
+    if (!result.ok) {
+      window.alert(result.reason);
+      return;
+    }
     saveState(ctx.state);
     if (ctx.state.activeStudySession?.status === "completed") {
       window.location.hash = "#session/summary";

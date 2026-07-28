@@ -120,20 +120,50 @@ describe("studySession", () => {
     expect(resumed.pausedAt).toBeNull();
   });
 
-  it("completes activities and marks reader steps", () => {
+  it("blocks completion without learning evidence", () => {
     const ctx = mockCtx();
+    let session = createStudySessionFromPlan(samplePlan, ctx);
+    session = completeCurrentActivity(session, ctx.state);
+    expect(session.completedActivityIds.length).toBe(0);
+    expect(ctx.state.sessionSteps.m1).toBeUndefined();
+  });
+
+  it("completes activities only after evidence and marks reader steps", () => {
+    const ctx = mockCtx({
+      stepArtifactSubmitted: { "explain:m1": true }
+    });
     let session = createStudySessionFromPlan(samplePlan, ctx);
     session = completeCurrentActivity(session, ctx.state);
     expect(session.completedActivityIds.length).toBe(1);
     expect(ctx.state.sessionSteps.m1).toContain("explain");
   });
 
-  it("finishes with summary", () => {
-    const ctx = mockCtx();
-    let session = createStudySessionFromPlan(samplePlan, ctx);
-    session.activities.forEach(() => {
-      session = completeCurrentActivity(session, ctx.state);
+  it("finishes with summary when each step has evidence", () => {
+    const ctx = mockCtx({
+      stepArtifactSubmitted: {
+        "explain:m1": true,
+        "praxis:m1": true
+      },
+      vocabChecks: { "vocab:m1:0": "correct" },
+      exerciseChecks: { "m1:0": "correct" },
+      stepArtifacts: { "apply:m1-apply-fallback": "resposta" },
     });
+    ctx.state.stepArtifactSubmitted["apply:m1-apply-fallback"] = true;
+    let session = createStudySessionFromPlan(samplePlan, ctx);
+    // complete explain + praxis via artifacts; vocab/practice/ap1 via checks
+    for (let i = 0; i < 5; i += 1) {
+      const activity = session.activities[session.currentIndex];
+      if (activity?.readerTab === "vocab") {
+        ctx.state.vocabChecks["vocab:m1:0"] = "correct";
+      }
+      if (activity?.readerTab === "practice") {
+        ctx.state.exerciseChecks["m1:0"] = "correct";
+      }
+      if (activity?.readerTab === "ap1") {
+        ctx.state.stepArtifactSubmitted["apply:m1-apply-fallback"] = true;
+      }
+      session = completeCurrentActivity(session, ctx.state);
+    }
     const { summary } = finishStudySession(session);
     expect(summary.activitiesCompleted).toBe(5);
     expect(summary.missionIds).toEqual(["m1"]);

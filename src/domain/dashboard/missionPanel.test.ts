@@ -94,7 +94,9 @@ describe("buildMissionPanelModel", () => {
   it("surfaces one current mission step and clear next action", () => {
     const ctx = {
       data: sampleData,
-      state: baseState({ sessionSteps: { ch1: ["explain"] } }),
+      state: baseState({
+        stepArtifactSubmitted: { "explain:ch1": true }
+      }),
       ui: {} as AppContext["ui"]
     } as AppContext;
 
@@ -113,8 +115,11 @@ describe("buildMissionPanelModel", () => {
     expect(model.rewards.xpLabel.toLowerCase()).toMatch(/xp|domínio|dominio/);
     expect(model.currentStepIndex).toBe(2);
     expect(model.doneCount).toBe(1);
+    expect(model.evidencePercent).toBe(20);
+    expect(model.masteryPassed).toBe(false);
+    expect(model.hierarchyCrumb).toMatch(/Introdução|Lernfeld/);
     expect(model.celebration.show).toBe(true);
-    expect(model.celebration.title).toBe("Etapa concluída");
+    expect(model.celebration.title).toBe("Evidência da etapa ok");
     expect(model.celebration.detail).not.toMatch(/\+\d+\s*XP/);
     expect(model.importanceLabel.toLowerCase()).toContain("import");
   });
