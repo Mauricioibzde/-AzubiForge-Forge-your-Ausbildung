@@ -1,6 +1,7 @@
 import type { AppContext } from "../appContext";
 import { getNormalizedCourseData } from "../data/normalizedCourse";
 import { findChapter } from "../domain/course";
+import { evaluateMasteryGate } from "../domain/learning/masteryGate";
 import { resolveNextLearningAction } from "../domain/learning/nextLearningAction";
 import { getDirectedReviewHref } from "../domain/mastery/applyMasteryResult";
 import {
@@ -14,10 +15,33 @@ import type { MasteryTestAttempt } from "../types";
 import { escapeAttribute, escapeHtml } from "../ui/html";
 
 export function renderMasteryTestView(ctx: AppContext, missionId: string, returnToSession: boolean): string {
+  const course = getNormalizedCourseData();
+  const mission = course.missionsById[missionId] || null;
+  const gate = evaluateMasteryGate(ctx.state, missionId, mission);
+
+  if (!gate.allowed && !ctx.state.activeMasteryTest) {
+    const chapter = findChapter(ctx.data, missionId);
+    return `
+      <section class="ds-page mastery-test-page">
+        <article class="ds-card">
+          <h1 class="ds-section-title">Teste ainda bloqueado</h1>
+          <p class="ds-lead">${escapeHtml(gate.reason)}</p>
+          <p class="ds-aux">Missão: ${escapeHtml(chapter?.title || missionId)}</p>
+          <p class="ds-aux">Prática: ${gate.practiceAnswered}/${gate.minAnswered} · ${gate.practiceScore ?? 0}% (mín. ${gate.minScore}%)${gate.applyRequired ? ` · Apply: ${gate.applyDone ? "ok" : "pendente"}` : ""}</p>
+          <div class="study-session-actions">
+            <a class="button accent" href="#reader/${escapeAttribute(missionId)}/practice">Ir para prática</a>
+            <a class="button secondary" href="#reader/${escapeAttribute(missionId)}/ap1">Tarefa aplicada</a>
+            <a class="button secondary" href="${returnToSession ? "#session" : "#home"}">Voltar</a>
+          </div>
+        </article>
+      </section>
+    `;
+  }
+
   let attempt = ctx.state.activeMasteryTest;
 
   if (!attempt || attempt.missionId !== missionId) {
-    const created = createMasteryTest(missionId, getNormalizedCourseData(), { returnToSession });
+    const created = createMasteryTest(missionId, course, { returnToSession });
     attempt = created;
     ctx.state.activeMasteryTest = created;
   }

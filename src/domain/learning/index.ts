@@ -17,3 +17,13 @@ export type {
   CourseLearningEvidence,
   EvidenceTone
 } from "./learningEvidence";
+export {
+  evaluateMasteryGate,
+  hasMasteryEvidence,
+  getPracticeStats,
+  getApplyCriteriaStats,
+  countApplyCriteria,
+  MIN_PRACTICE_ANSWERS
+} from "./masteryGate";
+export type { MasteryGateResult } from "./masteryGate";
+export { normalizeAnswer, answersMatch } from "./productionCheck";

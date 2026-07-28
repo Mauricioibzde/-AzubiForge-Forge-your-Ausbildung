@@ -3504,6 +3504,62 @@ a.session-step:hover {
   gap: 8px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.production-attempt {
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 88%, var(--primary) 12%);
+}
+
+.production-feedback {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 92%, var(--primary) 8%);
+}
+
+.production-feedback.is-correct {
+  border-color: color-mix(in srgb, var(--success) 55%, var(--line));
+  background: color-mix(in srgb, var(--surface) 86%, var(--success) 14%);
+}
+
+.production-feedback.is-wrong {
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--line));
+  background: color-mix(in srgb, var(--surface) 86%, var(--warning) 14%);
+}
+
+.apply-task-card,
+.mastery-gate-card {
+  margin-top: 18px;
+}
+
+.apply-criteria-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.apply-criteria-row {
+  align-items: flex-start;
+}
+
+.apply-activity + .apply-activity {
+  margin-top: 14px;
+}
+
 .button.active-check,
 a.button.active-check,
 button.button.active-check {

@@ -1,7 +1,7 @@
 # Learning Evidence — métricas honestas
 
 **Atualizado:** 2026-07-28  
-**Módulo:** `src/domain/learning/learningEvidence.ts`
+**Módulo:** `src/domain/learning/learningEvidence.ts` · `masteryGate.ts` · `productionCheck.ts`
 
 ## Mudança pedagógica
 
@@ -24,7 +24,18 @@ Isso era **gamificação vazia** e conflitava com a regra de honestidade das mé
 | Revisão | `missionReviews` / schedule | “Revisão em 3 dias” genérico |
 | Competências | `mission.competencyIds.length` | “1 competência” |
 
-Nada disso altera `AppState` persistido nem o envelope **v11**.
+Nada disso altera o envelope **v11** (campos novos são opcionais e sanitizados).
+
+## Produção antes do gabarito (fase A)
+
+| Etapa | Evidência | Persistência |
+|---|---|---|
+| Vocab | Digitar significado DE→PT antes de conferir | `vocabAttempts` + `vocabChecks` |
+| Practice | Digitar resposta antes do gabarito | `practiceAttempts` + `practiceRevealed` + `exerciseChecks` |
+| Apply (AP1) | Critérios checados (≥70%) | `applyCriteriaChecks` |
+| Mastery | Gate: ≥3 práticas, score ≥70%, apply se exigido | `evaluateMasteryGate` |
+
+“Marcar estudo” (`completed[]`) **não** prova domínio. No painel da jornada, **missão concluída** = mastery passed.
 
 ## UI
 

@@ -162,14 +162,11 @@ export function missionProgressFromLegacyState(
 ): MissionProgress {
   const progress = createInitialMissionProgress("available");
   const visited = state.sessionSteps[missionId] || [];
+  const markedComplete = state.completed.includes(missionId);
 
-  if (state.completed.includes(missionId)) {
-    progress.status = "provisionally-mastered";
-    progress.masteryLevel = 5;
-    progress.completedAt = state.lastStudiedAt[missionId] || null;
-  } else if (visited.length > 0) {
+  if (visited.length > 0 || markedComplete) {
     progress.status = "in-progress";
-    progress.currentPhase = visited.includes("practice") ? "practice" : "learn";
+    progress.currentPhase = visited.includes("practice") || visited.includes("ap1") ? "practice" : "learn";
     progress.startedAt = state.lastStudiedAt[missionId] || null;
   }
 
@@ -181,9 +178,22 @@ export function missionProgressFromLegacyState(
     const correct = exerciseKeys.filter((key) => state.exerciseChecks[key] === "correct").length;
     const score = Math.round((correct / exerciseKeys.length) * 100);
     progress.practiceScore = score;
-    if (score >= DEFAULT_COMPLETION_RULES.minimumPracticeScore) {
-      progress.status = progress.status === "in-progress" ? "ready-for-test" : progress.status;
+    progress.currentPhase = "practice";
+    if (exerciseKeys.length >= 3 && score >= DEFAULT_COMPLETION_RULES.minimumPracticeScore) {
+      progress.status = "ready-for-test";
+      progress.currentPhase = "test";
+    } else {
+      progress.status = "practice-required";
     }
+  } else if (markedComplete || visited.includes("practice") || visited.includes("ap1")) {
+    progress.status = "practice-required";
+    progress.currentPhase = "practice";
+  }
+
+  const applyKeys = Object.keys(state.applyCriteriaChecks || {}).filter((key) => key.startsWith(`${missionId}:`));
+  if (applyKeys.length) {
+    const checked = applyKeys.filter((key) => state.applyCriteriaChecks[key]).length;
+    progress.applyScore = Math.round((checked / Math.max(applyKeys.length, 1)) * 100);
   }
 
   const lastMasteryTest = getLatestMasteryTestForMission(state.masteryTestHistory || [], missionId);

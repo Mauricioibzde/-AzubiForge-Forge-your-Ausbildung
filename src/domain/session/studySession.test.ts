@@ -61,6 +61,10 @@ function mockCtx(stateOverrides: Partial<AppContext["state"]> = {}): AppContext 
       missionReviewHistory: [],
       activeCheckpoint: null,
       checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
       ...stateOverrides
     },
     ui: {} as AppContext["ui"]

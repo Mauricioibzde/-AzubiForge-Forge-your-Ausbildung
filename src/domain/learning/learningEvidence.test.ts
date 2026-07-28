@@ -109,6 +109,10 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
     missionReviewHistory: [],
     activeCheckpoint: null,
     checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
     ...overrides
   };
 }

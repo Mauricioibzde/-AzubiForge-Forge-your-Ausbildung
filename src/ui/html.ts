@@ -151,38 +151,53 @@ export function confidenceControls(
 export function vocabularyRecallCards(
   rows: VocabularyRow[],
   chapterId: string,
-  checks: Record<string, ExerciseCheck>
+  checks: Record<string, ExerciseCheck>,
+  attempts: Record<string, string> = {}
 ): string {
   return `
     <div class="vocab-recall-grid">
       ${rows.map((row, index) => {
         const key = `vocab:${chapterId}:${index}`;
         const check = checks[key];
+        const attempt = attempts[key] || "";
+        const revealed = Boolean(check);
         return `
           <article class="vocab-recall-card ${check ? `checked-${check}` : ""}">
-            <strong>${row.de}</strong>
-            <details>
-              <summary>Revelar significado</summary>
-              <p><strong>${row.pt}</strong></p>
-              <p>${row.explanation}</p>
-              <p class="small-note">${row.example}</p>
-              <div class="self-check-actions">
-                <button
-                  class="button secondary ${check === "correct" ? "active-check" : ""}"
-                  type="button"
-                  data-vocab-check="correct"
-                  data-check-key="${key}"
-                  data-check-chapter="${chapterId}"
-                >Acertei</button>
-                <button
-                  class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
-                  type="button"
-                  data-vocab-check="wrong"
-                  data-check-key="${key}"
-                  data-check-chapter="${chapterId}"
-                >Errei</button>
-              </div>
-            </details>
+            <strong>${escapeHtml(row.de)}</strong>
+            <textarea
+              class="note-area production-attempt"
+              rows="2"
+              placeholder="Digite o significado em PT"
+              data-vocab-attempt="${escapeAttribute(key)}"
+              data-vocab-expected="${escapeAttribute(row.pt)}"
+              ${check ? "readonly" : ""}
+            >${escapeHtml(attempt)}</textarea>
+            ${!revealed ? `
+              <button class="button accent" type="button" data-vocab-submit="${escapeAttribute(key)}" data-vocab-expected="${escapeAttribute(row.pt)}" data-check-chapter="${escapeAttribute(chapterId)}">Conferir</button>
+            ` : `
+              <details open>
+                <summary>Significado</summary>
+                <p><strong>${escapeHtml(row.pt)}</strong></p>
+                <p>${escapeHtml(row.explanation)}</p>
+                <p class="small-note">${escapeHtml(row.example)}</p>
+                <div class="self-check-actions">
+                  <button
+                    class="button secondary ${check === "correct" ? "active-check" : ""}"
+                    type="button"
+                    data-vocab-check="correct"
+                    data-check-key="${escapeAttribute(key)}"
+                    data-check-chapter="${escapeAttribute(chapterId)}"
+                  >Manter acerto</button>
+                  <button
+                    class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
+                    type="button"
+                    data-vocab-check="wrong"
+                    data-check-key="${escapeAttribute(key)}"
+                    data-check-chapter="${escapeAttribute(chapterId)}"
+                  >Marcar para revisar</button>
+                </div>
+              </details>
+            `}
           </article>
         `;
       }).join("")}
