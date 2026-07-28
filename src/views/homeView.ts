@@ -16,6 +16,7 @@ import type { JourneyNode } from "../domain/journey";
 import { getJourneyNodes, getJourneyProgress } from "../domain/journey";
 import { formatMockExamTimer, getMockExamAnsweredCount, getMockExamRemainingMs } from "../domain/mockExam";
 import { donutProgress, escapeAttribute, kpiCard } from "../ui/html";
+import { renderTodayPlanSection } from "./todayPlanView";
 
 export function renderHomeView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
@@ -37,6 +38,7 @@ export function renderHomeView(ctx: AppContext): string {
   return `
     <section class="ds-page dashboard journey-page">
       ${renderAlerts(ctx, unfinishedMock)}
+      ${renderTodayPlanSection(ctx)}
 
       <header class="ds-hero-layout rise-in">
         <div class="ds-hero">
