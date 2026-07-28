@@ -37,6 +37,10 @@ Nada disso altera o envelope **v11** (campos novos são opcionais e sanitizados)
 
 “Marcar estudo” (`completed[]`) **não** prova domínio. No painel da jornada, **missão concluída** = mastery passed.
 
+## Tarefas didáticas (fase B)
+
+Ver `docs/DIDACTIC_TASKS.md`. Em resumo: Erklären/Praxis exigem artefato escrito; Apply exige produção antes dos checkboxes; avançar na sessão bloqueia sem evidência da etapa.
+
 ## UI
 
 A seção da Jornada passou de “Recompensas” para **Evidência de aprendizagem**, com prática, domínio, revisão, XP honesto e competências do mapa.

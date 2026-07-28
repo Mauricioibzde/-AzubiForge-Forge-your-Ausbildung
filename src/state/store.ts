@@ -132,7 +132,9 @@ function createFallbackState(data: AzubiForgeData): AppState {
     vocabAttempts: {},
     practiceAttempts: {},
     practiceRevealed: {},
-    applyCriteriaChecks: {}
+    applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {}
   };
 }
 
@@ -176,7 +178,9 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     vocabAttempts: sanitizeAttemptRecord(imported.vocabAttempts),
     practiceAttempts: sanitizeAttemptRecord(imported.practiceAttempts),
     practiceRevealed: sanitizeBooleanMap(imported.practiceRevealed),
-    applyCriteriaChecks: sanitizeBooleanMap(imported.applyCriteriaChecks)
+    applyCriteriaChecks: sanitizeBooleanMap(imported.applyCriteriaChecks),
+    stepArtifacts: sanitizeAttemptRecord(imported.stepArtifacts),
+    stepArtifactSubmitted: sanitizeBooleanMap(imported.stepArtifactSubmitted)
   };
 }
 

@@ -109,6 +109,8 @@ function stateWithPassedTests(): AppState {
     practiceAttempts: {},
     practiceRevealed: {},
     applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
   };
 }
 

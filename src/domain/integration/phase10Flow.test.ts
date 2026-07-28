@@ -120,6 +120,8 @@ function createState(): AppState {
     practiceAttempts: {},
     practiceRevealed: {},
     applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
   };
 }
 

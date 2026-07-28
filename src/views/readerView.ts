@@ -34,6 +34,14 @@ import {
 } from "../ui/html";
 import { exerciseCard } from "../ui/components";
 import { hasMasteryEvidence, evaluateMasteryGate } from "../domain/learning/masteryGate";
+import {
+  buildExplainRetrievalTask,
+  buildPraxisDecisionTask,
+  buildApplyProductionTasks,
+  hasStepLearningEvidence,
+  stepEvidenceLabel,
+  type DidacticTask
+} from "../domain/learning/didacticTasks";
 import { getNormalizedCourseData } from "../data/normalizedCourse";
 
 export function renderReaderView(ctx: AppContext, chapterId: string): string {
@@ -47,6 +55,13 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
   const session = getSessionProgress(ctx.state, chapter.id);
   const nextTab = getNextSessionTab(ctx.state, chapter.id, ctx.ui.readerTab);
   const currentStep = READER_STEPS.find((step) => step.id === ctx.ui.readerTab) || READER_STEPS[0];
+  let currentMission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
+  try {
+    currentMission = getNormalizedCourseData().missionsById[chapter.id] || null;
+  } catch {
+    currentMission = null;
+  }
+  const stepEvidenceReady = hasStepLearningEvidence(ctx.state, chapter.id, ctx.ui.readerTab, currentMission);
   const minutes = getEstimatedSessionMinutes(chapter);
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const vocabRows = getChapterVocabulary(ctx.data, chapter);
@@ -83,10 +98,11 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           <div class="session-guide-track" role="list">
             ${READER_STEPS.map((step) => {
               const visited = getVisitedSteps(ctx.state, chapter.id).includes(step.id);
+              const evidenced = hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission);
               const active = step.id === ctx.ui.readerTab;
               return `
                 <button
-                  class="session-guide-step ${visited ? "done" : ""} ${active ? "active" : ""}"
+                  class="session-guide-step ${evidenced ? "done" : visited ? "visited" : ""} ${active ? "active" : ""}"
                   type="button"
                   role="listitem"
                   data-reader-tab="${step.id}"
@@ -122,7 +138,9 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           </div>
           <div class="step-coach-actions">
             ${nextTab
-              ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Concluir e ir para ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proxima etapa"}</button>`
+              ? (stepEvidenceReady
+                ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Concluir e ir para ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proxima etapa"}</button>`
+                : `<button class="button soft-complete" type="button" data-step-evidence-needed="${chapter.id}" data-step-tab="${ctx.ui.readerTab}">${stepEvidenceLabel(ctx.ui.readerTab)}</button>`)
               : `<a class="button" href="#review">Fechar e revisar erros</a>`
             }
             <a class="button secondary" href="#reader/${chapter.id}/${currentStep.id}">Focar nesta etapa</a>
@@ -140,9 +158,10 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
                 <span class="card-label">Proximo passo</span>
                 <p>${READER_STEPS.find((step) => step.id === nextTab)?.label || "Continuar"}</p>
               </div>
-              <button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">
-                Avancar na sessao
-              </button>
+              ${stepEvidenceReady
+                ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Avancar na sessao</button>`
+                : `<button class="button soft-complete" type="button" data-step-evidence-needed="${chapter.id}" data-step-tab="${ctx.ui.readerTab}">${stepEvidenceLabel(ctx.ui.readerTab)}</button>`
+              }
             ` : `
               <div>
                 <span class="card-label">Fechar sessao</span>
@@ -231,9 +250,10 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           }).join("")}
         </div>
         ${nextTab ? `
-          <button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">
-            Avancar: ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proximo"}
-          </button>
+          ${stepEvidenceReady
+            ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Avancar: ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proximo"}</button>`
+            : `<button class="button soft-complete" type="button" data-step-evidence-needed="${chapter.id}" data-step-tab="${ctx.ui.readerTab}">Fazer tarefa da etapa</button>`
+          }
         ` : `
           <div class="mobile-dock-confidence">
             ${confidenceControls(ctx.state, chapter, confidenceGateOptions(ctx, chapter.id))}
@@ -256,31 +276,31 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
 function getStepCoach(tab: ReaderTab): { goal: string; done: string } {
   if (tab === "explain") {
     return {
-      goal: "Entender o conceito central e identificar onde ele aparece na prova AP1.",
-      done: "você consegue explicar a ideia em 2 frases, sem consultar o texto"
+      goal: "Entender o conceito e recuperar de memória — não só reler.",
+      done: "você escreveu 2 frases próprias (o que é + por que importa)"
     };
   }
   if (tab === "praxis") {
     return {
-      goal: "Conectar a teoria a um cenário real de trabalho de infraestrutura/suporte.",
-      done: "você consegue descrever um caso real e a decisão técnica tomada"
+      goal: "Transferir teoria para uma decisão no caso de suporte/JIKU.",
+      done: "você registrou a ação que tomaria e a justificativa"
     };
   }
   if (tab === "vocab") {
     return {
-      goal: "Fixar termos DE/PT críticos para perguntas curtas e interpretação de enunciado.",
-      done: "você acerta os principais termos sem abrir a resposta"
+      goal: "Fixar termos DE/PT críticos com produção antes do gabarito.",
+      done: "você digitou e conferiu pelo menos 1 termo"
     };
   }
   if (tab === "practice") {
     return {
-      goal: "Treinar aplicação ativa e reduzir erros recorrentes antes do AP1-check.",
+      goal: "Treinar aplicação ativa com resposta própria + autoavaliação honesta.",
       done: "você respondeu e marcou Acertei/Errei em pelo menos 1 exercício"
     };
   }
   return {
-    goal: "Consolidar a evidência da sessão e preparar revisão de pontos fracos.",
-    done: "você identifica o que já domina e o que precisa voltar na revisão"
+    goal: "Resolver o desafio aplicado por escrito — evidência que libera o domínio.",
+    done: "você enviou a produção do caso e marcou os critérios com honestidade"
   };
 }
 
@@ -356,11 +376,75 @@ function tabContent(ctx: AppContext, chapter: Chapter, tab: ReaderTab): string {
   if (tab === "vocab") return vocabTab(ctx, chapter);
   if (tab === "practice") return practiceTab(ctx, chapter);
   if (tab === "ap1") return ap1Tab(ctx, chapter);
-  return explainTab(chapter);
+  return explainTab(ctx, chapter);
 }
 
-function explainTab(chapter: Chapter): string {
+function renderDidacticTaskCard(
+  ctx: AppContext,
+  chapterId: string,
+  task: DidacticTask,
+  options: { criteriaInteractive?: boolean } = {}
+): string {
+  const draft = ctx.state.stepArtifacts?.[task.id] || "";
+  const submitted = Boolean(ctx.state.stepArtifactSubmitted?.[task.id]);
+  const criteriaInteractive = Boolean(options.criteriaInteractive) && submitted;
+
+  return `
+    <section class="chapter-section didactic-task-card" aria-label="${escapeAttribute(task.title)}">
+      <span class="card-label">Tarefa didática</span>
+      <h2>${escapeHtml(task.title)}</h2>
+      <p class="ds-aux">${escapeHtml(task.whyItMatters)}</p>
+      ${task.context ? `
+        <div class="didactic-task-context">
+          <p class="ds-caption">Caso / foco</p>
+          <p>${escapeHtml(task.context)}</p>
+        </div>
+      ` : ""}
+      <p><strong>${escapeHtml(task.prompt)}</strong></p>
+      <label class="sr-only" for="artifact-${escapeAttribute(task.id)}">Sua resposta</label>
+      <textarea
+        id="artifact-${escapeAttribute(task.id)}"
+        class="note-area production-attempt"
+        rows="4"
+        placeholder="${escapeAttribute(task.placeholder)}"
+        data-step-artifact="${escapeAttribute(task.id)}"
+        ${submitted ? "readonly" : ""}
+      >${escapeHtml(draft)}</textarea>
+      ${!submitted ? `
+        <button
+          class="button accent"
+          type="button"
+          data-step-artifact-submit="${escapeAttribute(task.id)}"
+          data-check-chapter="${escapeAttribute(chapterId)}"
+        >Enviar produção</button>
+      ` : `
+        <div class="production-feedback" role="status">
+          <p><strong>Modelo de qualidade (compare, não copie):</strong></p>
+          <p>${escapeHtml(task.modelAnswer)}</p>
+        </div>
+        <div class="apply-criteria-list" aria-label="Critérios de qualidade">
+          ${task.successCriteria.map((criterion, index) => {
+            const key = `${task.id}:c${index}`;
+            const checked = Boolean(ctx.state.applyCriteriaChecks?.[key]);
+            if (!criteriaInteractive) {
+              return `<p class="ds-aux">□ ${escapeHtml(criterion)}</p>`;
+            }
+            return `
+              <label class="check-row apply-criteria-row">
+                <input type="checkbox" data-apply-criteria="${escapeAttribute(key)}" ${checked ? "checked" : ""}>
+                <span>${escapeHtml(criterion)}</span>
+              </label>
+            `;
+          }).join("")}
+        </div>
+      `}
+    </section>
+  `;
+}
+
+function explainTab(ctx: AppContext, chapter: Chapter): string {
   const content = chapter.fullContent;
+  const task = buildExplainRetrievalTask(chapter);
   if (!content) {
     return `
       <section class="chapter-section">
@@ -371,6 +455,7 @@ function explainTab(chapter: Chapter): string {
         <h2>Resumo</h2>
         <p>${chapter.summary}</p>
       </section>
+      ${renderDidacticTaskCard(ctx, chapter.id, task)}
     `;
   }
 
@@ -402,6 +487,7 @@ function explainTab(chapter: Chapter): string {
       <h2>Erklaerung</h2>
       ${content.explanation.map(contentBlock).join("")}
     </section>
+    ${renderDidacticTaskCard(ctx, chapter.id, task)}
   `;
 }
 
@@ -409,18 +495,13 @@ function praxisTab(ctx: AppContext, chapter: Chapter): string {
   const content = chapter.fullContent;
   const situation = getChapterLearningSituation(ctx.data, chapter.id);
   const module = getChapterModule(ctx.data, chapter.id);
+  const task = buildPraxisDecisionTask(chapter);
 
   return `
     <section class="praxisfall">
       <span class="card-label">JIKU Praxisfall</span>
       <h2>${situation?.title || module?.subtitle || "Berufliche Situation"}</h2>
       <p>Bei JIKU IT-Solutions taucht dieses Thema nicht als isolierte Definition auf, sondern als Aufgabe im Kunden- oder Betriebsprozess.</p>
-      <ul>
-        <li>Welche Information braucht der Kunde oder das Team?</li>
-        <li>Welche Fachwoerter muss ich im Auftrag erkennen?</li>
-        <li>Welche Entscheidung oder Kontrolle gehoert zu diesem Kapitel?</li>
-        <li>Wie begruende ich die Antwort kurz und pruefungstauglich?</li>
-      </ul>
     </section>
     <section class="chapter-section">
       <h2>Beispiel</h2>
@@ -440,6 +521,7 @@ function praxisTab(ctx: AppContext, chapter: Chapter): string {
         ${content.diagrams.map(diagram).join("")}
       </section>
     ` : ""}
+    ${renderDidacticTaskCard(ctx, chapter.id, task)}
   `;
 }
 
@@ -651,19 +733,24 @@ function ap1Tab(ctx: AppContext, chapter: Chapter): string {
     mission = null;
   }
   const gate = evaluateMasteryGate(ctx.state, chapter.id, mission);
-  const applyActivities = mission?.phases.apply.activities || [];
+  const applyTasks = buildApplyProductionTasks(chapter, mission);
   let criteriaIndex = 0;
-  const applyBlock = applyActivities.length ? `
-    <section class="chapter-section apply-task-card" aria-label="Tarefa aplicada">
-      <h2>Tarefa aplicada (evidência)</h2>
-      <p class="ds-aux">Marque os critérios que você consegue cumprir de verdade. Isso libera o teste de domínio.</p>
-      ${applyActivities.map((activity) => {
-        const criteria = activity.criteria || [];
-        const items = criteria.map((criterion) => {
-          const index = criteriaIndex;
-          criteriaIndex += 1;
+  const applyBlock = `
+    <section class="chapter-section apply-task-card" aria-label="Desafios aplicados">
+      <h2>Desafio aplicado (produção)</h2>
+      <p class="ds-aux">Escreva a resposta do caso <strong>antes</strong> de marcar critérios. Checkbox sem produção não conta como aprendizagem.</p>
+      ${applyTasks.map((task) => {
+        const draft = ctx.state.stepArtifacts?.[task.id] || "";
+        const submitted = Boolean(ctx.state.stepArtifactSubmitted?.[task.id]);
+        const criteriaStart = criteriaIndex;
+        criteriaIndex += task.successCriteria.length;
+        const criteriaHtml = task.successCriteria.map((criterion, localIndex) => {
+          const index = criteriaStart + localIndex;
           const key = `${chapter.id}:${index}`;
           const checked = Boolean(ctx.state.applyCriteriaChecks?.[key]);
+          if (!submitted) {
+            return `<p class="ds-aux locked-criterion">□ ${escapeHtml(criterion)} <em>(liberado após enviar)</em></p>`;
+          }
           return `
             <label class="check-row apply-criteria-row">
               <input type="checkbox" data-apply-criteria="${escapeAttribute(key)}" ${checked ? "checked" : ""}>
@@ -672,16 +759,36 @@ function ap1Tab(ctx: AppContext, chapter: Chapter): string {
           `;
         }).join("");
         return `
-          <article class="ds-card apply-activity">
-            <h3 class="ds-card-title">${escapeHtml(activity.title || activity.instruction || "Desafio aplicado")}</h3>
-            ${activity.modelAnswer ? `<p class="ds-aux">Dica de qualidade: compare depois com um modelo mental curto (não copie).</p>` : ""}
-            <div class="apply-criteria-list">${items}</div>
+          <article class="didactic-task-card apply-activity">
+            <span class="card-label">Apply</span>
+            <h3 class="ds-card-title">${escapeHtml(task.title)}</h3>
+            <p class="ds-aux">${escapeHtml(task.whyItMatters)}</p>
+            ${task.context ? `<div class="didactic-task-context"><p>${escapeHtml(task.context)}</p></div>` : ""}
+            <p><strong>${escapeHtml(task.prompt)}</strong></p>
+            <textarea
+              class="note-area production-attempt"
+              rows="4"
+              placeholder="${escapeAttribute(task.placeholder)}"
+              data-step-artifact="${escapeAttribute(task.id)}"
+              ${submitted ? "readonly" : ""}
+            >${escapeHtml(draft)}</textarea>
+            ${!submitted ? `
+              <button class="button accent" type="button" data-step-artifact-submit="${escapeAttribute(task.id)}" data-check-chapter="${escapeAttribute(chapter.id)}">
+                Enviar produção do caso
+              </button>
+              <div class="apply-criteria-list">${criteriaHtml}</div>
+            ` : `
+              <div class="production-feedback" role="status">
+                <p><strong>Modelo de qualidade:</strong> ${escapeHtml(task.modelAnswer)}</p>
+              </div>
+              <div class="apply-criteria-list">${criteriaHtml}</div>
+            `}
           </article>
         `;
       }).join("")}
-      <p class="ds-aux">${gate.applyDone ? "Critérios suficientes marcados." : "Ainda faltam critérios para liberar o domínio."}</p>
+      <p class="ds-aux">${gate.applyDone ? "Produção + critérios suficientes." : "Ainda falta produção ou critérios para liberar o domínio."}</p>
     </section>
-  ` : "";
+  `;
 
   return `
     <section class="info-box ihk">

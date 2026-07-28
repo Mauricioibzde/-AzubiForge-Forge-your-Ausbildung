@@ -61,6 +61,7 @@ import {
   submitMasteryTestForGrading
 } from "./views/masteryTestView";
 import { answersMatch } from "./domain/learning/productionCheck";
+import { hasStepLearningEvidence, stepEvidenceLabel } from "./domain/learning/didacticTasks";
 import { applyMasteryTestResult } from "./domain/mastery/applyMasteryResult";
 import {
   setMasteryTestResponse,
@@ -581,8 +582,48 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
   if (nextButton?.dataset.nextTab) {
     const nextTab = nextButton.dataset.nextTab as ReaderTab;
     const chapterId = nextButton.dataset.sessionNext || ctx.ui.readerChapterId || ctx.state.lastChapterId;
+    if (chapterId) {
+      let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
+      try {
+        mission = getNormalizedCourseData().missionsById[chapterId] || null;
+      } catch {
+        mission = null;
+      }
+      if (!hasStepLearningEvidence(ctx.state, chapterId, ctx.ui.readerTab, mission)) {
+        window.alert(stepEvidenceLabel(ctx.ui.readerTab));
+        return;
+      }
+    }
     ctx.ui.readerTab = nextTab;
     if (chapterId) setReaderHash(chapterId, nextTab);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const evidenceNeeded = target.closest<HTMLElement>("[data-step-evidence-needed]");
+  if (evidenceNeeded) {
+    const tab = (evidenceNeeded.dataset.stepTab || ctx.ui.readerTab) as ReaderTab;
+    window.alert(stepEvidenceLabel(tab));
+    const card = app.querySelector(".didactic-task-card, .production-attempt");
+    card?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
+  const artifactSubmit = target.closest<HTMLElement>("[data-step-artifact-submit]");
+  if (artifactSubmit?.dataset.stepArtifactSubmit) {
+    const key = artifactSubmit.dataset.stepArtifactSubmit;
+    const field = app.querySelector<HTMLTextAreaElement>(`[data-step-artifact="${CSS.escape(key)}"]`);
+    const draft = (field?.value || ctx.state.stepArtifacts[key] || "").trim();
+    if (draft.length < 12) {
+      window.alert("Escreva uma resposta completa (pelo menos 2 frases curtas) antes de enviar.");
+      field?.focus();
+      return;
+    }
+    ctx.state.stepArtifacts[key] = draft;
+    ctx.state.stepArtifactSubmitted[key] = true;
+    const chapterId = artifactSubmit.dataset.checkChapter || "";
+    if (chapterId && findChapter(ctx.data, chapterId)) touchStudied(ctx.state, chapterId);
+    saveState(ctx.state);
     renderRoute(app, ctx);
     return;
   }
@@ -848,6 +889,15 @@ function handleInput(event: Event, app: HTMLElement, ctx: AppContext): void {
     const key = target.dataset.practiceAttempt || "";
     if (key) {
       ctx.state.practiceAttempts[key] = target.value;
+      saveState(ctx.state);
+    }
+    return;
+  }
+
+  if (target.matches("[data-step-artifact]")) {
+    const key = target.dataset.stepArtifact || "";
+    if (key && !ctx.state.stepArtifactSubmitted[key]) {
+      ctx.state.stepArtifacts[key] = target.value;
       saveState(ctx.state);
     }
     return;

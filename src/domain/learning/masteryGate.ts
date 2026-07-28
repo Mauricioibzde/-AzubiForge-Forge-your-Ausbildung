@@ -2,6 +2,7 @@ import type { Mission } from "../../schemas/mission";
 import { DEFAULT_COMPLETION_RULES } from "../../schemas/mission";
 import type { AppState } from "../../types";
 import { getLatestMasteryTestForMission } from "../mastery/masteryTest";
+import { countApplyProductions } from "./didacticTasks";
 
 export const MIN_PRACTICE_ANSWERS = 3;
 
@@ -72,6 +73,7 @@ export function evaluateMasteryGate(
   const criteriaCount = countApplyCriteria(mission);
   const applyRequired = Boolean(mission?.completionRules.requireAppliedChallenge && criteriaCount > 0);
   const apply = getApplyCriteriaStats(state, missionId, criteriaCount);
+  const applyProduction = countApplyProductions(state, mission);
   const latest = getLatestMasteryTestForMission(state.masteryTestHistory || [], missionId);
   const masteryPassed = Boolean(latest?.passed);
 
@@ -84,7 +86,7 @@ export function evaluateMasteryGate(
       minAnswered: MIN_PRACTICE_ANSWERS,
       minScore,
       applyRequired,
-      applyDone: apply.done,
+      applyDone: apply.done && applyProduction.done,
       masteryPassed: true
     };
   }
@@ -98,7 +100,7 @@ export function evaluateMasteryGate(
       minAnswered: MIN_PRACTICE_ANSWERS,
       minScore,
       applyRequired,
-      applyDone: apply.done,
+      applyDone: apply.done && applyProduction.done,
       masteryPassed: false
     };
   }
@@ -112,7 +114,21 @@ export function evaluateMasteryGate(
       minAnswered: MIN_PRACTICE_ANSWERS,
       minScore,
       applyRequired,
-      applyDone: apply.done,
+      applyDone: apply.done && applyProduction.done,
+      masteryPassed: false
+    };
+  }
+
+  if (applyRequired && !applyProduction.done) {
+    return {
+      allowed: false,
+      reason: `Escreva a resposta do desafio aplicado (${applyProduction.submitted}/${applyProduction.total} produções) antes do teste.`,
+      practiceAnswered: practice.answered,
+      practiceScore: practice.score,
+      minAnswered: MIN_PRACTICE_ANSWERS,
+      minScore,
+      applyRequired,
+      applyDone: false,
       masteryPassed: false
     };
   }
@@ -133,13 +149,13 @@ export function evaluateMasteryGate(
 
   return {
     allowed: true,
-    reason: "Prática suficiente — você pode iniciar o teste de domínio.",
+    reason: "Prática e aplicação suficientes — você pode iniciar o teste de domínio.",
     practiceAnswered: practice.answered,
     practiceScore: practice.score,
     minAnswered: MIN_PRACTICE_ANSWERS,
     minScore,
     applyRequired,
-    applyDone: apply.done,
+    applyDone: apply.done && applyProduction.done,
     masteryPassed: false
   };
 }

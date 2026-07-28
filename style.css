@@ -3556,8 +3556,29 @@ a.session-step:hover {
   align-items: flex-start;
 }
 
-.apply-activity + .apply-activity {
-  margin-top: 14px;
+.didactic-task-card {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--line));
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--surface) 88%, var(--primary) 12%) 0%, var(--surface) 70%);
+}
+
+.didactic-task-context {
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border-left: 3px solid var(--primary-deep, var(--primary));
+  background: color-mix(in srgb, var(--surface) 90%, var(--primary) 10%);
+}
+
+.locked-criterion {
+  opacity: 0.72;
+}
+
+.session-guide-step.visited:not(.done) {
+  opacity: 0.85;
 }
 
 .button.active-check,

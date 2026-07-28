@@ -44,6 +44,8 @@ function emptyState(): AppState {
     practiceAttempts: {},
     practiceRevealed: {},
     applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
   };
 }
 

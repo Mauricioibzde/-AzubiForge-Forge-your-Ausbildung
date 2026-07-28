@@ -27,3 +27,12 @@ export {
 } from "./masteryGate";
 export type { MasteryGateResult } from "./masteryGate";
 export { normalizeAnswer, answersMatch } from "./productionCheck";
+export {
+  buildExplainRetrievalTask,
+  buildPraxisDecisionTask,
+  buildApplyProductionTasks,
+  hasStepLearningEvidence,
+  countApplyProductions,
+  stepEvidenceLabel
+} from "./didacticTasks";
+export type { DidacticTask, DidacticTaskKind } from "./didacticTasks";

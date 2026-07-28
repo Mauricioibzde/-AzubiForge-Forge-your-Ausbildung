@@ -3379,45 +3379,57 @@ function buildGuidedFullContent(title, description, focus, summary, example, ter
       { title: "Berufliche Anwendung", paragraphs: [example, focus] },
       { title: "AP1-Fokus", paragraphs: [focus, "Antworte knapp, nenne Fachbegriffe und begruende mit einem Beispiel aus dem Betrieb."] }
     ],
-    realWorldExamples: [example, `Ein Azubi bei JIKU IT-Solutions wendet ${title} in einer echten Kundenanfrage an.`],
+    realWorldExamples: [
+      example,
+      `Support-Ticket bei JIKU: Ein Kunde beschreibt ein Problem rund um ${title}. Du musst die naechste Pruefung waehlen und begruenden.`
+    ],
     practicalExamples: [{
-      title: "Praxisfall JIKU IT-Solutions",
-      paragraphs: [example, description],
-      steps: ["Situation erkennen.", "Fachbegriffe zuordnen.", "Loesung begruenden.", "Ergebnis dokumentieren."]
+      title: `Stoerfall: ${title} bei JIKU IT-Solutions`,
+      paragraphs: [
+        `Kundenmeldung: ${example}`,
+        `Dein Teamlead fragt: Was pruefst du zuerst zu ${title} — und warum?`,
+        description
+      ],
+      steps: [
+        "Auftrag und Symptom klaeren.",
+        `Hypothese zu ${title} bilden.`,
+        "Einen konkreten Pruefschritt ausfuehren.",
+        "Massnahme kurz begruenden und dokumentieren."
+      ]
     }],
     ihkFocus: focus,
     commonMistakes: [
-      `Verwechslung von Begriffen rund um ${title}.`,
-      "Antwort ohne beruflichen Bezug.",
-      "Nur Definition auswendig, aber kein Beispiel."
+      `Nur die Definition von ${title} nennen, ohne Entscheidung.`,
+      "Antwort ohne Bezug zur Kunden-/Betriebssituation.",
+      "Fachbegriffe verwechseln oder weglassen."
     ],
     vocabulary: vocabulary.slice(0, 10),
     summary: [summary, focus, description],
-    mindMap: `${title} → Begriffe → Praxis → AP1-Check`,
+    mindMap: `${title} → Begriffe → Entscheidung → AP1-Check`,
     exercises: {
       easy: [
-        mkEx(`Was bedeutet ${title}?`, summary),
-        mkEx(`Nennen Sie zwei Fachwoerter zu ${title}.`, baseTerms.slice(0, 2).join(", ") || title),
-        mkEx(`Warum ist ${title} in der Ausbildung wichtig?`, description)
+        mkEx(`Was ist ${title} in einem Satz?`, summary),
+        mkEx(`Welches Symptom kann auf ein Problem mit ${title} hinweisen?`, example),
+        mkEx(`Nennen Sie ein Fachwort zu ${title} und erklaeren Sie es kurz.`, baseTerms[0] ? `${baseTerms[0]}: ${summary}` : summary)
       ],
       intermediate: [
-        mkEx(`Erklaeren Sie ${title} in zwei Saetzen fuer einen Kunden.`, summary),
-        mkEx(`Welche Rolle spielt ${title} im Betrieb?`, example),
-        mkEx(`Ordne ${title} einer Lernsituation zu.`, example)
+        mkEx(`Kunde meldet: ${example} Welche Pruefung machen Sie zuerst zu ${title}?`, `Zuerst Auftrag klaeren, dann ${title} gezielt pruefen und begruenden.`),
+        mkEx(`Wann hilft ${title} — und wann nicht? Nennen Sie je ein Beispiel.`, example),
+        mkEx(`Schreiben Sie eine kurze Antwort an den Kunden zu ${title} (2 Saetze).`, summary)
       ],
       ap1Style: [
-        mkEx(`AP1: Beurteilen Sie eine Aussage zu ${title}.`, summary),
-        mkEx(`AP1: Welche Massnahme passt zu ${title}?`, example),
-        mkEx(`AP1: Erklaeren Sie ${title} mit dem Signalwort 'erklaeren'.`, summary)
+        mkEx(`AP1 — Situation: ${example} Beurteilen Sie die naechste Massnahme zu ${title}.`, `Massnahme waehlen, mit Fachbegriff begruenden, Bezug zur Situation herstellen.`),
+        mkEx(`AP1: Ein Azubi verwechselt Begriffe zu ${title}. Korrigieren Sie und begruenden Sie.`, summary),
+        mkEx(`AP1 — Signalwort erklaeren: Erklaeren Sie ${title} mit einem Betriebsbeispiel.`, `${summary} Beispiel: ${example}`)
       ]
     },
     related: baseTerms.slice(0, 4),
     revisionChecklist: [
-      `Ich kann ${title} erklaeren.`,
+      `Ich kann ${title} in eigenen Worten erklaeren.`,
+      "Ich kann in einem Fall eine Entscheidung begruenden.",
       "Ich kenne die wichtigsten Fachbegriffe.",
-      "Ich kann ein Praxisbeispiel nennen.",
-      "Ich habe mindestens eine Uebung beantwortet.",
-      "Ich habe die 5 Etapas da sessao abgeschlossen."
+      "Ich habe mindestens eine Uebung mit eigener Antwort gemacht.",
+      "Ich habe die angewandte Aufgabe schriftlich geloest."
     ]
   };
 }

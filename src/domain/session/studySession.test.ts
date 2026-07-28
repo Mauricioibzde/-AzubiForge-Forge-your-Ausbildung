@@ -65,6 +65,8 @@ function mockCtx(stateOverrides: Partial<AppContext["state"]> = {}): AppContext 
     practiceAttempts: {},
     practiceRevealed: {},
     applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
       ...stateOverrides
     },
     ui: {} as AppContext["ui"]

@@ -89,6 +89,8 @@ function baseState(): AppState {
     practiceAttempts: {},
     practiceRevealed: {},
     applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
   };
 }
 

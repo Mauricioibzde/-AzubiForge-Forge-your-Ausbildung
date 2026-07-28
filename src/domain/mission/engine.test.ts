@@ -118,6 +118,8 @@ describe("legacy mastery bridge", () => {
     practiceAttempts: {},
     practiceRevealed: {},
     applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
     };
 
     const progress = missionProgressFromLegacyState("m1", state, 2);

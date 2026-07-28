@@ -113,6 +113,8 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
     practiceAttempts: {},
     practiceRevealed: {},
     applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
     ...overrides
   };
 }

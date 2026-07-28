@@ -47,6 +47,8 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
     practiceAttempts: {},
     practiceRevealed: {},
     applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
     ...overrides
   };
 }
@@ -144,12 +146,32 @@ describe("masteryGate", () => {
         "m1:1": "correct",
         "m1:2": "correct"
       },
+      stepArtifactSubmitted: { "apply:a1": true },
       applyCriteriaChecks: { "m1:0": true }
     });
     const gate = evaluateMasteryGate(state, "m1", mission());
     expect(gate.allowed).toBe(false);
     expect(gate.applyRequired).toBe(true);
     expect(gate.applyDone).toBe(false);
+  });
+
+  it("blocks mastery when apply production is missing", () => {
+    const state = baseState({
+      exerciseChecks: {
+        "m1:0": "correct",
+        "m1:1": "correct",
+        "m1:2": "correct",
+        "m1:3": "correct"
+      },
+      applyCriteriaChecks: {
+        "m1:0": true,
+        "m1:1": true,
+        "m1:2": true
+      }
+    });
+    const gate = evaluateMasteryGate(state, "m1", mission());
+    expect(gate.allowed).toBe(false);
+    expect(gate.reason).toMatch(/produ/i);
   });
 
   it("allows mastery when practice and apply are ready", () => {
@@ -160,6 +182,7 @@ describe("masteryGate", () => {
         "m1:2": "correct",
         "m1:3": "correct"
       },
+      stepArtifactSubmitted: { "apply:a1": true },
       applyCriteriaChecks: {
         "m1:0": true,
         "m1:1": true,
