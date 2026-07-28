@@ -5,5 +5,6 @@ void bootstrap();
 
 async function bootstrap(): Promise<void> {
   await import("../data.js");
+  await import("../data/deep-content.js");
   startApp();
 }

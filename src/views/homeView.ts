@@ -1,5 +1,6 @@
 import type { AppContext } from "../appContext";
 import {
+  getActiveModule,
   getCourseProgress,
   getDailyGoalProgress,
   getDueReviewItemCount,
@@ -11,6 +12,7 @@ import {
   getTodayChapter,
   getTodayResolvedReviewCount
 } from "../domain/course";
+import type { JourneyNode } from "../domain/journey";
 import { getJourneyNodes, getJourneyProgress } from "../domain/journey";
 import { formatMockExamTimer, getMockExamAnsweredCount, getMockExamRemainingMs } from "../domain/mockExam";
 import { donutProgress, escapeAttribute, kpiCard } from "../ui/html";
@@ -18,7 +20,7 @@ import { donutProgress, escapeAttribute, kpiCard } from "../ui/html";
 export function renderHomeView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
   const journey = getJourneyProgress(ctx.data, ctx.state);
-  const nodes = getJourneyNodes(ctx.data, ctx.state);
+  const nodes = filterJourneyNodes(getJourneyNodes(ctx.data, ctx.state), getActiveModule(ctx.data, ctx.state).id);
   const chapter = getTodayChapter(ctx.data, ctx.state);
   const resumeTab = getResumeTab(ctx.state, chapter.id);
   const nextHref = `#reader/${chapter.id}/${resumeTab}`;
@@ -66,11 +68,11 @@ export function renderHomeView(ctx: AppContext): string {
         <div class="ds-section-head">
           <div>
             <h2 class="ds-section-title">Fluxo completo</h2>
-            <p class="ds-aux">Siga a linha do tempo: modulo → capitulo → 5 etapas → revisao → AP1.</p>
+            <p class="ds-aux">Modulo atual expandido. Capitulos concluidos de modulos anteriores ficam ocultos — <a href="#course">trilha completa</a>.</p>
           </div>
           <a class="text-link" href="#course">Ver trilha detalhada →</a>
         </div>
-        <ol class="journey-timeline">
+        <ol class="journey-timeline" id="journey-timeline">
           ${nodes.map((node) => renderJourneyNode(node)).join("")}
         </ol>
       </section>
@@ -91,7 +93,15 @@ export function renderHomeView(ctx: AppContext): string {
   `;
 }
 
-function renderJourneyNode(node: ReturnType<typeof getJourneyNodes>[number]): string {
+function filterJourneyNodes(nodes: JourneyNode[], activeModuleId: string): JourneyNode[] {
+  return nodes.filter((node) => {
+    if (node.kind !== "chapter") return true;
+    if (node.moduleId === activeModuleId) return true;
+    return node.status !== "done";
+  });
+}
+
+function renderJourneyNode(node: JourneyNode): string {
   const kindClass = `journey-node-${node.kind}`;
   const marker = node.kind === "module"
     ? "◆"
@@ -121,7 +131,7 @@ function renderJourneyNode(node: ReturnType<typeof getJourneyNodes>[number]): st
   `;
 }
 
-function nodeKindLabel(kind: ReturnType<typeof getJourneyNodes>[number]["kind"]): string {
+function nodeKindLabel(kind: JourneyNode["kind"]): string {
   if (kind === "module") return "Modulo";
   if (kind === "chapter") return "Capitulo";
   if (kind === "session-step") return "Etapa";
@@ -129,7 +139,7 @@ function nodeKindLabel(kind: ReturnType<typeof getJourneyNodes>[number]["kind"])
   return "AP1";
 }
 
-function nodeActionLabel(node: ReturnType<typeof getJourneyNodes>[number]): string {
+function nodeActionLabel(node: JourneyNode): string {
   if (node.kind === "session-step") return node.status === "done" ? "Rever" : "Abrir";
   if (node.kind === "review-gate") return "Revisar";
   if (node.kind === "exam-gate") return "Treinar";
