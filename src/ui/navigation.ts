@@ -17,8 +17,23 @@ const ROUTE_TITLES: Record<RouteName, string> = {
   checkpoint: "Checkpoint"
 };
 
+const IMMERSIVE_ROUTES: RouteName[] = [
+  "reader",
+  "session",
+  "mastery",
+  "review-mission",
+  "checkpoint"
+];
+
 export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string): void {
   document.body.dataset.route = route;
+  const examImmersive = route === "exam" && Boolean(
+    ctx.state.mockExam && ctx.state.mockExam.status !== "finished"
+  );
+  document.body.classList.toggle(
+    "immersive-study",
+    IMMERSIVE_ROUTES.includes(route) || examImmersive
+  );
   setActiveNav(route);
   updateContinueChip(ctx, route);
   updateReviewDueChip(ctx);
@@ -154,6 +169,54 @@ export function updateContextBar(ctx: AppContext, route: RouteName, chapterId?: 
     action.hidden = false;
     action.href = "#review";
     action.textContent = "Revisao";
+    return;
+  }
+
+  if (route === "session") {
+    bar.hidden = false;
+    eyebrow.textContent = "Estudo focado";
+    title.textContent = "Sessao em andamento";
+    back.href = "#home";
+    back.textContent = "Hoje";
+    action.hidden = false;
+    action.href = "#course";
+    action.textContent = "Trilha";
+    return;
+  }
+
+  if (route === "mastery") {
+    bar.hidden = false;
+    eyebrow.textContent = "Avaliacao";
+    title.textContent = "Teste de dominio";
+    back.href = "#session";
+    back.textContent = "Sessao";
+    action.hidden = false;
+    action.href = "#home";
+    action.textContent = "Hoje";
+    return;
+  }
+
+  if (route === "review-mission") {
+    bar.hidden = false;
+    eyebrow.textContent = "Retencao";
+    title.textContent = "Revisao de missao";
+    back.href = "#session";
+    back.textContent = "Sessao";
+    action.hidden = false;
+    action.href = "#review";
+    action.textContent = "Fila";
+    return;
+  }
+
+  if (route === "checkpoint") {
+    bar.hidden = false;
+    eyebrow.textContent = "Avaliacao";
+    title.textContent = "Checkpoint";
+    back.href = "#course";
+    back.textContent = "Trilha";
+    action.hidden = false;
+    action.href = "#home";
+    action.textContent = "Hoje";
     return;
   }
 

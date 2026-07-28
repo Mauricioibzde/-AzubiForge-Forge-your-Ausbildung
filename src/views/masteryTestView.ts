@@ -82,7 +82,7 @@ function renderMasteryActive(attempt: MasteryTestAttempt, returnToSession: boole
         </label>
       </article>
 
-      <div class="study-session-actions">
+      <div class="study-session-actions mobile-sticky-actions">
         ${index > 0 ? `<button class="button secondary" type="button" data-mastery-step="-1">Anterior</button>` : ""}
         ${index < total - 1
           ? `<button class="button" type="button" data-mastery-step="1">Proxima</button>`
@@ -122,7 +122,7 @@ function renderMasteryGrading(_ctx: AppContext, attempt: MasteryTestAttempt, ret
         </div>
       </article>
 
-      <div class="study-session-actions">
+      <div class="study-session-actions mobile-sticky-actions">
         ${index > 0 ? `<button class="button secondary" type="button" data-mastery-step="-1">Anterior</button>` : ""}
         ${index < total - 1
           ? `<button class="button" type="button" data-mastery-step="1">Proxima</button>`

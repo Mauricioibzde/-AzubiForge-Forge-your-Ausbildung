@@ -71,7 +71,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           ${readinessBadge(readiness)}
         </div>
 
-        <section class="session-guide" aria-label="Fluxo da sessao">
+        <section class="session-guide" aria-label="Fluxo da sessao" data-swipe-tabs>
           <div class="session-guide-copy">
             <span class="card-label">Fluxo guiado · ${session.completed}/${session.total}</span>
             <strong>${currentStep.label}</strong>

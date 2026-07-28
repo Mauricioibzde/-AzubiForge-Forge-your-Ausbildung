@@ -80,7 +80,7 @@ function renderActiveSession(ctx: AppContext, session: NonNullable<AppContext["s
           <span class="today-task-time">${current.estimatedMinutes} min estimados</span>
         </div>
 
-        <div class="study-session-actions">
+        <div class="study-session-actions mobile-sticky-actions">
           ${isMasteryTest
             ? `<a class="button accent" href="${masteryHref}">Iniciar teste de dominio</a>`
             : current.kind === "review"
