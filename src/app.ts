@@ -91,7 +91,7 @@ function createUiState(): UiState {
     reviewFocusIndex: 0,
     practiceFilter: "all",
     glossaryWrongOnly: false,
-    reviewWrongOnly: false,
+    reviewDeckFilter: "all",
     examDrillWrongOnly: false,
     readerVocabMode: "flash",
     readerVocabIndex: 0,
@@ -622,7 +622,8 @@ function applyFilter(ctx: AppContext, group: string, value: string): void {
     ctx.ui.glossaryFocusIndex = 0;
   }
   if (group === "review-wrong") {
-    ctx.ui.reviewWrongOnly = value === "wrong";
+    const next = value as UiState["reviewDeckFilter"];
+    ctx.ui.reviewDeckFilter = next === "wrong" || next === "due" ? next : "all";
     ctx.ui.reviewFocusIndex = 0;
   }
   if (group === "exam-drill-wrong") {

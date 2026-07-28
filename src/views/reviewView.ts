@@ -16,14 +16,20 @@ export function renderReviewView(ctx: AppContext): string {
   const allCards = getReviewExercises(ctx.data, ctx.state).slice(0, 24);
   const allTerms = getReviewVocabularyDeck(ctx.data, ctx.state, 24);
   const mode = ctx.ui.reviewFocusMode;
-  const wrongOnly = ctx.ui.reviewWrongOnly;
+  const deckFilter = ctx.ui.reviewDeckFilter;
 
-  const filteredTerms = wrongOnly
-    ? allTerms.filter((term) => ctx.state.vocabChecks[vocabCheckKey(term.chapterId, term.index)] === "wrong")
-    : allTerms;
-  const filteredCards = wrongOnly
-    ? allCards.filter((card) => ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)] === "wrong")
-    : allCards;
+  const filteredTerms = allTerms.filter((term) => {
+    const key = vocabCheckKey(term.chapterId, term.index);
+    if (deckFilter === "wrong") return ctx.state.vocabChecks[key] === "wrong";
+    if (deckFilter === "due") return isReviewItemDue(ctx.state.reviewSchedule, key);
+    return true;
+  });
+  const filteredCards = allCards.filter((card) => {
+    const key = exerciseCheckKey(card.chapterId, card.exerciseIndex);
+    if (deckFilter === "wrong") return ctx.state.exerciseChecks[key] === "wrong";
+    if (deckFilter === "due") return isReviewItemDue(ctx.state.reviewSchedule, key);
+    return true;
+  });
 
   const terms = prioritizeDueItems(
     filteredTerms,
@@ -78,15 +84,16 @@ export function renderReviewView(ctx: AppContext): string {
           </div>
         </div>
         <div class="segmented-control compact" aria-label="Filtrar por desempenho">
-          <button class="${!wrongOnly ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="all">Todos</button>
-          <button class="${wrongOnly ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="wrong">So erros (${focusWrongCount})</button>
+          <button class="${deckFilter === "all" ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="all">Todos</button>
+          <button class="${deckFilter === "wrong" ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="wrong">So erros (${focusWrongCount})</button>
+          <button class="${deckFilter === "due" ? "active" : ""}" type="button" data-filter-group="review-wrong" data-filter-value="due">Vencidos hoje (${focusDueCount})</button>
         </div>
         <div class="review-due-summary" role="status">
           <span class="status-pill due">Vencidos hoje: ${focusDueCount}</span>
           <span class="small-note">Termos: ${dueTermCount} · Perguntas: ${dueCardCount}</span>
         </div>
 
-        ${deckSize === 0 ? `<p class="empty-state">${wrongOnly ? "Nenhum erro marcado neste modo." : "Nada na fila de foco agora."}</p>` : `
+        ${deckSize === 0 ? `<p class="empty-state">${emptyStateForFilter(deckFilter)}</p>` : `
           <div class="focus-stage" data-swipe-deck="review">
             ${mode === "flash" ? renderFlashFocus(ctx, terms[index], index, deckSize) : renderQuizFocus(ctx, cards[index], index, deckSize)}
           </div>
@@ -254,4 +261,10 @@ function prioritizeDueItems<T>(
 ): T[] {
   const sorted = sortByCheckPriority(items, getCheck);
   return [...sorted].sort((a, b) => Number(isReviewItemDue(schedule, getKey(b))) - Number(isReviewItemDue(schedule, getKey(a))));
+}
+
+function emptyStateForFilter(filter: "all" | "wrong" | "due"): string {
+  if (filter === "wrong") return "Nenhum erro marcado neste modo.";
+  if (filter === "due") return "Nenhum item vencido hoje neste modo.";
+  return "Nada na fila de foco agora.";
 }

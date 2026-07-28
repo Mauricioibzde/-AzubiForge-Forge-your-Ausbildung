@@ -162,6 +162,7 @@ export interface AzubiForgeData {
 }
 
 export type ReviewFocusMode = "flash" | "quiz";
+export type ReviewDeckFilter = "all" | "wrong" | "due";
 export type ReadinessLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface Preferences {
@@ -204,7 +205,7 @@ export interface UiState {
   reviewFocusIndex: number;
   practiceFilter: "all" | "wrong";
   glossaryWrongOnly: boolean;
-  reviewWrongOnly: boolean;
+  reviewDeckFilter: ReviewDeckFilter;
   examDrillWrongOnly: boolean;
   readerVocabMode: "grid" | "flash";
   readerVocabIndex: number;
