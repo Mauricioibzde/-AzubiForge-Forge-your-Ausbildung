@@ -1,5 +1,5 @@
 import type { AppContext } from "../appContext";
-import { sortByCheckPriority } from "../domain/course";
+import { getResumeTab, sortByCheckPriority } from "../domain/course";
 import {
   detectSignalWort,
   EXAM_CHECKLIST,
@@ -18,11 +18,12 @@ import {
   getMockExamPool,
   getMockExamRemainingMs,
   getMockExamTrend,
+  getMockWrongQuestions,
   getWeakChaptersFromAttempt,
   MOCK_EXAM_PRESETS,
   scoreMockExam
 } from "../domain/mockExam";
-import type { ExamFocusMode, MockExamAttempt, MockExamLength } from "../types";
+import type { ExamFocusMode, MockExamAttempt, MockExamLength, MockExamQuestion } from "../types";
 import { escapeAttribute, escapeHtml, readinessBadge } from "../ui/html";
 
 export function renderExamView(ctx: AppContext): string {
@@ -31,6 +32,9 @@ export function renderExamView(ctx: AppContext): string {
   const poolSize = getMockExamPool(ctx.data).length;
   const historyCount = ctx.state.mockExamHistory.length;
   const unfinished = ctx.state.mockExam && ctx.state.mockExam.status !== "finished" ? ctx.state.mockExam : null;
+  const finishedWrong = ctx.state.mockExam?.status === "finished"
+    ? getMockWrongQuestions(ctx.state.mockExam).length
+    : 0;
 
   return `
     <section class="exam-shell">
@@ -56,6 +60,7 @@ export function renderExamView(ctx: AppContext): string {
         ${modeButton("signals", "Signalwoerter", mode)}
         ${modeButton("drill", "Perguntas AP1", mode)}
         ${modeButton("checklist", "Checklist", mode)}
+        ${finishedWrong ? modeButton("mistakes", `Erros (${finishedWrong})`, mode) : ""}
       </div>
 
       ${mode === "mock" ? renderMockMode(ctx) : ""}
@@ -63,6 +68,7 @@ export function renderExamView(ctx: AppContext): string {
       ${mode === "signals" ? renderSignalsMode(ctx) : ""}
       ${mode === "drill" ? renderDrillMode(ctx) : ""}
       ${mode === "checklist" ? renderChecklistMode(ctx) : ""}
+      ${mode === "mistakes" ? renderMistakesMode(ctx) : ""}
     </section>
   `;
 }
@@ -82,7 +88,7 @@ function renderMockMode(ctx: AppContext): string {
   const attempt = ctx.state.mockExam;
   if (!attempt) return renderMockLobby(ctx);
   if (attempt.status === "active") return renderMockActive(attempt);
-  if (attempt.status === "grading") return renderMockGrading(attempt);
+  if (attempt.status === "grading") return renderMockGrading(ctx, attempt);
   return renderMockResults(attempt);
 }
 
@@ -229,13 +235,14 @@ function renderMockActive(attempt: MockExamAttempt): string {
   `;
 }
 
-function renderMockGrading(attempt: MockExamAttempt): string {
+function renderMockGrading(ctx: AppContext, attempt: MockExamAttempt): string {
   const total = attempt.questions.length;
   const index = Math.min(attempt.currentIndex, total - 1);
   const question = attempt.questions[index];
   const response = attempt.responses[question.id] || {};
   const graded = getMockExamGradedCount(attempt);
   const signal = detectSignalWort(question.question);
+  const resumeTab = getResumeTab(ctx.state, question.chapterId);
 
   return `
     <section class="mock-runner panel" aria-label="Correcao do simulado">
@@ -259,6 +266,11 @@ function renderMockGrading(attempt: MockExamAttempt): string {
           `;
         }).join("")}
       </div>
+      ${graded < total ? `
+        <button class="button secondary mock-jump-unanswered" type="button" data-mock-jump-ungraded>
+          Ir para a primeira sem correcao (${total - graded})
+        </button>
+      ` : ""}
 
       <article class="mock-question-card">
         <span class="card-label">Aufgabe ${index + 1}/${total}</span>
@@ -290,7 +302,7 @@ function renderMockGrading(attempt: MockExamAttempt): string {
             data-mock-question="${escapeAttribute(question.id)}"
           >Errei</button>
         </div>
-        <a class="text-link" href="#reader/${question.chapterId}">Abrir capitulo</a>
+        <a class="text-link" href="#reader/${question.chapterId}/${resumeTab}">Abrir capitulo</a>
       </article>
 
       <div class="focus-controls">
@@ -300,6 +312,7 @@ function renderMockGrading(attempt: MockExamAttempt): string {
           ? `<button class="button" type="button" data-mock-step="1">Proxima</button>`
           : `<button class="button" type="button" data-mock-finish>Ver resultado</button>`}
       </div>
+      <p class="small-note">Teclado: 1 Acertei · 2 Errei · setas navegam.</p>
       <div class="mock-footer-actions">
         <button class="button" type="button" data-mock-finish>Calcular resultado</button>
       </div>
@@ -322,8 +335,8 @@ function renderMockResults(attempt: MockExamAttempt): string {
         <div class="session-focus-actions">
           <button class="button" type="button" data-mock-clear>Novo simulado</button>
           ${score.wrong ? `
-            <button class="button secondary" type="button" data-review-mistakes>Revisar erros</button>
-            <button class="button secondary" type="button" data-drill-mistakes>Drill so erros</button>
+            <button class="button secondary" type="button" data-review-mistakes>Revisar erros do simulado</button>
+            <button class="button secondary" type="button" data-filter-group="exam-focus" data-filter-value="weak">Pontos fracos</button>
           ` : `
             <button class="button secondary" type="button" data-filter-group="exam-focus" data-filter-value="weak">Pontos fracos</button>
             <a class="button secondary" href="#review">Revisao ativa</a>
@@ -337,7 +350,7 @@ function renderMockResults(attempt: MockExamAttempt): string {
           <h2>Priorize estes temas</h2>
           <div class="mini-list">
             ${weak.map((item) => `
-              <a href="#reader/${item.chapterId}">
+              <a href="#reader/${item.chapterId}/practice">
                 <strong>${item.chapterTitle}</strong>
                 <span>${item.wrongCount} erro(s) neste simulado</span>
               </a>
@@ -410,7 +423,7 @@ function renderWeakMode(ctx: AppContext): string {
             </div>
           </div>
           <div class="exam-weak-actions">
-            <a class="button" href="#reader/${item.chapter.id}">Estudar agora</a>
+            <a class="button" href="#reader/${item.chapter.id}/${getResumeTab(ctx.state, item.chapter.id)}">Estudar agora</a>
             <a class="button secondary" href="#reader/${item.chapter.id}/ap1">Abrir AP1-Check</a>
           </div>
         </article>
@@ -426,7 +439,7 @@ function renderSignalsMode(ctx: AppContext): string {
 
   return `
     <section class="review-focus panel" aria-label="Treino de Signalwoerter">
-      <p class="small-note">Na AP1, o verbo do enunciado define o formato da resposta. Treine reconhecer isso antes de responder.</p>
+      <p class="small-note">Na AP1, o verbo do enunciado define o formato da resposta. Espaco revela · setas navegam.</p>
       <div class="focus-stage" data-swipe-deck="exam">
         ${renderSignalCard(item, index, total)}
       </div>
@@ -436,6 +449,67 @@ function renderSignalsMode(ctx: AppContext): string {
         <button class="button" type="button" data-exam-step="1">Proximo</button>
       </div>
     </section>
+  `;
+}
+
+function renderMistakesMode(ctx: AppContext): string {
+  const attempt = ctx.state.mockExam;
+  const wrongs = attempt?.status === "finished" ? getMockWrongQuestions(attempt) : [];
+  if (!wrongs.length) {
+    return `
+      <section class="panel completion-card">
+        <span class="card-label">Erros do simulado</span>
+        <h2>Nenhum erro deste simulado na fila.</h2>
+        <p>Faca um novo simulado ou abra os drills AP1 para manter o ritmo.</p>
+        <button class="button" type="button" data-filter-group="exam-focus" data-filter-value="mock">Abrir simulado</button>
+      </section>
+    `;
+  }
+
+  const index = ((ctx.ui.examFocusIndex % wrongs.length) + wrongs.length) % wrongs.length;
+  const question = wrongs[index];
+  const signal = detectSignalWort(question.question);
+  const resumeTab = getResumeTab(ctx.state, question.chapterId);
+
+  return `
+    <section class="review-focus panel" aria-label="Erros do simulado">
+      <p class="small-note">Revisao focada nas perguntas que voce marcou como erro no ultimo simulado.</p>
+      <div class="focus-stage" data-swipe-deck="exam">
+        ${renderMistakeCard(question, index, wrongs.length, signal, resumeTab)}
+      </div>
+      <div class="focus-controls">
+        <button class="button secondary" type="button" data-exam-step="-1">Anterior</button>
+        <span class="focus-count">${index + 1} / ${wrongs.length}</span>
+        <button class="button" type="button" data-exam-step="1">Proximo</button>
+      </div>
+      <p class="small-note">Espaco revela · setas navegam.</p>
+    </section>
+  `;
+}
+
+function renderMistakeCard(
+  question: MockExamQuestion,
+  index: number,
+  total: number,
+  signal: SignalWort | undefined,
+  resumeTab: string
+): string {
+  return `
+    <article class="focus-card-big">
+      <span class="card-label">Erro ${index + 1}/${total}</span>
+      <p class="exam-chapter-tag">${escapeHtml(question.moduleTitle)} · ${escapeHtml(question.chapterTitle)}</p>
+      ${signal ? `<p class="exam-signal-tag">Signalwort: <strong>${escapeHtml(signal.de)}</strong> · ${escapeHtml(signal.expect)}</p>` : ""}
+      <h2>Aufgabe</h2>
+      <p class="focus-question">${escapeHtml(question.question)}</p>
+      <details class="focus-reveal">
+        <summary>Revelar gabarito</summary>
+        <p><strong>Antwort:</strong> ${escapeHtml(question.answer)}</p>
+        ${question.explanation ? `<p><strong>Erklaerung:</strong> ${escapeHtml(question.explanation)}</p>` : ""}
+        ${signal ? `<p class="small-note">Lembrete: ${escapeHtml(signal.tip)}</p>` : ""}
+        <a class="text-link" href="#reader/${question.chapterId}/${resumeTab}">Abrir capitulo</a>
+        <a class="text-link" href="#reader/${question.chapterId}/practice">Abrir Uebungen</a>
+      </details>
+    </article>
   `;
 }
 

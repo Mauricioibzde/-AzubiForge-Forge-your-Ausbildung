@@ -150,6 +150,18 @@ export function getMockExamGradedCount(attempt: MockExamAttempt): number {
   return attempt.questions.filter((question) => Boolean(attempt.responses[question.id]?.selfCheck)).length;
 }
 
+export function getMockExamFirstUngradedIndex(attempt: MockExamAttempt): number {
+  return attempt.questions.findIndex((question) => !attempt.responses[question.id]?.selfCheck);
+}
+
+export function getMockExamFirstUnansweredIndex(attempt: MockExamAttempt): number {
+  return attempt.questions.findIndex((question) => !attempt.responses[question.id]?.answered);
+}
+
+export function getMockWrongQuestions(attempt: MockExamAttempt): MockExamQuestion[] {
+  return attempt.questions.filter((question) => attempt.responses[question.id]?.selfCheck === "wrong");
+}
+
 export function scoreMockExam(attempt: MockExamAttempt): {
   correct: number;
   wrong: number;

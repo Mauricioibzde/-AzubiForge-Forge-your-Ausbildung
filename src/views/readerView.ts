@@ -190,6 +190,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
                 class="mobile-dock-tab ${visited ? "visited" : ""} ${active ? "active" : ""}"
                 type="button"
                 data-reader-tab="${step.id}"
+                data-reader-chapter="${chapter.id}"
               >${step.label}</button>
             `;
           }).join("")}

@@ -118,6 +118,14 @@ await mobile.click('[data-filter-value="mock"]');
 await mobile.waitForSelector(".mock-lobby, .mock-runner, .mock-results", { timeout: 10000 });
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-exam.png`, fullPage: true });
 
+await mobile.goto(`${baseUrl}/#course`, { waitUntil: "networkidle" });
+const courseResume = await mobile.evaluate(() => {
+  const href = document.querySelector(".continue-panel a.button")?.getAttribute("href") || "";
+  const parts = href.replace(/^#/, "").split("/");
+  return parts[0] === "reader" && parts.length >= 3;
+});
+if (!courseResume) issues.push("course: continue CTA missing resume tab deep-link");
+
 await mobile.goto(`${baseUrl}/#review`, { waitUntil: "networkidle" });
 await mobile.waitForSelector(".review-focus", { timeout: 10000 });
 const reviewWrongFilter = await mobile.evaluate(() => Boolean(document.querySelector('[data-filter-group="review-wrong"]')));

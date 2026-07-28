@@ -44,6 +44,8 @@ import {
   buildMockExamHistoryEntry,
   createMockExam,
   formatMockExamTimer,
+  getMockExamAnsweredCount,
+  getMockExamFirstUngradedIndex,
   getMockExamRemainingMs,
   setMockExamResponse,
   setMockExamSelfCheck
@@ -149,6 +151,7 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
 
   if (previousRoute && previousRoute !== route) scrollToPageTop();
   maybeScrollReaderStep(route);
+  maybeScrollMockPill(route || "home", ctx);
   syncMockExamTimer(app, ctx, route || "home");
 }
 
@@ -165,6 +168,25 @@ function maybeScrollReaderStep(route: RouteName): void {
   });
 }
 
+function maybeScrollMockPill(route: RouteName, ctx: AppContext): void {
+  if (route !== "exam" || ctx.ui.examFocusMode !== "mock") return;
+  if (!ctx.state.mockExam || ctx.state.mockExam.status === "finished") return;
+  window.requestAnimationFrame(() => {
+    document.querySelector<HTMLElement>(".mock-q-pill.active")?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest"
+    });
+  });
+}
+
+function setReaderHash(chapterId: string, tab: ReaderTab): void {
+  const next = `#reader/${chapterId}/${tab}`;
+  if (window.location.hash !== next) {
+    history.replaceState(null, "", next);
+  }
+}
+
 function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void {
   const target = event.target as Element;
 
@@ -175,17 +197,19 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
 
   if (target.closest("[data-review-mistakes]")) {
     event.preventDefault();
-    ctx.ui.reviewFocusMode = "quiz";
-    ctx.ui.reviewWrongOnly = true;
-    ctx.ui.reviewFocusIndex = 0;
-    window.location.hash = "#review";
+    ctx.ui.examFocusMode = "mistakes";
+    ctx.ui.examFocusIndex = 0;
+    if ((window.location.hash.replace("#", "").split("/")[0] || "") !== "exam") {
+      window.location.hash = "#exam";
+    } else {
+      renderRoute(app, ctx);
+    }
     return;
   }
 
   if (target.closest("[data-drill-mistakes]")) {
     event.preventDefault();
-    ctx.ui.examFocusMode = "drill";
-    ctx.ui.examDrillWrongOnly = true;
+    ctx.ui.examFocusMode = "mistakes";
     ctx.ui.examFocusIndex = 0;
     if ((window.location.hash.replace("#", "").split("/")[0] || "") !== "exam") {
       window.location.hash = "#exam";
@@ -246,7 +270,10 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
 
   const nextButton = target.closest<HTMLElement>("[data-session-next]");
   if (nextButton?.dataset.nextTab) {
-    ctx.ui.readerTab = nextButton.dataset.nextTab as ReaderTab;
+    const nextTab = nextButton.dataset.nextTab as ReaderTab;
+    const chapterId = nextButton.dataset.sessionNext || ctx.ui.readerChapterId || ctx.state.lastChapterId;
+    ctx.ui.readerTab = nextTab;
+    if (chapterId) setReaderHash(chapterId, nextTab);
     renderRoute(app, ctx);
     return;
   }
@@ -287,6 +314,7 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     ctx.ui.readerVocabIndex = 0;
     ctx.ui.readerPracticeIndex = 0;
     ctx.ui.completeGateChapterId = "";
+    setReaderHash(chapterId, "explain");
     saveState(ctx.state);
     renderRoute(app, ctx);
     return;
@@ -331,6 +359,8 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     ctx.ui.practiceFilter = "wrong";
     ctx.ui.readerPracticeMode = "flash";
     ctx.ui.readerPracticeIndex = 0;
+    const chapterId = wrongPractice.dataset.showWrongPractice || ctx.ui.readerChapterId || ctx.state.lastChapterId;
+    if (chapterId) setReaderHash(chapterId, "practice");
     renderRoute(app, ctx);
     return;
   }
@@ -344,6 +374,8 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     }
     ctx.ui.readerTab = nextTab;
     if (ctx.ui.readerTab !== "practice") ctx.ui.practiceFilter = "all";
+    const chapterId = tabButton.dataset.readerChapter || ctx.ui.readerChapterId || ctx.state.lastChapterId;
+    if (chapterId) setReaderHash(chapterId, nextTab);
     renderRoute(app, ctx);
     return;
   }
@@ -554,7 +586,7 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
     return;
   }
 
-  if (route === "exam" && (ctx.ui.examFocusMode === "signals" || ctx.ui.examFocusMode === "drill")) {
+  if (route === "exam" && (ctx.ui.examFocusMode === "signals" || ctx.ui.examFocusMode === "drill" || ctx.ui.examFocusMode === "mistakes")) {
     event.preventDefault();
     ctx.ui.examFocusIndex += delta;
     renderRoute(app, ctx);
@@ -591,10 +623,12 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
       const nextTab = getNextSessionTab(ctx.state, chapterId, ctx.ui.readerTab);
       if (!nextTab) return;
       ctx.ui.readerTab = nextTab;
+      setReaderHash(chapterId, nextTab);
     } else {
       const prevTab = getPrevSessionTab(ctx.ui.readerTab);
       if (!prevTab) return;
       ctx.ui.readerTab = prevTab;
+      setReaderHash(chapterId, prevTab);
     }
     renderRoute(app, ctx);
   }
@@ -603,7 +637,10 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
 function isFlashHotkeyRoute(ctx: AppContext, route: RouteName): boolean {
   if (route === "review") return true;
   if (route === "glossary" && ctx.ui.glossaryMode === "flash") return true;
-  if (route === "exam" && ctx.ui.examFocusMode === "drill") return true;
+  if (route === "exam" && (ctx.ui.examFocusMode === "drill" || ctx.ui.examFocusMode === "signals" || ctx.ui.examFocusMode === "mistakes")) {
+    return true;
+  }
+  if (route === "exam" && ctx.ui.examFocusMode === "mock" && ctx.state.mockExam?.status === "grading") return true;
   if (route === "reader" && ctx.ui.readerTab === "vocab" && ctx.ui.readerVocabMode === "flash") return true;
   if (route === "reader" && ctx.ui.readerTab === "practice" && ctx.ui.readerPracticeMode === "flash") return true;
   return false;
@@ -613,7 +650,9 @@ function handleFlashHotkeys(event: KeyboardEvent, _app: HTMLElement, ctx: AppCon
   if (!isFlashHotkeyRoute(ctx, route)) return false;
 
   if (event.key === " " || event.code === "Space") {
-    const details = document.querySelector<HTMLDetailsElement>(".focus-stage details.focus-reveal");
+    const details = document.querySelector<HTMLDetailsElement>(
+      ".focus-stage details.focus-reveal, .mock-question-card details.focus-reveal"
+    ) || document.querySelector<HTMLDetailsElement>(".focus-stage details.focus-reveal");
     if (!details) return false;
     event.preventDefault();
     details.open = !details.open;
@@ -622,6 +661,14 @@ function handleFlashHotkeys(event: KeyboardEvent, _app: HTMLElement, ctx: AppCon
 
   if (event.key === "1" || event.key === "2") {
     const value = event.key === "1" ? "correct" : "wrong";
+    const mockGrade = document.querySelector<HTMLElement>(
+      `.mock-question-card [data-mock-grade="${value}"]`
+    );
+    if (mockGrade) {
+      event.preventDefault();
+      mockGrade.click();
+      return true;
+    }
     const button = document.querySelector<HTMLElement>(
       `.focus-stage [data-exercise-check="${value}"], .focus-stage [data-vocab-check="${value}"]`
     );
@@ -677,6 +724,8 @@ function registerSwipe(app: HTMLElement, ctx: AppContext): void {
       ctx.ui.readerVocabIndex = 0;
       ctx.ui.readerPracticeIndex = 0;
       if (ctx.ui.readerTab !== "practice") ctx.ui.practiceFilter = "all";
+      const chapterId = ctx.ui.readerChapterId || ctx.state.lastChapterId;
+      if (chapterId) setReaderHash(chapterId, ctx.ui.readerTab);
       renderRoute(app, ctx);
       return;
     }
@@ -777,6 +826,17 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
     return true;
   }
 
+  if (target.closest("[data-mock-jump-ungraded]") && ctx.state.mockExam) {
+    const attempt = ctx.state.mockExam;
+    const ungraded = getMockExamFirstUngradedIndex(attempt);
+    if (ungraded >= 0) {
+      ctx.state.mockExam = { ...attempt, currentIndex: ungraded };
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
+    return true;
+  }
+
   const answered = target.closest<HTMLElement>("[data-mock-answered]");
   if (answered?.dataset.mockAnswered && ctx.state.mockExam) {
     const questionId = answered.dataset.mockAnswered;
@@ -798,6 +858,8 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
     if (question) {
       const key = `mock:${question.chapterId}:${question.id}`;
       ctx.state.exerciseChecks[key] = grade.dataset.mockGrade as ExerciseCheck;
+      const drillKey = `exam:${question.chapterId}:${question.style}:${question.question}`;
+      ctx.state.exerciseChecks[drillKey] = grade.dataset.mockGrade as ExerciseCheck;
       if (grade.dataset.mockGrade === "wrong") {
         const current = ctx.state.confidence[question.chapterId];
         if (current !== "hard") ctx.state.confidence[question.chapterId] = "review";
@@ -813,6 +875,17 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
   }
 
   if (target.closest("[data-mock-submit]") && ctx.state.mockExam) {
+    const attempt = ctx.state.mockExam;
+    if (attempt.status === "active") {
+      const answered = getMockExamAnsweredCount(attempt);
+      const remaining = attempt.questions.length - answered;
+      if (remaining > 0) {
+        const confirmed = window.confirm(
+          `Ainda faltam ${remaining} pergunta(s) sem marcar como respondida. Entregar mesmo assim?`
+        );
+        if (!confirmed) return true;
+      }
+    }
     submitMockExam(ctx);
     renderRoute(app, ctx);
     return true;
@@ -826,6 +899,7 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
 
   if (target.closest("[data-mock-clear]")) {
     ctx.state.mockExam = null;
+    if (ctx.ui.examFocusMode === "mistakes") ctx.ui.examFocusMode = "mock";
     saveState(ctx.state);
     renderRoute(app, ctx);
     return true;

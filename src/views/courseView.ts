@@ -9,6 +9,7 @@ import {
   getCourseReadiness,
   getModuleContinueChapter,
   getModuleProgress,
+  getResumeTab,
   getSuggestedChapter,
   isCompleted
 } from "../domain/course";
@@ -21,6 +22,7 @@ export function renderCourseView(ctx: AppContext): string {
   const next = getSuggestedChapter(ctx.data, ctx.state);
   const activeModule = getActiveModule(ctx.data, ctx.state);
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, activeModule);
+  const continueTab = getResumeTab(ctx.state, continueChapter.id);
   const filtered = getFilteredChapters(ctx);
 
   return `
@@ -38,7 +40,7 @@ export function renderCourseView(ctx: AppContext): string {
           <span class="card-label">Continuar daqui</span>
           <h2>${continueChapter.title}</h2>
           <p class="small-note">${activeModule.subtitle}</p>
-          <a class="button" href="#reader/${continueChapter.id}">Retomar capitulo</a>
+          <a class="button" href="#reader/${continueChapter.id}/${continueTab}">Retomar capitulo</a>
           <p class="small-note">Sugestao geral: ${next.title}</p>
         </div>
       </div>
@@ -119,6 +121,7 @@ function renderModule(
   const visibleIds = new Set(visibleChapters.map((chapter) => chapter.id));
   const progress = getModuleProgress(ctx.data, ctx.state, module);
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
+  const continueTab = getResumeTab(ctx.state, continueChapter.id);
   const situations = ctx.data.learningSituations?.[module.id] || [{
     id: `${module.id}-main`,
     title: module.subtitle,
@@ -138,7 +141,7 @@ function renderModule(
           ${inlineProgress(progress)}
         </div>
         <div class="module-head-actions">
-          <a class="button secondary" href="#reader/${continueChapter.id}">Continuar</a>
+          <a class="button secondary" href="#reader/${continueChapter.id}/${continueTab}">Continuar</a>
           <button class="module-toggle" type="button" data-toggle-module="${module.id}" aria-expanded="${!collapsed}">
             <span class="module-count">${progress.completed} / ${progress.total}</span>
             <span>${collapsed ? "Abrir" : "Recolher"}</span>
@@ -189,7 +192,7 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter, index
           ${confidenceBadge(ctx.state, chapter.id)}
         </div>
       </div>
-      <a class="button ${status === "current" ? "" : "secondary"}" href="#reader/${chapter.id}">${action}</a>
+      <a class="button ${status === "current" ? "" : "secondary"}" href="#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}">${action}</a>
     </li>
   `;
 }

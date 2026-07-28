@@ -444,12 +444,21 @@ export function getStudyCalendarDays(state: AppState, days = 14): StudyCalendarD
 
 export function getDailyGoalProgress(state: AppState): Progress {
   const goal = Math.max(1, state.preferences.dailyGoalSessions || 1);
-  const done = Math.min(goal, getTodayStudyCount(state));
+  const done = Math.min(goal, getTodayQualitySessionCount(state));
   return {
     completed: done,
     total: goal,
     percent: percentage(done, goal)
   };
+}
+
+/** Counts chapters studied today with a meaningful session (3+ steps visited). */
+export function getTodayQualitySessionCount(state: AppState): number {
+  const today = todayKey();
+  return Object.entries(state.lastStudiedAt).filter(([chapterId, stamp]) => {
+    if (stampToLocalDayKey(stamp) !== today) return false;
+    return getVisitedSteps(state, chapterId).length >= 3;
+  }).length;
 }
 
 export function getDaysSinceStudied(state: AppState, chapterId: string): number {

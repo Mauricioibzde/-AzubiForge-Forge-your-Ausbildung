@@ -82,7 +82,7 @@ export function renderHomeView(ctx: AppContext): string {
         <h1>AzubiForge</h1>
         <p class="lead">Forge your Ausbildung. Uma sessao curta, guiada e pratica: leia, aplique, treine vocabulario e feche com AP1.</p>
         <div class="study-hero-meta dual-progress">
-          ${progressBlock(daily, "sessoes hoje")}
+          ${progressBlock(daily, "sessoes uteis hoje")}
           ${progressBlock(progress, "concluidos")}
           ${progressBlock(readiness, "quase prontos")}
           <div class="daily-goal-controls" aria-label="Meta diaria">
@@ -138,7 +138,7 @@ export function renderHomeView(ctx: AppContext): string {
           ${weakTopics.length ? `
             <div class="mini-list exam-coach-list">
               ${weakTopics.map((item) => `
-                <a href="#reader/${item.chapter.id}">
+                <a href="#reader/${item.chapter.id}/${getResumeTab(ctx.state, item.chapter.id)}">
                   <strong>${item.chapter.title}</strong>
                   <span>${item.moduleTitle} ${readinessBadge(item.readiness)}</span>
                 </a>

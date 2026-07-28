@@ -211,7 +211,7 @@ function renderQuizFocus(
             >Errei / revisar</button>
           </div>
         </div>
-        <a class="text-link" href="#reader/${card.chapterId}">Abrir capitulo</a>
+        <a class="text-link" href="#reader/${card.chapterId}/${card.exerciseIndex >= 0 ? "practice" : "explain"}">Abrir capitulo</a>
       </details>
     </article>
   `;

@@ -1,4 +1,4 @@
-import { getChapterModule, getReadingMinutes, isCompleted } from "../domain/course";
+import { getChapterModule, getReadingMinutes, getResumeTab, isCompleted } from "../domain/course";
 import type { AppContext } from "../appContext";
 import type { Chapter, Exercise, ExerciseCheck } from "../types";
 import { confidenceBadge } from "./html";
@@ -7,6 +7,7 @@ export function chapterCard(ctx: AppContext, chapter: Chapter, actionLabel = "Es
   const done = isCompleted(ctx.state, chapter.id);
   const hasNote = Boolean((ctx.state.notes[chapter.id] || "").trim());
   const module = getChapterModule(ctx.data, chapter.id);
+  const resumeTab = getResumeTab(ctx.state, chapter.id);
 
   return `
     <article class="chapter-item ${done ? "done" : ""}">
@@ -24,7 +25,7 @@ export function chapterCard(ctx: AppContext, chapter: Chapter, actionLabel = "Es
           ${confidenceBadge(ctx.state, chapter.id)}
         </div>
       </div>
-      <a class="button secondary" href="#reader/${chapter.id}">${actionLabel}</a>
+      <a class="button secondary" href="#reader/${chapter.id}/${resumeTab}">${actionLabel}</a>
     </article>
   `;
 }
