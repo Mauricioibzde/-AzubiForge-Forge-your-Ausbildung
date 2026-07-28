@@ -21,6 +21,12 @@ import {
   isCompleted
 } from "../domain/course";
 import type { Chapter, LearningSituation, Module } from "../types";
+import { getNormalizedCourseData } from "../data/normalizedCourse";
+import {
+  getLearningSituationCheckpoints,
+  isCheckpointCompleted,
+  isCheckpointUnlocked
+} from "../domain/checkpoint/checkpoints";
 import { confidenceBadge, donutProgress, escapeAttribute, escapeHtml, inlineProgress, kpiCard, readinessBadge } from "../ui/html";
 import { icon } from "../ui/icons";
 
@@ -93,6 +99,8 @@ export function renderCourseView(ctx: AppContext): string {
         ${kpiCard("Progresso", `${progress.percent}%`, `${progress.completed}/${progress.total} capitulos`)}
         ${kpiCard("Tempo", `${studyMinutes} min`, `${resolvedToday} revisoes hoje`)}
       </section>
+
+      ${renderCheckpointSection(ctx)}
 
       <section class="ds-section ds-search-block rise-in" style="animation-delay:56ms" aria-label="Busca e filtros">
         <input class="search-input premium-search" type="search" placeholder="Pesquisar capitulo ou modulo..." aria-label="Pesquisar capitulo" data-course-search value="${escapeAttribute(ctx.ui.courseQuery)}">
@@ -252,6 +260,36 @@ function renderSituation(ctx: AppContext, situation: LearningSituation, visibleI
     <section class="lernsituation ds-aux">
       <span class="ds-caption">Lernsituation · ${completed}/${chapters.length}</span>
       <p>${situation.title} — ${situation.description}</p>
+    </section>
+  `;
+}
+
+function renderCheckpointSection(ctx: AppContext): string {
+  const course = getNormalizedCourseData();
+  const checkpoints = getLearningSituationCheckpoints(course)
+    .filter((checkpoint) => isCheckpointUnlocked(ctx.state, checkpoint) || isCheckpointCompleted(ctx.state, checkpoint.situationId));
+
+  if (!checkpoints.length) return "";
+
+  return `
+    <section class="ds-section rise-in" style="animation-delay:48ms" aria-label="Checkpoints">
+      <h2 class="ds-section-title">Checkpoints</h2>
+      <p class="ds-aux">Avaliacoes integradas por Lernsituation — disponiveis apos aprovar os testes de dominio de cada missao.</p>
+      <div class="ds-workflow-grid">
+        ${checkpoints.map((checkpoint) => {
+          const done = isCheckpointCompleted(ctx.state, checkpoint.situationId);
+          return `
+            <article class="ds-card ds-workflow-card">
+              <span class="ds-caption">${done ? "Concluido" : "Disponivel"}</span>
+              <h3 class="ds-card-title">${checkpoint.title}</h3>
+              <p class="ds-aux">${checkpoint.missionIds.length} missoes · minimo ${checkpoint.passingScore}%</p>
+              <a class="button ${done ? "secondary" : "accent"}" href="#checkpoint/${escapeAttribute(checkpoint.situationId)}">
+                ${done ? "Refazer checkpoint" : "Iniciar checkpoint"}
+              </a>
+            </article>
+          `;
+        }).join("")}
+      </div>
     </section>
   `;
 }

@@ -13,5 +13,8 @@ export default defineConfig({
   },
   preview: {
     port: 4174
+  },
+  test: {
+    include: ["src/**/*.test.ts"]
   }
 });
