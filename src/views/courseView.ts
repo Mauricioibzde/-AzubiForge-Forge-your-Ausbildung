@@ -27,8 +27,7 @@ import {
   isCheckpointCompleted,
   isCheckpointUnlocked
 } from "../domain/checkpoint/checkpoints";
-import { confidenceBadge, donutProgress, escapeAttribute, escapeHtml, inlineProgress, kpiCard, readinessBadge } from "../ui/html";
-import { icon } from "../ui/icons";
+import { confidenceBadge, escapeAttribute, escapeHtml, inlineProgress, kpiCard, readinessBadge } from "../ui/html";
 
 export function renderCourseView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
@@ -49,60 +48,48 @@ export function renderCourseView(ctx: AppContext): string {
 
   return `
     <section class="ds-page course-shell">
-      <div class="ds-hero-layout rise-in">
-        <header class="ds-hero">
-          <p class="ds-caption">Trilha AP1</p>
-          <h1>${ctx.data.course.title}</h1>
+      <section class="course-now-strip rise-in" aria-label="Continuar estudo">
+        <div class="course-now-copy">
+          <p class="ds-caption">Agora · ${activeModule.title}</p>
+          <h1 class="course-now-title">${continueChapter.title}</h1>
+          <p class="ds-aux">${activeModule.subtitle} · ${progress.completed}/${progress.total} capitulos (${progress.percent}%)</p>
+          <div class="course-now-progress" aria-hidden="true">
+            <span style="width:${progress.percent}%"></span>
+          </div>
+        </div>
+        <a class="button accent course-now-cta" href="#reader/${continueChapter.id}/${continueTab}">Continuar estudo</a>
+        <details class="course-about-details">
+          <summary>Sobre a trilha</summary>
           <p class="ds-lead">${ctx.data.course.description}</p>
           ${renderCourseBasis(ctx)}
-          <div class="course-hero-actions">
-            <a class="button accent" href="#reader/${continueChapter.id}/${continueTab}">Continuar estudo</a>
-            <a class="button secondary" href="#home">Ver jornada completa</a>
-          </div>
-        </header>
-        <aside class="ds-card ds-progress-rail" aria-label="Progresso da trilha">
-          ${donutProgress(progress, "Conclusao")}
-          <p class="ds-aux">${progress.completed} de ${progress.total} capitulos · ${readiness.completed} quase prontos AP1</p>
-        </aside>
-      </div>
-
-      <section class="ds-section rise-in" style="animation-delay:24ms" aria-label="Proximas acoes">
-        <h2 class="ds-section-title">Workflow</h2>
-        <div class="ds-workflow-grid">
-          <article class="ds-workflow-card ds-card">
-            <span class="flow-card-icon" aria-hidden="true">${icon("play", "flow-icon", 18)}</span>
-            <span class="ds-caption">Agora</span>
-            <h3 class="ds-card-title">${continueChapter.title}</h3>
-            <p class="ds-aux">${activeModule.subtitle}</p>
-            <a class="button secondary" href="#reader/${continueChapter.id}/${continueTab}">Retomar</a>
-          </article>
-          <article class="ds-workflow-card ds-card">
-            <span class="flow-card-icon" aria-hidden="true">${icon("arrow-right", "flow-icon", 18)}</span>
-            <span class="ds-caption">Depois</span>
-            <h3 class="ds-card-title">${afterChapter.title}</h3>
-            <p class="ds-aux">Proximo passo na sequencia</p>
-            <a class="button secondary" href="#reader/${afterChapter.id}/${getResumeTab(ctx.state, afterChapter.id)}">Abrir</a>
-          </article>
-          <article class="ds-workflow-card ds-card">
-            <span class="flow-card-icon" aria-hidden="true">${icon("refresh-cw", "flow-icon", 18)}</span>
-            <span class="ds-caption">Reforco</span>
-            <h3 class="ds-card-title">${dueReviewChapter?.title || "Sem urgencias"}</h3>
-            <p class="ds-aux">${dueReviewChapter ? "Revisao prioritaria" : "Fila sob controle"}</p>
-            <a class="button secondary" href="${dueReviewChapter ? "#review" : "#exam/drill"}" ${dueReviewChapter ? "data-go-review-due" : ""}>${dueReviewChapter ? "Revisar" : "Treino AP1"}</a>
-          </article>
-        </div>
+          <p class="ds-aux">${readiness.completed} capitulos quase prontos para AP1</p>
+          <a class="text-link" href="#home">Ver jornada completa →</a>
+        </details>
       </section>
 
-      <section class="ds-kpi-grid rise-in" style="animation-delay:40ms" aria-label="Metricas">
+      <section class="course-queue rise-in" style="animation-delay:16ms" aria-label="Fila de estudo">
+        <a class="course-queue-row" href="#reader/${afterChapter.id}/${getResumeTab(ctx.state, afterChapter.id)}">
+          <span class="ds-caption">Depois</span>
+          <strong>${afterChapter.title}</strong>
+          <span class="course-queue-action">Abrir</span>
+        </a>
+        <a class="course-queue-row" href="${dueReviewChapter ? "#review" : "#exam/drill"}" ${dueReviewChapter ? "data-go-review-due" : ""}>
+          <span class="ds-caption">Reforco</span>
+          <strong>${dueReviewChapter?.title || "Sem urgencias"}</strong>
+          <span class="course-queue-action">${dueReviewChapter ? "Revisar" : "AP1"}</span>
+        </a>
+      </section>
+
+      <section class="ds-kpi-grid course-kpi-grid rise-in" style="animation-delay:28ms" aria-label="Metricas">
         ${kpiCard("Pendencias", String(dueItems), dueReviewChapter?.title || "Em dia")}
-        ${kpiCard("Streak", `${studyStreak} dia(s)`, `Revisao: ${reviewStreak} dia(s)`)}
-        ${kpiCard("Progresso", `${progress.percent}%`, `${progress.completed}/${progress.total} capitulos`)}
-        ${kpiCard("Tempo", `${studyMinutes} min`, `${resolvedToday} revisoes hoje`)}
+        ${kpiCard("Streak", `${studyStreak}d`, `Rev ${reviewStreak}d`)}
+        ${kpiCard("Progresso", `${progress.percent}%`, `${progress.completed}/${progress.total}`)}
+        ${kpiCard("Tempo", `${studyMinutes}m`, `${resolvedToday} hoje`)}
       </section>
 
       ${renderCheckpointSection(ctx)}
 
-      <section class="ds-section ds-search-block rise-in" style="animation-delay:56ms" aria-label="Busca e filtros">
+      <section class="ds-section ds-search-block rise-in" style="animation-delay:40ms" aria-label="Busca e filtros">
         <input class="search-input premium-search" type="search" placeholder="Pesquisar capitulo ou modulo..." aria-label="Pesquisar capitulo" data-course-search value="${escapeAttribute(ctx.ui.courseQuery)}">
         <div class="segmented-control filter-chips" aria-label="Filtrar capitulos">
           ${segment("all", "Todos", ctx.ui.courseFilter)}
@@ -152,13 +139,15 @@ function renderModules(ctx: AppContext, filtered: Chapter[], activeModuleId: str
   const others = visibleModules.filter((item) => item.module.id !== focused.module.id);
 
   return `
-    <div class="ds-main-layout rise-in" style="animation-delay:72ms">
+    <div class="ds-main-layout rise-in" style="animation-delay:52ms">
       <section class="ds-section ds-timeline-block" id="course-focused-module">
         ${renderFocusedModule(ctx, focused.module, focused.chapters, focused.module.id === activeModuleId)}
       </section>
-      <aside class="ds-card ds-secondary-rail" aria-label="Catalogo de modulos">
-        <h3 class="ds-card-title">Modulos</h3>
-        <p class="ds-aux">Alternar foco sem perder contexto.</p>
+      <aside class="ds-secondary-rail course-module-switcher" aria-label="Trocar modulo">
+        <div class="course-module-switcher-head">
+          <h3 class="ds-card-title">Modulos</h3>
+          <p class="ds-aux">Toque para focar</p>
+        </div>
         <div class="module-summary-grid">
           ${others.map((item) => renderModuleSummary(ctx, item.module, item.chapters.length)).join("")}
         </div>
@@ -185,13 +174,13 @@ function renderFocusedModule(
   }];
 
   return `
-    <div class="ds-section-head">
+    <div class="ds-section-head course-focus-head">
       <div>
         <p class="ds-caption">${module.title}${isActive ? " · Em andamento" : ""}</p>
         <h2 class="ds-section-title">${module.subtitle}</h2>
-        <p class="ds-aux">${module.description}</p>
+        <p class="ds-aux course-focus-desc">${module.description}</p>
       </div>
-      <a class="button accent" href="#reader/${continueChapter.id}/${continueTab}">Continuar</a>
+      <a class="button accent course-focus-cta" href="#reader/${continueChapter.id}/${continueTab}">Continuar</a>
     </div>
     ${inlineProgress(progress)}
     <ol class="learning-path timeline-path ds-timeline-primary" aria-label="Capitulos">
@@ -203,18 +192,18 @@ function renderFocusedModule(
 
 function renderModuleSummary(ctx: AppContext, module: Module, visibleCount: number): string {
   const progress = getModuleProgress(ctx.data, ctx.state, module);
-  const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
   return `
-    <article class="module-summary-card ds-card">
-      <span class="ds-caption">${module.title}</span>
-      <h4 class="ds-card-title">${module.subtitle}</h4>
-      <p class="ds-aux">${visibleCount} capitulo(s)</p>
-      ${inlineProgress(progress)}
-      <div class="module-summary-actions">
-        <button class="button secondary" type="button" data-focus-module="${module.id}">Focar</button>
-        <a class="button ghost" href="#reader/${continueChapter.id}/${getResumeTab(ctx.state, continueChapter.id)}">Retomar</a>
-      </div>
-    </article>
+    <button class="module-summary-card module-switch-row" type="button" data-focus-module="${module.id}">
+      <span class="module-switch-copy">
+        <span class="ds-caption">${module.title}</span>
+        <strong class="ds-card-title">${module.subtitle}</strong>
+        <span class="ds-aux">${visibleCount} cap. · ${progress.percent}%</span>
+      </span>
+      <span class="module-switch-meta" aria-hidden="true">
+        <span class="module-switch-bar"><span style="width:${progress.percent}%"></span></span>
+        <span class="module-switch-chevron">›</span>
+      </span>
+    </button>
   `;
 }
 
@@ -233,7 +222,7 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter): stri
           <h3>${chapter.title}</h3>
           ${readinessBadge(readiness)}
         </div>
-        <p class="ds-aux">${chapter.description}</p>
+        <p class="ds-aux path-desc">${chapter.description}</p>
         ${(() => {
           const note = (ctx.state.notes[chapter.id] || "").trim();
           if (!note) return "";
@@ -245,7 +234,7 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter): stri
           ${confidenceBadge(ctx.state, chapter.id)}
         </div>
       </div>
-      <a class="button ${status === "current" ? "accent" : "secondary"}" href="#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}">${action}</a>
+      <a class="button ${status === "current" ? "accent" : "secondary"} path-node-cta" href="#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}">${action}</a>
     </li>
   `;
 }

@@ -36,7 +36,7 @@ export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string
   );
   setActiveNav(route);
   updateContinueChip(ctx, route);
-  updateReviewDueChip(ctx);
+  updateReviewDueChip(ctx, route);
   updateTopbarTitle(ctx, route, chapterId);
   updateContextBar(ctx, route, chapterId);
   updateDocumentTitle(ctx, route, chapterId);
@@ -58,8 +58,15 @@ export function setActiveNav(route: RouteName): void {
 
 export function updateContinueChip(ctx: AppContext, route: RouteName): void {
   const chapter = findChapter(ctx.data, ctx.state.lastChapterId) || ctx.data.chapters[0];
-  const hideOnReader = route === "reader" || route === "session" || route === "mastery" || route === "review-mission" || route === "checkpoint";
-  const useful = Boolean(chapter) && !hideOnReader;
+  const hideOnPage =
+    route === "reader" ||
+    route === "session" ||
+    route === "mastery" ||
+    route === "review-mission" ||
+    route === "checkpoint" ||
+    route === "course" ||
+    route === "home";
+  const useful = Boolean(chapter) && !hideOnPage;
   const href = getNextJourneyHref(ctx.data, ctx.state);
   const label = route === "home" ? "Continuar jornada" : "Continuar estudo";
 
@@ -75,10 +82,11 @@ export function updateContinueChip(ctx: AppContext, route: RouteName): void {
   });
 }
 
-function updateReviewDueChip(ctx: AppContext): void {
+function updateReviewDueChip(ctx: AppContext, route?: RouteName): void {
   const dueCount = getDueReviewItemCount(ctx.state);
+  const hideOnCatalog = route === "home" || route === "course";
   document.querySelectorAll<HTMLAnchorElement>("[data-go-review-due]").forEach((chip) => {
-    chip.hidden = dueCount <= 0;
+    chip.hidden = dueCount <= 0 || hideOnCatalog;
     const label = chip.querySelector<HTMLElement>("[data-review-due-label]");
     if (label) label.textContent = dueCount > 0 ? `Revisar hoje (${dueCount})` : "Revisar hoje";
   });
@@ -139,12 +147,12 @@ export function updateContextBar(ctx: AppContext, route: RouteName, chapterId?: 
   }
 
   if (route === "course") {
-    bar.hidden = false;
-    eyebrow.textContent = "Curso AP1";
-    title.textContent = "Trilha de aprendizado";
-    back.href = "#home";
-    back.textContent = "Hoje";
-    action.hidden = true;
+    bar.hidden = true;
+    return;
+  }
+
+  if (route === "home") {
+    bar.hidden = true;
     return;
   }
 
