@@ -176,6 +176,19 @@ export function renderHomeView(ctx: AppContext): string {
         </div>
       </section>
 
+      <section class="dashboard-command rise-in" style="animation-delay: 28ms" aria-label="Comando do dia">
+        <div>
+          <span class="card-label">Prioridade do dia</span>
+          <h2>${dueItems > 8 ? "Alta" : dueItems > 0 ? "Media" : "Estavel"} · foco em fluxo completo</h2>
+          <p class="small-note">Meta sugerida: concluir a sessao guiada, zerar vencidos e fechar com treino AP1.</p>
+        </div>
+        <div class="command-actions">
+          <a class="button secondary" href="#reader/${chapter.id}/${resumeTab}">Abrir sessao</a>
+          <a class="button secondary" href="#review" data-go-review-due>Revisar vencidos</a>
+          <a class="button secondary" href="${unfinishedMock ? "#exam/mock" : "#exam/drill"}" ${unfinishedMock ? "data-go-exam-mock" : ""}>Treinar AP1</a>
+        </div>
+      </section>
+
       <section class="dashboard-session session-focus rise-in" style="animation-delay: 40ms">
         <div class="session-focus-copy">
           <span class="card-label">Sessao de hoje</span>

@@ -60,6 +60,8 @@ export function renderReviewView(ctx: AppContext): string {
   const focusDueCount = mode === "flash" ? dueTermCount : dueCardCount;
   const resolvedToday = getTodayResolvedReviewCount(ctx.state);
   const reviewStreak = getReviewResolutionStreak(ctx.state);
+  const sprintTarget = Math.max(4, Math.min(12, dueTermCount + dueCardCount || 6));
+  const sprintPercent = Math.min(100, Math.round((resolvedToday / sprintTarget) * 100));
 
   return `
     <section class="review-shell">
@@ -79,6 +81,24 @@ export function renderReviewView(ctx: AppContext): string {
             : ""}
         </div>
       </div>
+
+      <section class="review-sprint panel" aria-label="Sprint de revisao">
+        <div class="review-sprint-head">
+          <div>
+            <span class="card-label">Sprint AP1 (20 min)</span>
+            <h2>${resolvedToday}/${sprintTarget} revisoes resolvidas hoje</h2>
+            <p class="small-note">Foco: resolver vencidos primeiro e reduzir retrabalho nos proximos dias.</p>
+          </div>
+          <div class="review-sprint-actions">
+            <button class="button secondary" type="button" data-filter-group="review-wrong" data-filter-value="due">Abrir vencidos</button>
+            <a class="button secondary" href="#exam/drill">Fechar com drill AP1</a>
+          </div>
+        </div>
+        <div class="sprint-progress">
+          <div style="width: ${sprintPercent}%"></div>
+        </div>
+        <p class="small-note">${sprintPercent}% da meta diaria de revisao · streak ${reviewStreak} dia(s)</p>
+      </section>
 
       <section class="review-focus panel" aria-label="Modo foco">
         <div class="review-focus-head">

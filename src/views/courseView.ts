@@ -9,8 +9,10 @@ import {
   getCourseReadiness,
   getModuleContinueChapter,
   getModuleProgress,
+  getReviewQueue,
   getResumeTab,
   getSuggestedChapter,
+  isReviewDue,
   isCompleted
 } from "../domain/course";
 import type { Chapter, LearningSituation, Module } from "../types";
@@ -24,6 +26,9 @@ export function renderCourseView(ctx: AppContext): string {
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, activeModule);
   const continueTab = getResumeTab(ctx.state, continueChapter.id);
   const filtered = getFilteredChapters(ctx);
+  const queue = getReviewQueue(ctx.data, ctx.state);
+  const dueReviewChapter = queue.find((chapter) => isReviewDue(ctx.state, chapter.id));
+  const afterChapter = queue.find((chapter) => chapter.id !== continueChapter.id) || next;
 
   return `
     <section class="course-shell">
@@ -44,6 +49,33 @@ export function renderCourseView(ctx: AppContext): string {
           <p class="small-note">Sugestao geral: ${next.title}</p>
         </div>
       </div>
+
+      <section class="course-flow-board panel" aria-label="Roteiro inteligente">
+        <div class="course-flow-head">
+          <span class="card-label">Roteiro inteligente</span>
+          <h2>Organize o estudo em sequencia de impacto</h2>
+        </div>
+        <div class="course-flow-grid">
+          <article class="course-flow-card">
+            <span class="status-pill open">Agora</span>
+            <strong>${continueChapter.title}</strong>
+            <p class="small-note">Etapa ativa em ${activeModule.subtitle}. Continue no ponto exato da sessao.</p>
+            <a class="text-link" href="#reader/${continueChapter.id}/${continueTab}">Retomar capitulo →</a>
+          </article>
+          <article class="course-flow-card">
+            <span class="status-pill open">Depois</span>
+            <strong>${afterChapter.title}</strong>
+            <p class="small-note">Proximo passo para manter ritmo sem trocar de contexto.</p>
+            <a class="text-link" href="#reader/${afterChapter.id}/${getResumeTab(ctx.state, afterChapter.id)}">Abrir proximo →</a>
+          </article>
+          <article class="course-flow-card">
+            <span class="status-pill ${dueReviewChapter ? "due" : "open"}">Reforco</span>
+            <strong>${dueReviewChapter?.title || "Sem vencidos urgentes"}</strong>
+            <p class="small-note">${dueReviewChapter ? "Revisao em atraso com maior retorno pedagogico hoje." : "A fila de revisao esta sob controle; avance na trilha."}</p>
+            <a class="text-link" href="${dueReviewChapter ? "#review" : "#exam/drill"}" ${dueReviewChapter ? "data-go-review-due" : ""}>${dueReviewChapter ? "Revisar agora" : "Treino AP1"} →</a>
+          </article>
+        </div>
+      </section>
 
       <div class="toolbar" aria-label="Filtros do curso">
         <input
