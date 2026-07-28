@@ -34,15 +34,52 @@ export function progressBlock(progress: Progress, label = "capitulos"): string {
   `;
 }
 
-export function inlineProgress(progress: Progress): string {
+export function inlineProgress(progress: Progress, label = "Progresso"): string {
   return `
-    <div class="inline-progress">
+    <div class="inline-progress" role="group" aria-label="${escapeAttribute(label)}">
       <div>
         <span>${progress.completed} de ${progress.total}</span>
         <strong>${progress.percent}%</strong>
       </div>
-      <div class="progress-track">
+      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress.percent}" aria-label="${escapeAttribute(label)}">
         <div class="progress-fill" style="width: ${progress.percent}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+export interface DualProgressInput {
+  study: Progress;
+  mastery: Progress;
+  studyLabel?: string;
+  masteryLabel?: string;
+}
+
+/** Two honest bars: visited/study path vs proven mastery. */
+export function dualProgressBars(input: DualProgressInput): string {
+  const studyLabel = input.studyLabel || "Percurso";
+  const masteryLabel = input.masteryLabel || "Domínio";
+  return `
+    <div class="dual-progress course-dual-progress" role="group" aria-label="Progresso de estudo e domínio">
+      <div class="dual-progress-row">
+        <div class="dual-progress-meta">
+          <span class="dual-progress-label">${escapeHtml(studyLabel)}</span>
+          <strong>${input.study.completed}/${input.study.total} · ${input.study.percent}%</strong>
+        </div>
+        <div class="progress-track dual-progress-track study" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${input.study.percent}" aria-label="${escapeAttribute(studyLabel)}">
+          <div class="progress-fill" style="width: ${input.study.percent}%"></div>
+        </div>
+        <p class="dual-progress-hint">Capítulos visitados / marcados no estudo</p>
+      </div>
+      <div class="dual-progress-row">
+        <div class="dual-progress-meta">
+          <span class="dual-progress-label">${escapeHtml(masteryLabel)}</span>
+          <strong>${input.mastery.completed}/${input.mastery.total} · ${input.mastery.percent}%</strong>
+        </div>
+        <div class="progress-track dual-progress-track mastery" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${input.mastery.percent}" aria-label="${escapeAttribute(masteryLabel)}">
+          <div class="progress-fill" style="width: ${input.mastery.percent}%"></div>
+        </div>
+        <p class="dual-progress-hint">Só conta após teste de domínio aprovado</p>
       </div>
     </div>
   `;

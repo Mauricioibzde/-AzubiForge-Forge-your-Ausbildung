@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-const CACHE_NAME = "azubiforge-offline-v74";
-=======
-const CACHE_NAME = "azubiforge-offline-v70";
->>>>>>> origin/cursor/trilha-path-align-cbb6
+const CACHE_NAME = "azubiforge-offline-v75";
 const APP_ASSETS = [
   "./",
   "./index.html"

@@ -36,3 +36,9 @@ export {
   stepEvidenceLabel
 } from "./didacticTasks";
 export type { DidacticTask, DidacticTaskKind } from "./didacticTasks";
+export {
+  getCourseDualProgress,
+  getModuleDualProgress,
+  countStudyProgress,
+  countMasteryProgress
+} from "./courseProgress";

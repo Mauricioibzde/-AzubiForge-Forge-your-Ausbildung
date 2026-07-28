@@ -333,7 +333,9 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     evidence,
     summary: {
       learningField: `${module.title} · ${module.subtitle}`,
-      situation: truncate(module.description || module.subtitle, 72),
+      situation: mission
+        ? truncate(`${module.title} › ${chapter.title}`, 72)
+        : truncate(module.description || module.subtitle, 72),
       status: evidence
         ? evidence.summaryLabel
         : mastered
