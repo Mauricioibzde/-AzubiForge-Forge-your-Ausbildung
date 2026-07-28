@@ -4,6 +4,7 @@ import {
   getReviewExercises,
   getReviewQueue,
   getReviewVocabularyDeck,
+  sortByCheckPriority,
   vocabCheckKey,
   type ReviewVocabItem
 } from "../domain/course";
@@ -17,17 +18,27 @@ export function renderReviewView(ctx: AppContext): string {
   const mode = ctx.ui.reviewFocusMode;
   const wrongOnly = ctx.ui.reviewWrongOnly;
 
-  const terms = wrongOnly
+  const filteredTerms = wrongOnly
     ? allTerms.filter((term) => ctx.state.vocabChecks[vocabCheckKey(term.chapterId, term.index)] === "wrong")
     : allTerms;
-  const cards = wrongOnly
+  const filteredCards = wrongOnly
     ? allCards.filter((card) => ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)] === "wrong")
     : allCards;
 
+  const terms = sortByCheckPriority(filteredTerms, (term) => ctx.state.vocabChecks[vocabCheckKey(term.chapterId, term.index)]);
+  const cards = sortByCheckPriority(
+    filteredCards,
+    (card) => ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)]
+  );
+
   const deckSize = mode === "flash" ? terms.length : cards.length;
   const index = deckSize ? ((ctx.ui.reviewFocusIndex % deckSize) + deckSize) % deckSize : 0;
-  const wrongExerciseCount = Object.values(ctx.state.exerciseChecks).filter((value) => value === "wrong").length;
-  const wrongVocabCount = Object.values(ctx.state.vocabChecks).filter((value) => value === "wrong").length;
+  const wrongExerciseCount = allCards.filter(
+    (card) => ctx.state.exerciseChecks[exerciseCheckKey(card.chapterId, card.exerciseIndex)] === "wrong"
+  ).length;
+  const wrongVocabCount = allTerms.filter(
+    (term) => ctx.state.vocabChecks[vocabCheckKey(term.chapterId, term.index)] === "wrong"
+  ).length;
   const focusWrongCount = mode === "flash" ? wrongVocabCount : wrongExerciseCount;
 
   return `
@@ -70,7 +81,7 @@ export function renderReviewView(ctx: AppContext): string {
             <span class="focus-count">${index + 1} / ${deckSize}</span>
             <button class="button" type="button" data-review-step="1">Proximo</button>
           </div>
-          <p class="small-note">Deslize o card no celular ou use as setas do teclado.</p>
+          <p class="small-note">Espaco revela · 1 Acertei · 2 Errei · setas navegam · deslize no celular.</p>
         `}
       </section>
 

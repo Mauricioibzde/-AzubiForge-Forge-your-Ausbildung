@@ -1,4 +1,5 @@
 import type { AppContext } from "../appContext";
+import { sortByCheckPriority } from "../domain/course";
 import {
   detectSignalWort,
   EXAM_CHECKLIST,
@@ -29,9 +30,11 @@ export function renderExamView(ctx: AppContext): string {
   const mode = ctx.ui.examFocusMode;
   const poolSize = getMockExamPool(ctx.data).length;
   const historyCount = ctx.state.mockExamHistory.length;
+  const unfinished = ctx.state.mockExam && ctx.state.mockExam.status !== "finished" ? ctx.state.mockExam : null;
 
   return `
     <section class="exam-shell">
+      ${unfinished && mode !== "mock" ? renderMockResumeBanner(unfinished) : ""}
       <div class="section-head">
         <div>
           <p class="eyebrow">AP1 Pruefungstraining</p>
@@ -318,8 +321,13 @@ function renderMockResults(attempt: MockExamAttempt): string {
         <p>${score.correct} certas · ${score.wrong} erradas · ${score.unanswered} sem correcao · tempo ${elapsed}</p>
         <div class="session-focus-actions">
           <button class="button" type="button" data-mock-clear>Novo simulado</button>
-          <button class="button secondary" type="button" data-filter-group="exam-focus" data-filter-value="weak">Pontos fracos</button>
-          <a class="button secondary" href="#review">Revisao ativa</a>
+          ${score.wrong ? `
+            <button class="button secondary" type="button" data-review-mistakes>Revisar erros</button>
+            <button class="button secondary" type="button" data-drill-mistakes>Drill so erros</button>
+          ` : `
+            <button class="button secondary" type="button" data-filter-group="exam-focus" data-filter-value="weak">Pontos fracos</button>
+            <a class="button secondary" href="#review">Revisao ativa</a>
+          `}
         </div>
       </div>
 
@@ -357,6 +365,21 @@ function renderMockResults(attempt: MockExamAttempt): string {
         </div>
       </details>
     </section>
+  `;
+}
+
+function renderMockResumeBanner(attempt: MockExamAttempt): string {
+  const remaining = formatMockExamTimer(getMockExamRemainingMs(attempt));
+  const answered = getMockExamAnsweredCount(attempt);
+  const label = attempt.status === "grading" ? "Correcao em andamento" : "Simulado em andamento";
+  return `
+    <div class="mock-resume-banner" role="status">
+      <div>
+        <strong>${label}</strong>
+        <p class="small-note">${answered}/${attempt.questions.length} · tempo restante ${remaining}</p>
+      </div>
+      <button class="button" type="button" data-filter-group="exam-focus" data-filter-value="mock">Retomar</button>
+    </div>
   `;
 }
 
@@ -433,7 +456,10 @@ function renderSignalCard(item: SignalWort, index: number, total: number): strin
 }
 
 function renderDrillMode(ctx: AppContext): string {
-  const allItems = getAp1DrillExercises(ctx.data, ctx.state, 24);
+  const allItems = sortByCheckPriority(
+    getAp1DrillExercises(ctx.data, ctx.state, 24),
+    (item) => ctx.state.exerciseChecks[`exam:${item.chapterId}:${item.style}:${item.question}`]
+  );
   const wrongOnly = ctx.ui.examDrillWrongOnly;
   const items = wrongOnly
     ? allItems.filter((item) => ctx.state.exerciseChecks[`exam:${item.chapterId}:${item.style}:${item.question}`] === "wrong")
@@ -464,7 +490,7 @@ function renderDrillMode(ctx: AppContext): string {
 
   return `
     <section class="review-focus panel" aria-label="Drill AP1">
-      <p class="small-note">Responda como na prova: leia o Signalwort, monte a resposta, so depois revele.</p>
+      <p class="small-note">Responda como na prova: leia o Signalwort, monte a resposta, so depois revele. Espaco / 1 / 2 no teclado.</p>
       <div class="segmented-control compact" aria-label="Filtrar drills">
         <button class="${!wrongOnly ? "active" : ""}" type="button" data-filter-group="exam-drill-wrong" data-filter-value="all">Todos</button>
         <button class="${wrongOnly ? "active" : ""}" type="button" data-filter-group="exam-drill-wrong" data-filter-value="wrong">So erros (${wrongCount})</button>
@@ -492,30 +518,30 @@ function renderDrillCard(
   return `
     <article class="focus-card-big">
       <span class="card-label">${item.style === "ap1" ? "AP1-Style" : "Pratica"} ${index + 1}/${total}</span>
-      <p class="exam-chapter-tag">${item.chapterTitle}</p>
-      ${signal ? `<p class="exam-signal-tag">Signalwort: <strong>${signal.de}</strong> · ${signal.expect}</p>` : ""}
+      <p class="exam-chapter-tag">${escapeHtml(item.chapterTitle)}</p>
+      ${signal ? `<p class="exam-signal-tag">Signalwort: <strong>${escapeHtml(signal.de)}</strong> · ${escapeHtml(signal.expect)}</p>` : ""}
       <h2>Aufgabe</h2>
-      <p class="focus-question">${item.question}</p>
+      <p class="focus-question">${escapeHtml(item.question)}</p>
       <details class="focus-reveal">
         <summary>Antwort anzeigen</summary>
-        <p><strong>Antwort:</strong> ${item.answer}</p>
-        ${item.explanation ? `<p><strong>Erklaerung:</strong> ${item.explanation}</p>` : ""}
-        ${signal ? `<p class="small-note">Lembrete: ${signal.tip}</p>` : ""}
+        <p><strong>Antwort:</strong> ${escapeHtml(item.answer)}</p>
+        ${item.explanation ? `<p><strong>Erklaerung:</strong> ${escapeHtml(item.explanation)}</p>` : ""}
+        ${signal ? `<p class="small-note">Lembrete: ${escapeHtml(signal.tip)}</p>` : ""}
         <div class="self-check-actions">
           <button
             class="button secondary ${check === "correct" ? "active-check" : ""}"
             type="button"
             data-exercise-check="correct"
-            data-check-key="${checkKey}"
-            data-check-chapter="${item.chapterId}"
+            data-check-key="${escapeAttribute(checkKey)}"
+            data-check-chapter="${escapeAttribute(item.chapterId)}"
             data-auto-advance="exam"
           >Acertei</button>
           <button
             class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
             type="button"
             data-exercise-check="wrong"
-            data-check-key="${checkKey}"
-            data-check-chapter="${item.chapterId}"
+            data-check-key="${escapeAttribute(checkKey)}"
+            data-check-chapter="${escapeAttribute(item.chapterId)}"
             data-auto-advance="exam"
           >Errei / revisar</button>
         </div>

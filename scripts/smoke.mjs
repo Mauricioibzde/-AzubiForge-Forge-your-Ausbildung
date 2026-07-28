@@ -29,12 +29,21 @@ desktop.on("pageerror", (error) => {
 await desktop.goto(baseUrl, { waitUntil: "networkidle" });
 await desktop.waitForSelector("main h1", { timeout: 10000 });
 
-const homePolish = await desktop.evaluate(() => ({
-  streakCalendar: Boolean(document.querySelector(".streak-calendar")),
-  streakDays: document.querySelectorAll(".streak-day").length
-}));
+const homePolish = await desktop.evaluate(() => {
+  const href = document.querySelector(".session-focus .session-focus-actions a.button.large")?.getAttribute("href") || "";
+  const parts = href.replace(/^#/, "").split("/");
+  return {
+    streakCalendar: Boolean(document.querySelector(".streak-calendar")),
+    streakDays: document.querySelectorAll(".streak-day").length,
+    resumeDeepLink: parts[0] === "reader" && parts.length >= 3,
+    href
+  };
+});
 if (!homePolish.streakCalendar || homePolish.streakDays !== 14) {
   issues.push(`home: streak calendar missing or incomplete (${homePolish.streakDays})`);
+}
+if (!homePolish.resumeDeepLink) {
+  issues.push(`home: session CTA missing resume tab deep-link (${homePolish.href})`);
 }
 
 const desktopChrome = await desktop.evaluate(() => {

@@ -140,12 +140,8 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
     app.innerHTML = renderReaderView(ctx, chapterId);
   } else if (route === "review") app.innerHTML = renderReviewView(ctx);
   else if (route === "glossary") app.innerHTML = renderGlossaryView(ctx);
-  else if (route === "exam") {
-    if (ctx.state.mockExam && ctx.state.mockExam.status !== "finished" && ctx.ui.examFocusMode !== "mock") {
-      ctx.ui.examFocusMode = "mock";
-    }
-    app.innerHTML = renderExamView(ctx);
-  } else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
+  else if (route === "exam") app.innerHTML = renderExamView(ctx);
+  else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
   else app.innerHTML = renderHomeView(ctx);
 
   syncChrome(ctx, route || "home", chapterId);
@@ -175,6 +171,28 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
   if (target.closest("[data-go-exam-mock]")) {
     ctx.ui.examFocusMode = "mock";
     // hash navigation continues for <a href="#exam">
+  }
+
+  if (target.closest("[data-review-mistakes]")) {
+    event.preventDefault();
+    ctx.ui.reviewFocusMode = "quiz";
+    ctx.ui.reviewWrongOnly = true;
+    ctx.ui.reviewFocusIndex = 0;
+    window.location.hash = "#review";
+    return;
+  }
+
+  if (target.closest("[data-drill-mistakes]")) {
+    event.preventDefault();
+    ctx.ui.examFocusMode = "drill";
+    ctx.ui.examDrillWrongOnly = true;
+    ctx.ui.examFocusIndex = 0;
+    if ((window.location.hash.replace("#", "").split("/")[0] || "") !== "exam") {
+      window.location.hash = "#exam";
+    } else {
+      renderRoute(app, ctx);
+    }
+    return;
   }
 
   if (target.closest("[data-sidebar-toggle]")) {
@@ -517,6 +535,8 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
   const tag = (event.target as HTMLElement | null)?.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
+  if (handleFlashHotkeys(event, app, ctx, route)) return;
+
   if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
   const delta = event.key === "ArrowRight" ? 1 : -1;
 
@@ -578,6 +598,40 @@ function handleKeydown(event: KeyboardEvent, app: HTMLElement, ctx: AppContext):
     }
     renderRoute(app, ctx);
   }
+}
+
+function isFlashHotkeyRoute(ctx: AppContext, route: RouteName): boolean {
+  if (route === "review") return true;
+  if (route === "glossary" && ctx.ui.glossaryMode === "flash") return true;
+  if (route === "exam" && ctx.ui.examFocusMode === "drill") return true;
+  if (route === "reader" && ctx.ui.readerTab === "vocab" && ctx.ui.readerVocabMode === "flash") return true;
+  if (route === "reader" && ctx.ui.readerTab === "practice" && ctx.ui.readerPracticeMode === "flash") return true;
+  return false;
+}
+
+function handleFlashHotkeys(event: KeyboardEvent, _app: HTMLElement, ctx: AppContext, route: RouteName): boolean {
+  if (!isFlashHotkeyRoute(ctx, route)) return false;
+
+  if (event.key === " " || event.code === "Space") {
+    const details = document.querySelector<HTMLDetailsElement>(".focus-stage details.focus-reveal");
+    if (!details) return false;
+    event.preventDefault();
+    details.open = !details.open;
+    return true;
+  }
+
+  if (event.key === "1" || event.key === "2") {
+    const value = event.key === "1" ? "correct" : "wrong";
+    const button = document.querySelector<HTMLElement>(
+      `.focus-stage [data-exercise-check="${value}"], .focus-stage [data-vocab-check="${value}"]`
+    );
+    if (!button) return false;
+    event.preventDefault();
+    button.click();
+    return true;
+  }
+
+  return false;
 }
 
 function registerSwipe(app: HTMLElement, ctx: AppContext): void {

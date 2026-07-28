@@ -21,6 +21,7 @@ import {
   READER_STEPS
 } from "../domain/course";
 import { getExamReadinessSummary, getWeakChapters } from "../domain/exam";
+import { formatMockExamTimer, getMockExamAnsweredCount, getMockExamRemainingMs } from "../domain/mockExam";
 import { confidenceBadge, escapeAttribute, inlineProgress, progressBlock, readinessBadge } from "../ui/html";
 
 export function renderHomeView(ctx: AppContext): string {
@@ -41,10 +42,12 @@ export function renderHomeView(ctx: AppContext): string {
   const review = getReviewQueue(ctx.data, ctx.state).filter((item) => item.id !== chapter.id).slice(0, 3);
   const dueCount = ctx.data.chapters.filter((item) => isReviewDue(ctx.state, item.id)).length;
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
+  const continueResumeTab = getResumeTab(ctx.state, continueChapter.id);
   const moduleProgress = getModuleProgress(ctx.data, ctx.state, module);
   const ctaLabel = session.completed > 0 && session.percent < 100 ? "Continuar sessao" : "Comecar sessao";
   const examSummary = getExamReadinessSummary(ctx.data, ctx.state);
   const weakTopics = getWeakChapters(ctx.data, ctx.state, 3);
+  const unfinishedMock = ctx.state.mockExam && ctx.state.mockExam.status !== "finished" ? ctx.state.mockExam : null;
 
   return `
     <section class="study-home">
@@ -63,6 +66,16 @@ export function renderHomeView(ctx: AppContext): string {
           <button class="button" type="button" data-dismiss-onboarding>Entendi, comecar</button>
         </section>
       `}
+
+      ${unfinishedMock ? `
+        <section class="mock-resume-banner rise-in" role="status">
+          <div>
+            <strong>${unfinishedMock.status === "grading" ? "Correcao em andamento" : "Simulado em andamento"}</strong>
+            <p class="small-note">${getMockExamAnsweredCount(unfinishedMock)}/${unfinishedMock.questions.length} · ${formatMockExamTimer(getMockExamRemainingMs(unfinishedMock))} restantes</p>
+          </div>
+          <a class="button" href="#exam" data-go-exam-mock>Retomar simulado</a>
+        </section>
+      ` : ""}
 
       <section class="study-hero rise-in">
         <p class="eyebrow">Curso offline AP1 FIAE</p>
@@ -186,7 +199,7 @@ export function renderHomeView(ctx: AppContext): string {
             : ""}
         </div>
         <div class="session-focus-actions">
-          <a class="button large" href="#reader/${chapter.id}">${ctaLabel}</a>
+          <a class="button large" href="#reader/${chapter.id}/${resumeTab}">${ctaLabel}</a>
           <a class="button secondary" href="#course">Ver trilha do curso</a>
           <a class="button secondary" href="#exam">Treino AP1</a>
         </div>
@@ -219,7 +232,7 @@ export function renderHomeView(ctx: AppContext): string {
               `;
             }).join("")}
           </ol>
-          <a class="button secondary" href="#reader/${continueChapter.id}">Continuar em ${continueChapter.title}</a>
+          <a class="button secondary" href="#reader/${continueChapter.id}/${continueResumeTab}">Continuar em ${continueChapter.title}</a>
         </section>
 
         <section class="panel soft-panel">

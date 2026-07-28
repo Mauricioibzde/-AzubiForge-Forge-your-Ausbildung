@@ -1,5 +1,5 @@
 import type { AppContext } from "../appContext";
-import { findChapter, getChapterModule } from "../domain/course";
+import { findChapter, getChapterModule, getResumeTab } from "../domain/course";
 import type { RouteName } from "../types";
 
 const ROUTE_TITLES: Record<RouteName, string> = {
@@ -42,7 +42,8 @@ export function updateContinueChip(ctx: AppContext, route: RouteName): void {
   document.querySelectorAll<HTMLAnchorElement>("[data-continue-study]").forEach((chip) => {
     chip.hidden = !useful;
     if (!chapter) return;
-    chip.href = `#reader/${chapter.id}`;
+    const resumeTab = getResumeTab(ctx.state, chapter.id);
+    chip.href = `#reader/${chapter.id}/${resumeTab}`;
     chip.textContent = route === "home" ? `Continuar: ${chapter.title}` : "Continuar estudo";
     chip.title = chapter.title;
   });

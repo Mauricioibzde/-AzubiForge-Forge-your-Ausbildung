@@ -15,6 +15,7 @@ import {
   getVocabStats,
   isCompleted,
   exerciseCheckKey,
+  sortByCheckPriority,
   vocabCheckKey,
   READER_STEPS
 } from "../domain/course";
@@ -357,13 +358,18 @@ function praxisTab(ctx: AppContext, chapter: Chapter): string {
 }
 
 function vocabTab(ctx: AppContext, chapter: Chapter): string {
-  const rows = getChapterVocabulary(ctx.data, chapter);
+  const rawRows = getChapterVocabulary(ctx.data, chapter);
+  const rows = sortByCheckPriority(
+    rawRows.map((row, index) => ({ row, index })),
+    (item) => ctx.state.vocabChecks[vocabCheckKey(chapter.id, item.index)]
+  );
   const mode = ctx.ui.readerVocabMode;
   const total = rows.length;
   const index = total ? ((ctx.ui.readerVocabIndex % total) + total) % total : 0;
-  const row = rows[index];
-  const key = row ? vocabCheckKey(chapter.id, index) : "";
+  const current = rows[index];
+  const key = current ? vocabCheckKey(chapter.id, current.index) : "";
   const check = key ? ctx.state.vocabChecks[key] : undefined;
+  const row = current?.row;
 
   return `
     <section class="chapter-section">
@@ -374,7 +380,7 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
           <button class="${mode === "grid" ? "active" : ""}" type="button" data-filter-group="reader-vocab-mode" data-filter-value="grid">Grade</button>
         </div>
       </div>
-      <p>Veja o termo em alemao, explique em voz alta e so depois revele o significado.</p>
+      <p>Veja o termo em alemao, explique em voz alta e so depois revele o significado. Espaco / 1 / 2 no teclado.</p>
       ${mode === "flash" && row ? `
         <section class="review-focus" aria-label="Flash Wortschatz">
           <div class="focus-stage" data-swipe-deck="reader-vocab">
@@ -414,11 +420,11 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
             <button class="button" type="button" data-reader-vocab-step="1">Proximo</button>
           </div>
         </section>
-      ` : vocabularyRecallCards(rows, chapter.id, ctx.state.vocabChecks)}
+      ` : vocabularyRecallCards(rawRows, chapter.id, ctx.state.vocabChecks)}
     </section>
     <details class="vocab-table-details">
       <summary>Ver tabela completa</summary>
-      ${vocabularyTable(rows)}
+      ${vocabularyTable(rawRows)}
     </details>
   `;
 }
@@ -431,12 +437,15 @@ function practiceTab(ctx: AppContext, chapter: Chapter): string {
   const stats = getChapterExerciseStats(ctx.state, chapter.id, exercises.length);
   const filter = ctx.ui.practiceFilter;
   const mode = ctx.ui.readerPracticeMode;
-  const visible = exercises
-    .map((exercise, index) => ({ exercise, index }))
-    .filter(({ index }) => {
-      if (filter !== "wrong") return true;
-      return ctx.state.exerciseChecks[exerciseCheckKey(chapter.id, index)] === "wrong";
-    });
+  const visible = sortByCheckPriority(
+    exercises
+      .map((exercise, index) => ({ exercise, index }))
+      .filter(({ index }) => {
+        if (filter !== "wrong") return true;
+        return ctx.state.exerciseChecks[exerciseCheckKey(chapter.id, index)] === "wrong";
+      }),
+    (item) => ctx.state.exerciseChecks[exerciseCheckKey(chapter.id, item.index)]
+  );
   const total = visible.length;
   const flashIndex = total ? ((ctx.ui.readerPracticeIndex % total) + total) % total : 0;
   const current = visible[flashIndex];

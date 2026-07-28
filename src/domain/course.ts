@@ -3,6 +3,7 @@ import type {
   AzubiForgeData,
   Chapter,
   Exercise,
+  ExerciseCheck,
   GlossaryTerm,
   LearningSituation,
   Module,
@@ -308,6 +309,18 @@ export function exerciseCheckKey(chapterId: string, index: number): string {
   return `${chapterId}:${index}`;
 }
 
+export function sortByCheckPriority<T>(
+  items: T[],
+  getCheck: (item: T) => ExerciseCheck | undefined
+): T[] {
+  const rank = (check?: ExerciseCheck): number => {
+    if (check === "wrong") return 0;
+    if (!check) return 1;
+    return 2;
+  };
+  return [...items].sort((a, b) => rank(getCheck(a)) - rank(getCheck(b)));
+}
+
 export function getChapterExerciseStats(state: AppState, chapterId: string, total: number): {
   correct: number;
   wrong: number;
@@ -362,12 +375,21 @@ export function touchStudied(state: AppState, chapterId: string): void {
 }
 
 export function todayKey(date = new Date()): string {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function stampToLocalDayKey(stamp: string): string {
+  const date = new Date(stamp);
+  if (Number.isNaN(date.getTime())) return "";
+  return todayKey(date);
 }
 
 export function getTodayStudyCount(state: AppState): number {
   const today = todayKey();
-  return Object.values(state.lastStudiedAt).filter((stamp) => stamp.startsWith(today)).length;
+  return Object.values(state.lastStudiedAt).filter((stamp) => stampToLocalDayKey(stamp) === today).length;
 }
 
 export function getStudyStreak(state: AppState): number {

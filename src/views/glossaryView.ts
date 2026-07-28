@@ -1,9 +1,13 @@
 import type { AppContext } from "../appContext";
+import { sortByCheckPriority } from "../domain/course";
 import type { GlossaryFilter, GlossaryTerm } from "../types";
 import { escapeAttribute } from "../ui/html";
 
 export function renderGlossaryView(ctx: AppContext): string {
-  const terms = getFilteredGlossary(ctx);
+  const terms = sortByCheckPriority(
+    getFilteredGlossary(ctx),
+    (term) => ctx.state.vocabChecks[`glossary:${term.word.toLowerCase()}`]
+  );
   const mode = ctx.ui.glossaryMode;
   const index = terms.length ? ((ctx.ui.glossaryFocusIndex % terms.length) + terms.length) % terms.length : 0;
   const current = terms[index];
@@ -104,7 +108,7 @@ function renderGlossaryFlash(
         <span class="focus-count">${index + 1} / ${total}</span>
         <button class="button" type="button" data-glossary-step="1">Proximo</button>
       </div>
-      <p class="small-note">Dica mobile: deslize o card para o lado. No teclado, use as setas.</p>
+      <p class="small-note">Espaco revela · 1 Acertei · 2 Errei · setas navegam · deslize no celular.</p>
     </section>
   `;
 }
