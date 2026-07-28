@@ -8,6 +8,7 @@ import {
   getCourseProgress,
   getCourseReadiness,
   getDailyGoalProgress,
+  getDueReviewItemCount,
   getEstimatedSessionMinutes,
   getEstimatedStudyMinutes,
   getModuleContinueChapter,
@@ -52,6 +53,7 @@ export function renderHomeView(ctx: AppContext): string {
   const minutes = getEstimatedSessionMinutes(chapter);
   const review = getReviewQueue(ctx.data, ctx.state).filter((item) => item.id !== chapter.id).slice(0, 5);
   const dueCount = ctx.data.chapters.filter((item) => isReviewDue(ctx.state, item.id)).length;
+  const dueItems = getDueReviewItemCount(ctx.state);
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
   const continueResumeTab = getResumeTab(ctx.state, continueChapter.id);
   const moduleProgress = getModuleProgress(ctx.data, ctx.state, module);
@@ -200,7 +202,7 @@ export function renderHomeView(ctx: AppContext): string {
         <article class="dashboard-card panel soft-panel">
           <span class="card-label">Revisar agora</span>
           <h2>Fila curta</h2>
-          <p class="small-note">${dueCount ? `${dueCount} capitulo(s) vencidos hoje.` : "Capitulos fracos ou ainda abertos."}</p>
+          <p class="small-note">${dueCount ? `${dueCount} capitulo(s) com revisao ativa · ${dueItems} item(ns) vencidos.` : "Capitulos fracos ou ainda abertos."}</p>
           <div class="review-queue-list">
             ${review.length ? review.map((item) => {
               const due = isReviewDue(ctx.state, item.id);

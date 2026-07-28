@@ -87,10 +87,21 @@ export function getReviewQueue(data: AzubiForgeData, state: AppState): Chapter[]
       .map(([key]) => chapterIdFromCheckKey(key))
       .filter(Boolean)
   );
+  const scheduledDueIds = new Set(
+    Object.entries(state.reviewSchedule)
+      .filter(([, dueAt]) => {
+        const due = Date.parse(dueAt);
+        return !Number.isNaN(due) && due <= Date.now();
+      })
+      .map(([key]) => chapterIdFromCheckKey(key))
+      .filter(Boolean)
+  );
   const due = data.chapters
     .filter((chapter) => isReviewDue(state, chapter.id))
     .sort((a, b) => getDaysSinceStudied(state, b.id) - getDaysSinceStudied(state, a.id));
-  const fromMistakes = data.chapters.filter((chapter) => wrongChapterIds.has(chapter.id) || weakVocabIds.has(chapter.id));
+  const fromMistakes = data.chapters.filter(
+    (chapter) => scheduledDueIds.has(chapter.id) || wrongChapterIds.has(chapter.id) || weakVocabIds.has(chapter.id)
+  );
   const marked = data.chapters
     .filter((chapter) => state.confidence[chapter.id] === "hard" || state.confidence[chapter.id] === "review")
     .sort((a, b) => priority[state.confidence[a.id]] - priority[state.confidence[b.id]]);
@@ -320,6 +331,31 @@ export function exerciseCheckKey(chapterId: string, index: number): string {
   return `${chapterId}:${index}`;
 }
 
+export function scheduleReviewCheck(
+  state: AppState,
+  key: string,
+  next: ExerciseCheck,
+  previous?: ExerciseCheck
+): void {
+  const now = Date.now();
+  const currentDue = Date.parse(state.reviewSchedule[key] || "");
+  const validDue = Number.isNaN(currentDue) ? 0 : currentDue;
+
+  let days = 1;
+  if (next === "wrong") {
+    days = 1;
+  } else if (previous === "wrong") {
+    days = 2;
+  } else {
+    const remainingDays = validDue > now ? (validDue - now) / DAY_MS : 0;
+    if (remainingDays >= 5) days = 7;
+    else if (remainingDays >= 2) days = 4;
+    else days = 2;
+  }
+
+  state.reviewSchedule[key] = new Date(now + days * DAY_MS).toISOString();
+}
+
 export function sortByCheckPriority<T>(
   items: T[],
   getCheck: (item: T) => ExerciseCheck | undefined
@@ -481,6 +517,7 @@ export function getDaysSinceStudied(state: AppState, chapterId: string): number 
 }
 
 export function isReviewDue(state: AppState, chapterId: string): boolean {
+  if (hasDueReviewCheck(state, chapterId)) return true;
   if (!isCompleted(state, chapterId) && !getVisitedSteps(state, chapterId).length) return false;
   const confidence = state.confidence[chapterId];
   if (confidence === "ready") return getDaysSinceStudied(state, chapterId) >= 7;
@@ -488,6 +525,23 @@ export function isReviewDue(state: AppState, chapterId: string): boolean {
   if (confidence === "review") return getDaysSinceStudied(state, chapterId) >= 1;
   if (isCompleted(state, chapterId)) return getDaysSinceStudied(state, chapterId) >= 2;
   return getDaysSinceStudied(state, chapterId) >= 1;
+}
+
+export function getDueReviewItemCount(state: AppState): number {
+  const now = Date.now();
+  return Object.values(state.reviewSchedule).filter((dueAt) => {
+    const due = Date.parse(dueAt);
+    return !Number.isNaN(due) && due <= now;
+  }).length;
+}
+
+function hasDueReviewCheck(state: AppState, chapterId: string): boolean {
+  const now = Date.now();
+  return Object.entries(state.reviewSchedule).some(([key, dueAt]) => {
+    if (chapterIdFromCheckKey(key) !== chapterId) return false;
+    const due = Date.parse(dueAt);
+    return !Number.isNaN(due) && due <= now;
+  });
 }
 
 export function getChapterReadiness(data: AzubiForgeData, state: AppState, chapter: Chapter): Readiness {

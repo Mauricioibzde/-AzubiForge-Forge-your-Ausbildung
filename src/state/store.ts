@@ -83,6 +83,7 @@ function createFallbackState(data: AzubiForgeData): AppState {
     sessionSteps: {},
     exerciseChecks: {},
     vocabChecks: {},
+    reviewSchedule: {},
     examChecklist: {},
     mockExam: null,
     mockExamHistory: [],
@@ -117,6 +118,7 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     sessionSteps: sanitizeSessionSteps(imported.sessionSteps, validChapterIds),
     exerciseChecks: sanitizeExerciseChecks(imported.exerciseChecks),
     vocabChecks: sanitizeExerciseChecks(imported.vocabChecks),
+    reviewSchedule: sanitizeReviewSchedule(imported.reviewSchedule),
     examChecklist: sanitizeExamChecklist(imported.examChecklist),
     mockExam: sanitizeMockExam(imported.mockExam),
     mockExamHistory: sanitizeMockExamHistory(imported.mockExamHistory),
@@ -234,6 +236,19 @@ function sanitizeExerciseChecks(value: unknown): Record<string, ExerciseCheck> {
     if (typeof key === "string" && EXERCISE_CHECK_VALUES.has(item as ExerciseCheck)) {
       record[key] = item as ExerciseCheck;
     }
+  });
+
+  return record;
+}
+
+function sanitizeReviewSchedule(value: unknown): Record<string, string> {
+  const record: Record<string, string> = {};
+  if (!value || typeof value !== "object") return record;
+
+  Object.entries(value).forEach(([key, item]) => {
+    if (typeof key !== "string" || typeof item !== "string") return;
+    const ts = Date.parse(item);
+    if (!Number.isNaN(ts)) record[key] = new Date(ts).toISOString();
   });
 
   return record;

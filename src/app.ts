@@ -8,6 +8,7 @@ import {
   getNextSessionTab,
   getPrevSessionTab,
   getResumeTab,
+  scheduleReviewCheck,
   getSessionProgress,
   isCompleted,
   markVisitedStep,
@@ -864,7 +865,9 @@ function setExerciseCheck(
   value: ExerciseCheck,
   chapterId: string
 ): void {
+  const previous = ctx.state.exerciseChecks[key];
   ctx.state.exerciseChecks[key] = value;
+  scheduleReviewCheck(ctx.state, key, value, previous);
   if (chapterId && findChapter(ctx.data, chapterId)) {
     touchStudied(ctx.state, chapterId);
     if (value === "wrong") {
@@ -881,7 +884,9 @@ function setVocabCheck(
   value: ExerciseCheck,
   chapterId: string
 ): void {
+  const previous = ctx.state.vocabChecks[key];
   ctx.state.vocabChecks[key] = value;
+  scheduleReviewCheck(ctx.state, key, value, previous);
   if (chapterId && findChapter(ctx.data, chapterId)) {
     touchStudied(ctx.state, chapterId);
     if (value === "wrong") {

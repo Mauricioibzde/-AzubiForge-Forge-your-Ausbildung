@@ -181,6 +181,7 @@ export interface AppState {
   sessionSteps: Record<string, ReaderTab[]>;
   exerciseChecks: Record<string, ExerciseCheck>;
   vocabChecks: Record<string, ExerciseCheck>;
+  reviewSchedule: Record<string, string>;
   examChecklist: Record<string, boolean>;
   mockExam: MockExamAttempt | null;
   mockExamHistory: MockExamHistoryEntry[];
