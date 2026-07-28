@@ -58,11 +58,12 @@ const desktopChrome = await desktop.evaluate(() => {
     sidebar: Boolean(sidebar),
     sidebarVisible: sidebar ? getComputedStyle(sidebar).transform === "none" || getComputedStyle(sidebar).position === "sticky" : false,
     navHome: Boolean(document.querySelector('.sidebar [data-nav="home"]')),
-    navExam: Boolean(document.querySelector('.sidebar [data-nav="exam"]'))
+    navExam: Boolean(document.querySelector('.sidebar [data-nav="exam"]')),
+    reviewDueChip: Boolean(document.querySelector("[data-go-review-due]"))
   };
 });
 
-if (!desktopChrome.sidebar || !desktopChrome.navHome || !desktopChrome.navExam) {
+if (!desktopChrome.sidebar || !desktopChrome.navHome || !desktopChrome.navExam || !desktopChrome.reviewDueChip) {
   issues.push("desktop: sidebar navigation missing");
 }
 

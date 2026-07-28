@@ -1,5 +1,5 @@
 import type { AppContext } from "../appContext";
-import { findChapter, getChapterModule, getResumeTab } from "../domain/course";
+import { findChapter, getChapterModule, getDueReviewItemCount, getResumeTab } from "../domain/course";
 import type { RouteName } from "../types";
 
 const ROUTE_TITLES: Record<RouteName, string> = {
@@ -16,6 +16,7 @@ export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string
   document.body.dataset.route = route;
   setActiveNav(route);
   updateContinueChip(ctx, route);
+  updateReviewDueChip(ctx);
   updateContextBar(ctx, route, chapterId);
   updateDocumentTitle(ctx, route, chapterId);
   updateConnectivityBanner();
@@ -51,6 +52,15 @@ export function updateContinueChip(ctx: AppContext, route: RouteName): void {
     const textLabel = chip.querySelector<HTMLElement>("[data-continue-label]");
     if (textLabel) textLabel.textContent = label;
     else chip.textContent = label;
+  });
+}
+
+function updateReviewDueChip(ctx: AppContext): void {
+  const dueCount = getDueReviewItemCount(ctx.state);
+  document.querySelectorAll<HTMLAnchorElement>("[data-go-review-due]").forEach((chip) => {
+    chip.hidden = dueCount <= 0;
+    const label = chip.querySelector<HTMLElement>("[data-review-due-label]");
+    if (label) label.textContent = `Revisar hoje (${dueCount})`;
   });
 }
 

@@ -351,6 +351,22 @@ button {
   text-overflow: ellipsis;
 }
 
+.review-due-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 10px;
+  border-color: rgba(183, 121, 31, 0.35);
+  background: rgba(183, 121, 31, 0.12);
+  color: #7a4b0f;
+}
+
+:root[data-theme="dark"] .review-due-chip {
+  border-color: rgba(224, 177, 91, 0.45);
+  background: rgba(224, 177, 91, 0.16);
+  color: #f3d28a;
+}
+
 .topbar-continue-icon {
   color: var(--primary);
   font-size: 0.82rem;
@@ -3052,6 +3068,11 @@ a.session-step:hover {
     display: inline-flex;
     max-width: 128px;
     font-size: 0.78rem;
+  }
+
+  .review-due-chip {
+    max-width: 136px;
+    font-size: 0.74rem;
   }
 
   .topbar-theme {

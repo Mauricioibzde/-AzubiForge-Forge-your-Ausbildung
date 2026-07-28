@@ -233,6 +233,18 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     // hash navigation continues for <a href="#exam/mock">
   }
 
+  if (target.closest("[data-go-review-due]")) {
+    event.preventDefault();
+    ctx.ui.reviewDeckFilter = "due";
+    ctx.ui.reviewFocusIndex = 0;
+    if ((window.location.hash.replace("#", "").split("/")[0] || "") !== "review") {
+      window.location.hash = "#review";
+    } else {
+      renderRoute(app, ctx);
+    }
+    return;
+  }
+
   if (target.closest("[data-review-mistakes]")) {
     event.preventDefault();
     ctx.ui.examFocusMode = "mistakes";
