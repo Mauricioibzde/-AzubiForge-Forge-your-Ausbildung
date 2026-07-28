@@ -3,19 +3,16 @@ import {
   getActiveModule,
   getCourseProgress,
   getDailyGoalProgress,
-  getDueReviewItemCount,
-  getEstimatedStudyMinutes,
   getResumeTab,
-  getReviewResolutionStreak,
-  getStudyStreak,
   getStudyCalendarDays,
-  getTodayChapter,
-  getTodayResolvedReviewCount
+  getTodayChapter
 } from "../domain/course";
+import { getNormalizedCourseData } from "../data/normalizedCourse";
+import { getHomeTodayInsights } from "../domain/dashboard/homeToday";
 import type { JourneyNode } from "../domain/journey";
 import { getJourneyNodes, getJourneyProgress } from "../domain/journey";
 import { formatMockExamTimer, getMockExamAnsweredCount, getMockExamRemainingMs } from "../domain/mockExam";
-import { donutProgress, escapeAttribute, kpiCard } from "../ui/html";
+import { donutProgress, escapeAttribute } from "../ui/html";
 import { renderTodayPlanSection } from "./todayPlanView";
 
 export function renderHomeView(ctx: AppContext): string {
@@ -26,19 +23,22 @@ export function renderHomeView(ctx: AppContext): string {
   const resumeTab = getResumeTab(ctx.state, chapter.id);
   const nextHref = `#reader/${chapter.id}/${resumeTab}`;
   const daily = getDailyGoalProgress(ctx.state);
-  const streak = getStudyStreak(ctx.state);
   const calendar = getStudyCalendarDays(ctx.state, 14);
-  const studyMinutes = getEstimatedStudyMinutes(ctx.data, ctx.state);
-  const dueItems = getDueReviewItemCount(ctx.state);
-  const resolvedToday = getTodayResolvedReviewCount(ctx.state);
-  const reviewStreak = getReviewResolutionStreak(ctx.state);
   const studyGoal = ctx.state.preferences.studyGoal || "Dominar a AP1 e organizar os fundamentos.";
   const unfinishedMock = ctx.state.mockExam && ctx.state.mockExam.status !== "finished" ? ctx.state.mockExam : null;
+  const insights = getHomeTodayInsights(getNormalizedCourseData(), ctx.state);
 
   return `
     <section class="ds-page dashboard journey-page">
       ${renderAlerts(ctx, unfinishedMock)}
       ${renderTodayPlanSection(ctx)}
+      <nav class="home-nav-links rise-in" aria-label="Atalhos de hoje">
+        <a href="#home">Hoje</a>
+        <a href="#course">Missoes</a>
+        <a href="#review">Revisoes</a>
+        <a href="#exam/lernfeld">Simulados</a>
+        <a href="#home/progress">Progresso</a>
+      </nav>
 
       <header class="ds-hero-layout rise-in">
         <div class="ds-hero">
@@ -59,11 +59,28 @@ export function renderHomeView(ctx: AppContext): string {
         </aside>
       </header>
 
-      <section class="ds-kpi-grid rise-in" style="animation-delay:24ms" aria-label="Metricas">
-        ${kpiCard("Pendencias", String(dueItems), dueItems > 0 ? "Revisoes vencidas" : "Fila em dia")}
-        ${kpiCard("Streak", `${streak} dia(s)`, `Revisao: ${reviewStreak} dia(s)`)}
-        ${kpiCard("Progresso", `${progress.percent}%`, `${progress.completed}/${progress.total} capitulos`)}
-        ${kpiCard("Tempo", `${studyMinutes} min`, `${resolvedToday} revisoes hoje`)}
+      <section class="ds-section home-priority-grid rise-in" style="animation-delay:24ms" aria-label="Prioridades de hoje">
+        <article class="ds-card home-priority-item">
+          <span class="ds-caption">Revisoes pendentes</span>
+          <strong>${insights.dueMissionReviews}</strong>
+          <p class="ds-aux">${insights.dueLegacyReviewItems} itens vencidos na fila total</p>
+          <a class="button secondary" href="${insights.dueMissionReviews > 0 ? "#review-mission" : "#review"}">${insights.dueMissionReviews > 0 ? "Revisar missao" : "Abrir revisao"}</a>
+        </article>
+        <article class="ds-card home-priority-item">
+          <span class="ds-caption">Missao em andamento</span>
+          <strong>${insights.inProgressMissionTitle || "Nenhuma ativa"}</strong>
+          <p class="ds-aux">${insights.inProgressMissionId ? "Retome de onde parou na sessao de estudo." : "Inicie uma nova missao no plano de hoje."}</p>
+          <a class="button secondary" href="${insights.inProgressMissionId ? `#reader/${insights.inProgressMissionId}/${getResumeTab(ctx.state, insights.inProgressMissionId)}` : "#session/start"}">${insights.inProgressMissionId ? "Retomar missao" : "Iniciar sessao"}</a>
+        </article>
+        <article class="ds-card home-priority-item">
+          <span class="ds-caption">Dominio por Lernfeld</span>
+          <div class="home-lf-list">
+            ${insights.learningFieldMastery.slice(0, 4).map((item) => `
+              <p class="ds-aux"><strong>${item.title}</strong>: ${item.mastered}/${item.total} (${item.percent}%)</p>
+            `).join("")}
+          </div>
+          <a class="button secondary" href="#course">Ver trilha por Lernfeld</a>
+        </article>
       </section>
 
       <section class="ds-section journey-timeline-section rise-in" style="animation-delay:40ms" aria-label="Linha do tempo completa">

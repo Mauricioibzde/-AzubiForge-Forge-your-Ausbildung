@@ -5301,3 +5301,53 @@ a.session-step:hover {
   display: grid;
   gap: var(--space-4);
 }
+
+.home-nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.home-nav-links a {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-decoration: none;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.home-nav-links a:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.home-priority-grid {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.home-priority-item {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+}
+
+.home-priority-item strong {
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.home-lf-list {
+  display: grid;
+  gap: 0.15rem;
+}
+
+@media (max-width: 980px) {
+  .home-priority-grid {
+    grid-template-columns: 1fr;
+  }
+}
