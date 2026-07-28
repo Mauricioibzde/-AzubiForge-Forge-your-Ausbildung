@@ -8,7 +8,7 @@ import type {
   StudySessionActivity,
   StudySessionSummary
 } from "../../types";
-import { getResumeTab, getVisitedSteps, READER_STEPS } from "../course";
+import { getResumeTab, READER_STEPS } from "../course";
 import { hasStepLearningEvidence, stepEvidenceLabel } from "../learning/didacticTasks";
 import { hasMasteryEvidence } from "../learning/masteryGate";
 
@@ -43,10 +43,12 @@ export function buildSessionActivities(plan: DailyPlan, ctx: AppContext): StudyS
       return;
     }
 
-    const visited = new Set(getVisitedSteps(ctx.state, task.missionId));
-    const steps = task.type === "new-mission"
-      ? READER_STEPS
-      : READER_STEPS.filter((step) => !visited.has(step.id));
+    const openSteps = READER_STEPS.filter(
+      (step) => !hasStepLearningEvidence(ctx.state, task.missionId, step.id, null)
+    );
+    // Focused chunk: fit the planner block (~8–20 min) instead of dumping all 5 steps.
+    const maxSteps = Math.max(1, Math.min(openSteps.length, Math.round(task.estimatedMinutes / 7) || 1));
+    const steps = openSteps.slice(0, maxSteps);
 
     if (!steps.length) {
       activities.push({
@@ -196,6 +198,32 @@ export function completeCurrentActivity(
     status: isDone ? "completed" : session.status,
     endedAt: isDone ? new Date().toISOString() : session.endedAt
   };
+}
+
+/**
+ * Auto-advance session activities that already have evidence
+ * (e.g. student returns from reader after producing work).
+ */
+export function syncSessionFromEvidence(
+  session: StudySession,
+  state: AppState,
+  resolveMission?: (missionId: string) => Mission | null | undefined
+): StudySession {
+  if (session.status === "completed" || session.status === "paused") return session;
+
+  let current = session;
+  for (let guard = 0; guard < session.activities.length + 1; guard += 1) {
+    const activity = getCurrentActivity(current);
+    if (!activity) break;
+    const mission = resolveMission?.(activity.missionId) ?? null;
+    const gate = canCompleteSessionActivity(state, activity, mission);
+    if (!gate.allowed) break;
+    const next = completeCurrentActivity(current, state, mission);
+    if (next.completedActivityIds.length === current.completedActivityIds.length) break;
+    current = next;
+    if (current.status === "completed") break;
+  }
+  return current;
 }
 
 export function finishStudySession(session: StudySession): {

@@ -36,7 +36,8 @@ export function getPracticeStats(state: AppState, missionId: string): {
 export function getApplyCriteriaStats(
   state: AppState,
   missionId: string,
-  criteriaCount: number
+  criteriaCount: number,
+  minimumRequired?: number
 ): { checked: number; total: number; done: boolean; score: number | null } {
   if (criteriaCount <= 0) {
     return { checked: 0, total: 0, done: true, score: null };
@@ -45,20 +46,31 @@ export function getApplyCriteriaStats(
   for (let index = 0; index < criteriaCount; index += 1) {
     if (state.applyCriteriaChecks?.[`${missionId}:${index}`]) checked += 1;
   }
+  const needed = Math.min(
+    criteriaCount,
+    Math.max(1, minimumRequired ?? Math.ceil(criteriaCount * 0.7))
+  );
   const score = Math.round((checked / criteriaCount) * 100);
   return {
     checked,
     total: criteriaCount,
-    done: checked >= Math.ceil(criteriaCount * 0.7),
+    done: checked >= needed,
     score
   };
 }
 
+/** Criteria of the primary (required) apply activity only. */
 export function countApplyCriteria(mission: Mission | null | undefined): number {
   if (!mission) return 0;
-  return mission.phases.apply.activities.reduce((sum, activity) => {
-    return sum + (activity.criteria?.length || 0);
-  }, 0);
+  return mission.phases.apply.activities[0]?.criteria?.length || 0;
+}
+
+export function getApplyMinimumRequired(mission: Mission | null | undefined): number {
+  const primary = mission?.phases.apply.activities?.[0];
+  if (!primary) return 0;
+  const total = primary.criteria?.length || 0;
+  if (!total) return 0;
+  return Math.min(total, Math.max(1, primary.minimumCriteria ?? Math.ceil(total * 0.7)));
 }
 
 /** Whether the student may start the mastery test for this mission. */
@@ -71,8 +83,9 @@ export function evaluateMasteryGate(
     ?? DEFAULT_COMPLETION_RULES.minimumPracticeScore;
   const practice = getPracticeStats(state, missionId);
   const criteriaCount = countApplyCriteria(mission);
+  const applyMinimum = getApplyMinimumRequired(mission);
   const applyRequired = Boolean(mission?.completionRules.requireAppliedChallenge && criteriaCount > 0);
-  const apply = getApplyCriteriaStats(state, missionId, criteriaCount);
+  const apply = getApplyCriteriaStats(state, missionId, criteriaCount, applyMinimum);
   const applyProduction = countApplyProductions(state, mission);
   const latest = getLatestMasteryTestForMission(state.masteryTestHistory || [], missionId);
   const masteryPassed = Boolean(latest?.passed);
@@ -136,7 +149,7 @@ export function evaluateMasteryGate(
   if (applyRequired && !apply.done) {
     return {
       allowed: false,
-      reason: `Conclua a tarefa aplicada (pelo menos ${Math.ceil(criteriaCount * 0.7)} de ${criteriaCount} critérios) na etapa AP1.`,
+      reason: `Conclua o desafio aplicado (pelo menos ${applyMinimum} de ${criteriaCount} critérios) na etapa Aplicar.`,
       practiceAnswered: practice.answered,
       practiceScore: practice.score,
       minAnswered: MIN_PRACTICE_ANSWERS,

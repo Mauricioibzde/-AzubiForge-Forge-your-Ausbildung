@@ -191,8 +191,11 @@ function buildApplyActivities(chapter: Chapter, competencyIds: string[]): Missio
     minimumCriteria: 2
   }));
 
-  const fromIntermediate = exercisesToActivities(chapter, competencyIds, "apply", "intermediate").slice(0, 2);
-  return [...fromExamples, ...fromIntermediate];
+  // One strong required apply case — extras stay in practice, not as checkbox spam.
+  const primary = fromExamples[0]
+    || exercisesToActivities(chapter, competencyIds, "apply", "intermediate")[0]
+    || null;
+  return primary ? [primary] : [];
 }
 
 function buildPhases(chapter: Chapter, competencyIds: string[], estimatedMinutes: number): MissionPhases {

@@ -171,4 +171,13 @@ describe("generateDailyPlan", () => {
       expect(task.reason.length).toBeGreaterThan(10);
     });
   });
+
+  it("still plans when the next mission is larger than the session", () => {
+    const longMissions = [buildMission("big", 50), buildMission("next", 45)];
+    const plan = planForMinutes(30, longMissions, emptyState());
+    expect(plan.tasks.length).toBeGreaterThanOrEqual(1);
+    expect(plan.totalEstimatedMinutes).toBeLessThanOrEqual(30);
+    expect(plan.tasks[0].estimatedMinutes).toBeLessThanOrEqual(20);
+    expect(plan.tasks[0].reason.toLowerCase()).toMatch(/bloco|evid|sequ/);
+  });
 });

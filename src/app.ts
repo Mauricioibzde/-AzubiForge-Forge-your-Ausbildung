@@ -52,7 +52,8 @@ import {
   handleSessionPause,
   handleSessionResume,
   renderStudySessionView,
-  startStudySessionFromPlan
+  startStudySessionFromPlan,
+  syncActiveStudySession
 } from "./views/studySessionView";
 import {
   finishMasteryTest,
@@ -210,6 +211,13 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
       }
       setSessionHash("active");
       sessionMode = "active";
+    }
+    if (syncActiveStudySession(ctx)) {
+      saveState(ctx.state);
+      if (ctx.state.activeStudySession?.status === "completed") {
+        sessionMode = "summary";
+        setSessionHash("summary");
+      }
     }
     app.innerHTML = renderStudySessionView(ctx, sessionMode);
   } else if (route === "mastery") {

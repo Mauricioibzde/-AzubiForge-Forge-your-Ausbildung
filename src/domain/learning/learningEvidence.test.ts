@@ -126,6 +126,12 @@ describe("learningEvidence", () => {
   it("does not invent XP before mastery pass", () => {
     const state = baseState({
       sessionSteps: { m1: ["explain", "praxis", "vocab", "practice", "ap1"] },
+      stepArtifactSubmitted: {
+        "explain:m1": true,
+        "praxis:m1": true,
+        "apply:m1-apply-1": true
+      },
+      vocabChecks: { "vocab:m1:0": "correct" },
       exerciseChecks: { "m1:0": "correct", "m1:1": "wrong" }
     });
     const evidence = getMissionLearningEvidence(m1, state);
@@ -135,6 +141,7 @@ describe("learningEvidence", () => {
     expect(evidence.practiceScore).toBe(50);
     expect(evidence.competencyLabel).toContain("2 competências");
     expect(evidence.tone).toBe("partial");
+    expect(evidence.stepsDone).toBeGreaterThan(0);
   });
 
   it("counts XP only after passed mastery test", () => {

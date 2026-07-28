@@ -13,7 +13,6 @@ import {
   getSessionProgress,
   getStudyStreak,
   getTodayChapter,
-  isCompleted,
   stampToLocalDayKey
 } from "../course";
 import {
@@ -132,8 +131,8 @@ const STEP_DISPLAY: Record<ReaderTab, { label: string; shortLabel: string; learn
     ]
   },
   ap1: {
-    label: "Check AP1",
-    shortLabel: "Conclusão",
+    label: "Aplicar no caso",
+    shortLabel: "Aplicar",
     learnings: [
       "Fechar evidência da sessão",
       "Priorizar pontos fracos",
@@ -201,9 +200,6 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     };
   });
 
-  const chapterDone = isCompleted(ctx.state, chapter.id);
-  const allStepsVisited = session.percent === 100;
-  const studyDone = chapterDone || allStepsVisited;
   const mastered = hasMasteryEvidence(ctx.state, chapter.id);
   const completed = mastered;
 
@@ -233,13 +229,14 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
   const currentStep = steps.find((step) => step.state === "current") || steps[steps.length - 1];
   const upcomingSteps = steps.filter((step) => step.state === "upcoming");
   const doneSteps = steps.filter((step) => step.state === "done");
+  const evidenceDoneCount = doneSteps.length;
+  const evidenceComplete = evidenceDoneCount === steps.length;
   const remainingOpenSteps = steps.filter((step) => step.state !== "done").length;
-  const remainingSteps = mastered ? 0 : Math.max(1, remainingOpenSteps);
   const remainingMinutes = mastered
     ? 0
-    : studyDone
+    : evidenceComplete
       ? Math.max(12, stepMinutes)
-      : remainingSteps * stepMinutes;
+      : Math.max(1, remainingOpenSteps) * stepMinutes;
   const lastDone = doneSteps[doneSteps.length - 1] || null;
 
   const chapterIndex = getChapterIndex(ctx.data, chapter.id);
@@ -268,7 +265,6 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       ? formatDay(lastStudiedKey)
       : "Ainda não iniciada";
 
-  const evidenceDoneCount = doneSteps.length;
   const evidencePercent = Math.round((evidenceDoneCount / Math.max(steps.length, 1)) * 100);
 
   const celebration: MissionCelebration = mastered
@@ -279,7 +275,7 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
           ? `${evidence.summaryLabel} · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
           : (nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada")
       }
-    : evidenceDoneCount === steps.length
+    : evidenceComplete
       ? {
           show: true,
           title: "Percurso com evidência",
@@ -294,6 +290,18 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
         : { show: false, title: "", detail: "" };
 
   const hierarchyCrumb = `${module.title} › ${chapter.title}`;
+  const fallbackHref = mastered
+    ? (nextMission?.href || "#course")
+    : evidenceComplete
+      ? `#mastery/${chapter.id}`
+      : `#reader/${chapter.id}/${currentStep.id}`;
+  const fallbackLabel = mastered
+    ? (nextMission ? "Próxima missão" : "Abrir trilha")
+    : evidenceComplete
+      ? "Provar domínio"
+      : evidenceDoneCount > 0
+        ? "Continuar missão"
+        : "Começar missão";
 
   return {
     chapter,
@@ -304,17 +312,8 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     estimatedMinutes,
     difficultyLabel: DIFFICULTY_LABELS[difficulty] || "Intermediário",
     importanceLabel: IMPORTANCE_LABELS[importance],
-    continueHref: nextAction?.href
-      || (mastered ? (nextMission?.href || "#course") : studyDone ? `#mastery/${chapter.id}` : `#reader/${chapter.id}/${currentStep.id}`),
-    continueLabel: nextAction
-      ? labelForLearningAction(nextAction)
-      : mastered
-        ? (nextMission ? "Próxima missão" : "Abrir trilha")
-        : studyDone
-          ? "Provar domínio"
-          : evidenceDoneCount > 0
-            ? "Continuar missão"
-            : "Começar missão",
+    continueHref: nextAction?.href || fallbackHref,
+    continueLabel: nextAction ? labelForLearningAction(nextAction) : fallbackLabel,
     sessionPercent: evidencePercent,
     evidencePercent,
     masteryPassed: mastered,
@@ -350,8 +349,8 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
         ? evidence.summaryLabel
         : mastered
           ? "Domínio comprovado"
-          : studyDone
-            ? "Estudo concluído"
+          : evidenceComplete
+            ? "Pronto para domínio"
             : session.completed > 0
               ? "Em andamento"
               : "Disponível",
@@ -361,10 +360,12 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     materials: [
       { label: "Guia da missão", href: `#reader/${chapter.id}/explain`, kind: "guide" },
       { label: "Caso prático", href: `#reader/${chapter.id}/praxis`, kind: "map" },
-      { label: "Checklist AP1", href: `#reader/${chapter.id}/ap1`, kind: "checklist" },
+      { label: "Desafio aplicado", href: `#reader/${chapter.id}/ap1`, kind: "checklist" },
       { label: "Glossário", href: "#glossary", kind: "glossary" }
     ],
-    tip: tipForStep(currentStep.id, currentStep.hint),
+    tip: evidenceComplete && !mastered
+      ? "Percurso com evidência completo. Faça o teste de domínio para comprovar que aprendeu."
+      : tipForStep(currentStep.id, currentStep.hint),
     completed,
     nextAction
   };
@@ -375,7 +376,7 @@ function tipForStep(id: ReaderTab, hint: string): string {
   if (id === "praxis") return "Conecte o conceito a um cenário real de suporte ou infraestrutura.";
   if (id === "vocab") return "Produza antes de ver: digite o significado em PT e só então confira.";
   if (id === "practice") return "Escreva a resposta, confira o gabarito e marque Acertei/Errei com honestidade.";
-  if (id === "ap1") return "Marque os critérios da tarefa aplicada — isso libera o teste de domínio.";
+  if (id === "ap1") return "Resolva um caso por escrito e marque os critérios com honestidade — isso libera o domínio.";
   return hint;
 }
 

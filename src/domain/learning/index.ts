@@ -23,6 +23,7 @@ export {
   getPracticeStats,
   getApplyCriteriaStats,
   countApplyCriteria,
+  getApplyMinimumRequired,
   MIN_PRACTICE_ANSWERS
 } from "./masteryGate";
 export type { MasteryGateResult } from "./masteryGate";

@@ -86,24 +86,26 @@ export function buildPraxisDecisionTask(chapter: Chapter): DidacticTask {
   };
 }
 
-/** Applied production from mission apply activities. */
+/** Applied production — one required case (first apply activity). */
 export function buildApplyProductionTasks(
   chapter: Chapter,
   mission: Mission | null | undefined
 ): DidacticTask[] {
   const activities = mission?.phases.apply.activities || [];
-  if (!activities.length) {
+  const primary = activities[0];
+  if (!primary) {
     const fallback = buildPraxisDecisionTask(chapter);
     return [{
       ...fallback,
       id: applyArtifactKey(`${chapter.id}-apply-fallback`),
       kind: "apply-production",
       title: "Desafio aplicado",
-      whyItMatters: "Sem produção aplicada, o teste de domínio fica bloqueado."
+      whyItMatters: "Sem produção aplicada, o teste de domínio fica bloqueado.",
+      modelAnswer: fallback.modelAnswer || chapter.summary || chapter.description
     }];
   }
 
-  return activities.map((activity) => buildApplyTaskFromActivity(activity));
+  return [buildApplyTaskFromActivity(primary)];
 }
 
 export function buildApplyTaskFromActivity(activity: MissionActivity): DidacticTask {
@@ -123,9 +125,9 @@ export function buildApplyTaskFromActivity(activity: MissionActivity): DidacticT
     context: activity.question && activity.question !== activity.instruction
       ? activity.question
       : (activity.instruction || ""),
-    modelAnswer: activity.modelAnswer || activity.answer || "",
+    modelAnswer: (activity.modelAnswer || activity.answer || "").trim(),
     successCriteria: criteria,
-    whyItMatters: "Aplicar em um caso é a evidência que libera o teste de domínio.",
+    whyItMatters: "Um caso bem resolvido libera o teste de domínio — qualidade > quantidade.",
     placeholder: "Minha resposta / decisão: …\nJustificativa: …"
   };
 }
@@ -161,14 +163,11 @@ export function hasStepLearningEvidence(
     return Object.keys(state.exerciseChecks || {}).some((key) => key.startsWith(`${chapterId}:`));
   }
   if (tab === "ap1") {
-    const activities = mission?.phases.apply.activities || [];
-    if (!activities.length) {
+    const primary = mission?.phases.apply.activities?.[0];
+    if (!primary) {
       return hasArtifactSubmitted(state, applyArtifactKey(`${chapterId}-apply-fallback`));
     }
-    const withProduction = activities.filter((activity) =>
-      hasArtifactSubmitted(state, applyArtifactKey(activity.id))
-    ).length;
-    return withProduction >= Math.min(1, activities.length);
+    return hasArtifactSubmitted(state, applyArtifactKey(primary.id));
   }
   return false;
 }
@@ -181,21 +180,19 @@ export function stepEvidenceLabel(tab: ReaderTab): string {
   return "Escreva a resposta do desafio aplicado antes de avançar.";
 }
 
-/** Count apply activities with a submitted production artifact. */
+/** Count required apply production (primary activity only). */
 export function countApplyProductions(
   state: AppState,
   mission: Mission | null | undefined
 ): { submitted: number; total: number; done: boolean } {
-  const activities = mission?.phases.apply.activities || [];
-  if (!activities.length) {
+  const primary = mission?.phases.apply.activities?.[0];
+  if (!primary) {
     return { submitted: 0, total: 0, done: true };
   }
-  const submitted = activities.filter((activity) =>
-    hasArtifactSubmitted(state, applyArtifactKey(activity.id))
-  ).length;
+  const submitted = hasArtifactSubmitted(state, applyArtifactKey(primary.id)) ? 1 : 0;
   return {
     submitted,
-    total: activities.length,
-    done: submitted >= Math.max(1, Math.ceil(activities.length * 0.5))
+    total: 1,
+    done: submitted >= 1
   };
 }

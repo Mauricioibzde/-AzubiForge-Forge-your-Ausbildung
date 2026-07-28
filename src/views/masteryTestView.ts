@@ -205,11 +205,12 @@ function renderMasteryResults(ctx: AppContext, attempt: MasteryTestAttempt, retu
 
         <div class="study-session-actions">
           ${passed && returnToSession
-            ? `<a class="button accent" href="#session">Continuar sessao</a>`
+            ? `<a class="button accent" href="#session">Voltar à sessão focada</a>`
             : passed
-              ? `<a class="button accent" href="${escapeAttribute(nextHref)}">Continuar</a>`
+              ? `<a class="button accent" href="${escapeAttribute(nextHref)}">${nextHref.includes("review") ? "Ir para revisão" : nextHref.includes("mastery") ? "Próximo domínio" : nextHref.includes("reader") ? "Próxima missão" : "Continuar jornada"}</a>`
               : `<button class="button accent" type="button" data-mastery-retry>Nova tentativa</button>`}
           ${!passed ? `<a class="button secondary" href="${getDirectedReviewHref(attempt.missionId)}">Estudar erros</a>` : ""}
+          <a class="button secondary" href="#course">Ver trilha</a>
           <button class="button secondary" type="button" data-mastery-clear>Fechar</button>
         </div>
       </article>

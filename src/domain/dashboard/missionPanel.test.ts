@@ -123,4 +123,27 @@ describe("buildMissionPanelModel", () => {
     expect(model.celebration.detail).not.toMatch(/\+\d+\s*XP/);
     expect(model.importanceLabel.toLowerCase()).toContain("import");
   });
+
+  it("points next action to mastery when all steps have evidence", () => {
+    const ctx = {
+      data: sampleData,
+      state: baseState({
+        stepArtifactSubmitted: {
+          "explain:ch1": true,
+          "praxis:ch1": true,
+          "apply:ch1-apply-fallback": true
+        },
+        vocabChecks: { "vocab:ch1:0": "correct" },
+        exerciseChecks: { "ch1:0": "correct" }
+      }),
+      ui: {} as AppContext["ui"]
+    } as AppContext;
+
+    const model = buildMissionPanelModel(ctx);
+    expect(model.doneCount).toBe(5);
+    expect(model.masteryPassed).toBe(false);
+    expect(model.continueHref).toBe("#mastery/ch1");
+    expect(model.continueLabel.toLowerCase()).toMatch(/dom[ií]nio/);
+    expect(model.celebration.title).toBe("Percurso com evidência");
+  });
 });

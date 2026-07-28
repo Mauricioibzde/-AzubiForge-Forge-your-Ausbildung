@@ -252,7 +252,8 @@ describe("resolveNextLearningAction", () => {
     ];
     const courseWithDepth = sampleCourse([mission("m1"), deep, mission("m3")]);
     const state = baseState({
-      sessionSteps: { m2: ["explain"] }
+      sessionSteps: { m2: ["explain"] },
+      stepArtifactSubmitted: { "explain:m2": true }
     });
     const action = resolveNextLearningAction({ course: courseWithDepth, state, now });
     expect(action.type).toBe("continue-study");

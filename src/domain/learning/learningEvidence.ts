@@ -4,7 +4,8 @@ import type { AppState } from "../../types";
 import { getLatestMasteryTestForMission } from "../mastery/masteryTest";
 import { missionProgressFromLegacyState } from "../mission/engine";
 import { isMissionReviewDue } from "../review/missionReview";
-import { getVisitedSteps, READER_STEPS } from "../course";
+import { READER_STEPS } from "../course";
+import { hasStepLearningEvidence } from "./didacticTasks";
 
 /**
  * Honest learning evidence derived from AppState (no decorative XP ledger).
@@ -91,7 +92,9 @@ export function getMissionLearningEvidence(
 ): MissionLearningEvidence {
   const blockCount = mission.phases.learn.blocks.length || 1;
   const progress = missionProgressFromLegacyState(mission.id, state, blockCount);
-  const visited = getVisitedSteps(state, mission.id);
+  const stepsDone = READER_STEPS.filter((step) =>
+    hasStepLearningEvidence(state, mission.id, step.id, mission)
+  ).length;
   const practice = practiceStats(state, mission.id);
   const latestMastery = getLatestMasteryTestForMission(state.masteryTestHistory || [], mission.id);
   const masteryAttempts = (state.masteryTestHistory || []).filter((entry) => entry.missionId === mission.id).length;
@@ -104,14 +107,14 @@ export function getMissionLearningEvidence(
     masteryPassed: Boolean(latestMastery?.passed),
     reviewScore: reviewRecord?.lastScore ?? null,
     practiceScore: practice.score,
-    stepsDone: visited.length
+    stepsDone
   });
 
   let summaryLabel = "Ainda sem evidência registrada";
   if (tone === "proven") summaryLabel = "Domínio confirmado na revisão";
   else if (tone === "strong") summaryLabel = "Domínio inicial no teste";
-  else if (practice.score !== null) summaryLabel = `Prática ${practice.score}% · ${visited.length}/${READER_STEPS.length} etapas`;
-  else if (visited.length) summaryLabel = `${visited.length}/${READER_STEPS.length} etapas do leitor`;
+  else if (practice.score !== null) summaryLabel = `Prática ${practice.score}% · ${stepsDone}/${READER_STEPS.length} etapas`;
+  else if (stepsDone) summaryLabel = `${stepsDone}/${READER_STEPS.length} etapas com evidência`;
 
   const practiceLabel = practice.score === null
     ? "Sem exercícios marcados"
@@ -137,7 +140,7 @@ export function getMissionLearningEvidence(
 
   return {
     missionId: mission.id,
-    stepsDone: visited.length,
+    stepsDone,
     stepsTotal: READER_STEPS.length,
     practiceAttempted: practice.attempted,
     practiceCorrect: practice.correct,

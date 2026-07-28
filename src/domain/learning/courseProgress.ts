@@ -1,5 +1,6 @@
 import type { AppState, AzubiForgeData, Module, Progress } from "../../types";
-import { getModuleProgress, isCompleted } from "../course";
+import { getModuleProgress, isCompleted, READER_STEPS } from "../course";
+import { hasStepLearningEvidence } from "./didacticTasks";
 import { hasMasteryEvidence } from "./masteryGate";
 
 function toPercent(completed: number, total: number): number {
@@ -15,11 +16,11 @@ export function makeProgress(completed: number, total: number): Progress {
   };
 }
 
-/** Chapters marked complete or with any session step visited. */
+/** Chapters with study evidence (any didactic step) or marked complete — not mere visits. */
 export function countStudyProgress(state: AppState, chapterIds: string[]): Progress {
   const completed = chapterIds.filter((id) => {
     if (isCompleted(state, id)) return true;
-    return Boolean(state.sessionSteps[id]?.length);
+    return READER_STEPS.some((step) => hasStepLearningEvidence(state, id, step.id, null));
   }).length;
   return makeProgress(completed, chapterIds.length);
 }

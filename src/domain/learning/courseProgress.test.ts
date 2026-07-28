@@ -47,13 +47,22 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
 }
 
 describe("courseProgress", () => {
-  it("counts study from visits without counting as mastery", () => {
+  it("counts study from evidence without counting as mastery", () => {
     const state = baseState({
       sessionSteps: { a: ["explain"], b: ["explain", "praxis"] },
+      stepArtifactSubmitted: { "explain:a": true, "praxis:b": true },
       completed: ["c"]
     });
+    // Visits alone on a/b without artifacts would not count; a and b have artifacts; c is marked complete.
     expect(countStudyProgress(state, ["a", "b", "c", "d"])).toEqual(makeProgress(3, 4));
     expect(countMasteryProgress(state, ["a", "b", "c", "d"])).toEqual(makeProgress(0, 4));
+  });
+
+  it("does not count mere visits as percurso", () => {
+    const state = baseState({
+      sessionSteps: { a: ["explain", "praxis", "vocab"] }
+    });
+    expect(countStudyProgress(state, ["a", "b"])).toEqual(makeProgress(0, 2));
   });
 
   it("counts mastery only from passed tests", () => {

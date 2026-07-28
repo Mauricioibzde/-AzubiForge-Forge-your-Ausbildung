@@ -79,19 +79,19 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
       <article class="article">
         <div class="reader-kicker">
           <p class="eyebrow">${module?.subtitle || ctx.data.course.title}</p>
-          <span class="reader-session-pill">${READER_STEPS.filter((step) => hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission)).length}/${session.total} evidência · ${minutes} min</span>
+          <span class="reader-session-pill">${session.completed}/${session.total} evidência · ${minutes} min</span>
         </div>
         <h1>${chapter.title}</h1>
         <div class="reader-meta">
           <span>${chapter.studyTime || `${getReadingMinutes(chapter)} min leitura`}</span>
           <span>${index + 1} de ${ctx.data.chapters.length}</span>
-          <span>${done ? "Concluido" : "Em estudo"}</span>
+          <span>${hasMasteryEvidence(ctx.state, chapter.id) ? "Domínio ok" : done ? "Estudo marcado" : "Em estudo"}</span>
           ${readinessBadge(readiness)}
         </div>
 
         <section class="session-guide" aria-label="Fluxo da sessao" data-swipe-tabs>
           <div class="session-guide-copy">
-            <span class="card-label">Fluxo guiado · ${session.completed}/${session.total}</span>
+            <span class="card-label">Fluxo guiado · ${session.completed}/${session.total} evidência</span>
             <strong>${currentStep.label}</strong>
             <p>${stepCoach.goal}</p>
           </div>
@@ -242,7 +242,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           <nav class="chapter-mini-list" aria-label="Capitulos">
             ${ctx.data.chapters.slice(Math.max(0, index - 6), index + 7).map((item) => `
               <a class="${item.id === chapter.id ? "active" : ""}" href="#reader/${item.id}">
-                ${isCompleted(ctx.state, item.id) ? "OK " : ""}${item.title}
+                ${hasMasteryEvidence(ctx.state, item.id) ? "★ " : isCompleted(ctx.state, item.id) ? "· " : ""}${item.title}
               </a>
             `).join("")}
           </nav>
@@ -252,14 +252,15 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
       <div class="mobile-study-dock" aria-label="Acoes da sessao">
         <div class="mobile-dock-tabs" data-swipe-tabs aria-label="Etapas da sessao">
           ${READER_STEPS.map((step) => {
-            const visited = getVisitedSteps(ctx.state, chapter.id).includes(step.id);
+            const evidenced = hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission);
             const active = step.id === ctx.ui.readerTab;
             return `
               <button
-                class="mobile-dock-tab ${visited ? "visited" : ""} ${active ? "active" : ""}"
+                class="mobile-dock-tab ${evidenced ? "done" : ""} ${active ? "active" : ""}"
                 type="button"
                 data-reader-tab="${step.id}"
                 data-reader-chapter="${chapter.id}"
+                aria-label="${step.label}${evidenced ? " com evidência" : ""}"
               >${step.label}</button>
             `;
           }).join("")}
@@ -280,7 +281,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
             : `<a class="button secondary" href="#exam/drill">Treino AP1</a>`}
         `}
         <div class="mobile-study-meta">
-          <span>${session.completed}/${session.total} · ${readiness.label}</span>
+          <span>${session.completed}/${session.total} evidência · ${readiness.label}</span>
           ${exerciseStats.wrong ? `<button class="text-link" type="button" data-show-wrong-practice="${chapter.id}">Ver erros (${exerciseStats.wrong})</button>` : `<a class="text-link" href="#course">Trilha</a>`}
         </div>
       </div>
@@ -793,9 +794,11 @@ function ap1Tab(ctx: AppContext, chapter: Chapter): string {
               </button>
               <div class="apply-criteria-list">${criteriaHtml}</div>
             ` : `
-              <div class="production-feedback" role="status">
-                <p><strong>Modelo de qualidade:</strong> ${escapeHtml(task.modelAnswer)}</p>
-              </div>
+              ${task.modelAnswer ? `
+                <div class="production-feedback" role="status">
+                  <p><strong>Modelo de qualidade:</strong> ${escapeHtml(task.modelAnswer)}</p>
+                </div>
+              ` : ""}
               <div class="apply-criteria-list">${criteriaHtml}</div>
             `}
           </article>

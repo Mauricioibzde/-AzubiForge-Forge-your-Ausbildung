@@ -142,9 +142,29 @@ export function generateDailyPlan(input: DailyPlanInput): DailyPlan {
   let usedMinutes = 0;
 
   for (const task of candidates) {
-    if (usedMinutes + task.estimatedMinutes > availableMinutes) break;
-    tasks.push(task);
-    usedMinutes += task.estimatedMinutes;
+    const remaining = availableMinutes - usedMinutes;
+    if (remaining < 5) break;
+
+    let minutes = task.estimatedMinutes;
+    // Whole missions are often 45–50 min; pack a focused chunk that still fits.
+    if (task.type === "continue-mission" || task.type === "new-mission") {
+      minutes = Math.min(minutes, Math.max(8, Math.min(20, remaining)));
+    } else if (task.type === "test") {
+      minutes = Math.min(minutes, Math.max(8, remaining));
+    } else if (task.type === "review") {
+      minutes = Math.min(minutes, Math.max(6, remaining));
+    }
+
+    if (minutes > remaining) continue;
+
+    tasks.push({
+      ...task,
+      estimatedMinutes: minutes,
+      reason: minutes < task.estimatedMinutes
+        ? `${task.reason} Bloco focado de ${minutes} min (próxima evidência).`
+        : task.reason
+    });
+    usedMinutes += minutes;
   }
 
   return {

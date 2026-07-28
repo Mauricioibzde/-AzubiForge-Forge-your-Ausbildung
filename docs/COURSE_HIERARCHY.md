@@ -16,8 +16,8 @@ Curso
 
 | Barra | Significa | Não significa |
 |---|---|---|
-| **Percurso** | Capítulos visitados / estudo marcado | Domínio |
-| **Domínio** | Teste de domínio aprovado | Só ter aberto a página |
+| **Percurso** | Capítulos com evidência de estudo (produção/prática) ou marcados | Domínio |
+| **Domínio** | Teste de domínio aprovado | Só ter aberto a página / visitado abas |
 
 ## Comprovação de entendimento
 
@@ -29,3 +29,20 @@ Em cada missão a UI mostra:
 - o próximo requisito do gate (prática / apply / teste)
 
 Checkpoint da Lernsituation só libera quando **todas** as missões da situação têm domínio.
+
+## Sessão focada
+
+“Concluir atividade” só libera com evidência da etapa (produção / prática / domínio).
+Abrir o conteúdo sem fazer a tarefa **não** marca progresso.
+Ao voltar do leitor com a tarefa já feita, a atividade **avança automaticamente**.
+O plano da sessão fatia só as próximas etapas sem evidência (bloco focado).
+
+## Plano diário
+
+Missões longas (45–50 min) são fatiadas em **blocos de até 20 min** que cabem na sessão.
+O planner **pula** candidatos grandes demais em vez de gerar plano vazio.
+
+## Apply
+
+Uma missão exige **um** desafio aplicado forte (não vários checklists genéricos).
+

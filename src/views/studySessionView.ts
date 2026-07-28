@@ -10,10 +10,38 @@ import {
   getEstimatedSessionMinutes,
   getSessionActivityProgress,
   pauseStudySession,
-  resumeStudySession
+  resumeStudySession,
+  syncSessionFromEvidence
 } from "../domain/session/studySession";
 import { escapeAttribute, escapeHtml } from "../ui/html";
 import { buildTodayPlan } from "./todayPlanView";
+
+/** Advance session activities that already have evidence (e.g. return from reader). */
+export function syncActiveStudySession(ctx: AppContext): boolean {
+  const session = ctx.state.activeStudySession;
+  if (!session || session.status !== "active") return false;
+
+  const synced = syncSessionFromEvidence(session, ctx.state, (missionId) => {
+    try {
+      return getNormalizedCourseData().missionsById[missionId] || null;
+    } catch {
+      return null;
+    }
+  });
+  if (synced.completedActivityIds.length === session.completedActivityIds.length
+    && synced.status === session.status
+    && synced.currentIndex === session.currentIndex) {
+    return false;
+  }
+
+  ctx.state.activeStudySession = synced;
+  if (synced.status === "completed") {
+    const { session: finished, summary } = finishStudySession(synced);
+    ctx.state.activeStudySession = finished;
+    ctx.state.studySessionHistory = [summary, ...ctx.state.studySessionHistory].slice(0, 50);
+  }
+  return true;
+}
 
 export function renderStudySessionView(ctx: AppContext, mode: "active" | "summary"): string {
   const session = ctx.state.activeStudySession;
@@ -100,12 +128,12 @@ function renderActiveSession(ctx: AppContext, session: NonNullable<AppContext["s
             ? `<a class="button accent" href="${masteryHref}">Iniciar teste de dominio</a>`
             : current.kind === "review"
               ? `<a class="button accent" href="#review-mission/${escapeAttribute(current.missionId)}/session">Iniciar revisao de retencao</a>`
-              : `<a class="button accent" href="${readerHref}" data-session-open-reader>Fazer a tarefa</a>`}
-          ${isMasteryTest || current.kind === "review"
+              : evidenceGate.allowed
+                ? `<button class="button accent" type="button" data-session-complete>Concluir e avançar</button>`
+                : `<a class="button accent" href="${readerHref}" data-session-open-reader>Fazer a tarefa</a>`}
+          ${isMasteryTest || current.kind === "review" || evidenceGate.allowed
             ? ""
-            : evidenceGate.allowed
-              ? `<button class="button" type="button" data-session-complete>Concluir atividade</button>`
-              : `<button class="button soft-complete" type="button" data-session-evidence-needed>Concluir (falta evidência)</button>`
+            : `<button class="button soft-complete" type="button" data-session-evidence-needed>Concluir (falta evidência)</button>`
           }
           <button class="button secondary" type="button" data-session-pause>Salvar e sair</button>
         </div>

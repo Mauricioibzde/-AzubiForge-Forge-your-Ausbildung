@@ -69,7 +69,7 @@ export function dualProgressBars(input: DualProgressInput): string {
         <div class="progress-track dual-progress-track study" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${input.study.percent}" aria-label="${escapeAttribute(studyLabel)}">
           <div class="progress-fill" style="width: ${input.study.percent}%"></div>
         </div>
-        <p class="dual-progress-hint">Capítulos visitados / marcados no estudo</p>
+        <p class="dual-progress-hint">Capítulos com evidência de estudo (produção/prática)</p>
       </div>
       <div class="dual-progress-row">
         <div class="dual-progress-meta">
