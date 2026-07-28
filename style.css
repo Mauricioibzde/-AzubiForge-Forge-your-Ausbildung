@@ -5351,3 +5351,79 @@ a.session-step:hover {
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .home-nav-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .home-nav-links a {
+    text-align: center;
+    padding: 0.5rem 0.7rem;
+    min-height: 42px;
+    display: grid;
+    place-items: center;
+  }
+
+  .today-next-actions,
+  .today-plan-actions,
+  .study-session-actions {
+    width: 100%;
+  }
+
+  .today-next-actions .button,
+  .today-plan-actions .button,
+  .study-session-actions .button {
+    flex: 1 1 100%;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .today-plan-item {
+    align-items: flex-start;
+  }
+
+  .today-plan-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .study-session-outline-list li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mastery-score {
+    font-size: clamp(2.2rem, 12vw, 3.6rem);
+  }
+
+  .mock-question-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-priority-item strong {
+    font-size: 1rem;
+  }
+
+  .ds-hero h1,
+  .ds-hero-layout .ds-hero h1 {
+    font-size: clamp(1.9rem, 9vw, 2.4rem);
+  }
+
+  .topbar {
+    gap: 8px;
+  }
+
+  .topbar-continue,
+  .review-due-chip {
+    max-width: 96px;
+    font-size: 0.68rem;
+    padding-inline: 6px;
+  }
+}
