@@ -35,9 +35,9 @@ const homePolish = await desktop.evaluate(() => {
     || "";
   const parts = href.replace(/^#/, "").split("/");
   return {
-    dashboard: Boolean(document.querySelector(".dashboard-hero")),
+    dashboard: Boolean(document.querySelector(".ds-hero, .dashboard-hero")),
     lucideIcons: document.querySelectorAll(".lucide, [data-lucide]").length,
-    streakCalendar: Boolean(document.querySelector(".streak-calendar")),
+    streakCalendar: Boolean(document.querySelector(".streak-calendar, .ds-progress-rail .streak-calendar")),
     streakDays: document.querySelectorAll(".streak-day").length,
     resumeDeepLink: parts[0] === "reader" && parts.length >= 3,
     href
@@ -130,7 +130,7 @@ await mobile.screenshot({ path: `${screenshotsDir}/mobile-exam.png`, fullPage: t
 
 await mobile.goto(`${baseUrl}/#course`, { waitUntil: "networkidle" });
 const courseResume = await mobile.evaluate(() => {
-  const href = document.querySelector(".course-hero-actions a.button, .module-head-actions a.button, .path-node.current a.button")?.getAttribute("href") || "";
+  const href = document.querySelector(".ds-hero .button.accent, .course-hero-actions a.button, .module-head-actions a.button, .path-node.current a.button")?.getAttribute("href") || "";
   const parts = href.replace(/^#/, "").split("/");
   return parts[0] === "reader" && parts.length >= 3;
 });

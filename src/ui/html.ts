@@ -65,6 +65,37 @@ export function donutProgress(progress: Progress, caption: string): string {
   `;
 }
 
+export function kpiCard(label: string, value: string, note = ""): string {
+  return `
+    <article class="ds-kpi ds-card">
+      <span class="ds-caption">${label}</span>
+      <div class="ds-kpi-value">${value}</div>
+      ${note ? `<p class="ds-aux">${note}</p>` : ""}
+    </article>
+  `;
+}
+
+export function workflowCard(
+  label: string,
+  title: string,
+  description: string,
+  statusClass: string,
+  statusText: string,
+  href: string,
+  cta: string,
+  extraAttrs = ""
+): string {
+  return `
+    <article class="ds-workflow-card ds-card">
+      <span class="ds-caption">${label}</span>
+      <h3 class="ds-card-title">${title}</h3>
+      <p class="ds-aux">${description}</p>
+      <span class="status-pill ${statusClass}">${statusText}</span>
+      <a class="button secondary" href="${href}" ${extraAttrs}>${cta}</a>
+    </article>
+  `;
+}
+
 export function confidenceBadge(state: AppState, chapterId: string): string {
   const value = state.confidence[chapterId];
   if (!value) return "";

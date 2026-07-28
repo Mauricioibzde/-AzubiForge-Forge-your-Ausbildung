@@ -17,10 +17,15 @@
   --shadow-hover: 0 20px 48px rgba(15, 35, 45, 0.14);
   --glow-primary: 0 0 0 1px rgba(15, 107, 95, 0.18), 0 8px 24px rgba(15, 107, 95, 0.12);
   --glow-accent: 0 0 0 1px rgba(201, 146, 63, 0.24), 0 8px 24px rgba(201, 146, 63, 0.16);
-  --radius: 18px;
-  --radius-lg: 24px;
-  --radius-sm: 14px;
-  --content: 1240px;
+  --radius: 20px;
+  --radius-lg: 20px;
+  --radius-sm: 20px;
+  --container-max: 1600px;
+  --content: 1360px;
+  --gutter: 32px;
+  --margin-outer: 48px;
+  --gap-v: 32px;
+  --gap-h: 32px;
   --sidebar-width: 292px;
   --topbar-height: 72px;
   --space-1: 8px;
@@ -4701,6 +4706,281 @@ a.session-step:hover {
   }
 
   .course-hero-main {
+    padding: var(--space-3);
+  }
+}
+
+/* ═══ Master Design System v1.0 ═══ */
+
+.ds-page {
+  display: grid;
+  gap: var(--gap-v);
+  max-width: var(--container-max);
+  width: min(100%, var(--container-max));
+  margin: 0 auto;
+  padding: 0 var(--margin-outer);
+}
+
+.ds-caption {
+  display: block;
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ds-aux {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.ds-lead {
+  margin: var(--space-2) 0;
+  max-width: 56ch;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.ds-card {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.ds-card:hover {
+  transform: scale(1.01);
+}
+
+.ds-card-title {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-ui);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.ds-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ds-section-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 2.5vw, 2.625rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.ds-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.ds-hero h1,
+.ds-hero-layout .ds-hero h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 4.5vw, 4rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  max-width: none;
+}
+
+.ds-hero-layout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--gap-h);
+  align-items: start;
+}
+
+.ds-hero {
+  grid-column: span 8;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.ds-progress-rail {
+  grid-column: span 4;
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.ds-workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap-h);
+}
+
+.ds-workflow-card {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.ds-workflow-card .button {
+  justify-self: start;
+  margin-top: auto;
+}
+
+.ds-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap-h);
+}
+
+.ds-kpi {
+  display: grid;
+  gap: var(--space-1);
+  min-height: 120px;
+  align-content: start;
+}
+
+.ds-kpi-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.ds-main-layout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--gap-h);
+  align-items: start;
+}
+
+.ds-timeline-block {
+  grid-column: span 8;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.ds-secondary-rail {
+  grid-column: span 4;
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.ds-session-block {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.ds-session-timeline .path-node {
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+}
+
+.ds-timeline-primary {
+  margin-top: var(--space-3);
+}
+
+.ds-search-block {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ds-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: var(--space-1) 0;
+}
+
+.ds-alert {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.panel:hover,
+.stat-card:hover,
+.premium-card:hover {
+  transform: none;
+}
+
+.ds-card:hover,
+.ds-kpi:hover,
+.ds-workflow-card:hover {
+  transform: scale(1.01);
+  box-shadow: var(--shadow-hover);
+}
+
+.button:hover {
+  transform: scale(1.01);
+}
+
+.app-shell {
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.page {
+  padding: var(--space-4) 0 var(--space-6);
+}
+
+@media (max-width: 1100px) {
+  .ds-hero-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-hero,
+  .ds-progress-rail {
+    grid-column: auto;
+  }
+
+  .ds-main-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-timeline-block,
+  .ds-secondary-rail {
+    grid-column: auto;
+  }
+
+  .ds-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ds-workflow-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .ds-page {
+    padding: 0 var(--space-2);
+  }
+
+  .ds-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-hero {
     padding: var(--space-3);
   }
 }
