@@ -104,7 +104,9 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
             <span class="ds-caption">Jornada AP1</span>
             <p class="ds-aux">${journey.completed}/${journey.total} capitulos · ${journey.percent}% da trilha</p>
           </div>
-          <a class="button accent" href="${nextJourneyHref}">Proximo passo na jornada</a>
+          ${ctx.state.activeStudySession && ctx.state.activeStudySession.status !== "completed"
+            ? `<a class="button accent" href="#session">Voltar a sessao focada</a>`
+            : `<a class="button accent" href="${nextJourneyHref}">Proximo passo na jornada</a>`}
           <a class="button secondary" href="#home">Ver linha do tempo</a>
         </section>
 

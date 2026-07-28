@@ -84,7 +84,10 @@ function emptyState(): AppState {
       onboardingDone: true,
       dailyGoalSessions: 1,
       studyGoal: "Test"
-    }
+    },
+    activeStudySession: null,
+    studySessionHistory: [],
+    missionReviews: {}
   };
 }
 

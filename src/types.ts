@@ -1,4 +1,4 @@
-export type RouteName = "home" | "course" | "reader" | "review" | "glossary" | "docs-ai" | "exam";
+export type RouteName = "home" | "course" | "reader" | "review" | "glossary" | "docs-ai" | "exam" | "session";
 
 export type CourseFilter = "all" | "open" | "done" | "notes" | "hard";
 export type GlossaryFilter = "all" | "network" | "security" | "database" | "programming";
@@ -7,6 +7,9 @@ export type Confidence = "ok" | "review" | "hard" | "ready";
 export type Theme = "light" | "dark";
 export type ReadingSize = "normal" | "large";
 export type ExamFocusMode = "weak" | "signals" | "drill" | "checklist" | "mock" | "mistakes";
+export type StudySessionStatus = "active" | "paused" | "completed";
+export type StudySessionActivityKind = "reader-step" | "review" | "mastery-test";
+export type MissionReviewStatus = "scheduled" | "due" | "completed";
 export type MockExamLength = "short" | "full";
 export type MockExamStatus = "active" | "grading" | "finished";
 export type ExerciseCheck = "correct" | "wrong";
@@ -173,6 +176,48 @@ export interface Preferences {
   studyGoal: string;
 }
 
+export interface StudySessionActivity {
+  id: string;
+  kind: StudySessionActivityKind;
+  missionId: string;
+  title: string;
+  instruction: string;
+  estimatedMinutes: number;
+  readerTab?: ReaderTab;
+  planTaskId?: string;
+}
+
+export interface StudySession {
+  id: string;
+  planDate: string;
+  status: StudySessionStatus;
+  startedAt: string;
+  pausedAt: string | null;
+  endedAt: string | null;
+  activities: StudySessionActivity[];
+  currentIndex: number;
+  completedActivityIds: string[];
+}
+
+export interface StudySessionSummary {
+  id: string;
+  planDate: string;
+  startedAt: string;
+  endedAt: string;
+  activitiesCompleted: number;
+  activitiesTotal: number;
+  minutesStudied: number;
+  missionIds: string[];
+}
+
+export interface MissionReviewRecord {
+  reviewLevel: number;
+  lastReviewedAt: string | null;
+  nextReviewAt: string | null;
+  lastScore: number | null;
+  status: MissionReviewStatus;
+}
+
 export interface AppState {
   completed: string[];
   lastChapterId: string;
@@ -191,6 +236,9 @@ export interface AppState {
   lastStudiedAt: Record<string, string>;
   studyDates: string[];
   preferences: Preferences;
+  activeStudySession: StudySession | null;
+  studySessionHistory: StudySessionSummary[];
+  missionReviews: Record<string, MissionReviewRecord>;
 }
 
 export interface UiState {

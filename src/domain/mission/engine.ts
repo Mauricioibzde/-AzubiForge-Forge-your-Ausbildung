@@ -187,7 +187,8 @@ export function missionProgressFromLegacyState(
 
   if (state.reviewSchedule[missionId]) {
     progress.nextReviewAt = state.reviewSchedule[missionId];
-    if (new Date(state.reviewSchedule[missionId]) <= new Date()) {
+    const reviewDue = new Date(state.reviewSchedule[missionId]) <= new Date();
+    if (reviewDue && ["provisionally-mastered", "mastered", "review-due"].includes(progress.status)) {
       progress.status = "review-due";
     }
   }

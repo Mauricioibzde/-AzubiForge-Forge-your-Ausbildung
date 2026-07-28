@@ -45,6 +45,14 @@ import { renderHomeView } from "./views/homeView";
 import { renderReaderView } from "./views/readerView";
 import { renderReviewView } from "./views/reviewView";
 import {
+  handleSessionComplete,
+  handleSessionDismiss,
+  handleSessionPause,
+  handleSessionResume,
+  renderStudySessionView,
+  startStudySessionFromPlan
+} from "./views/studySessionView";
+import {
   buildMockExamHistoryEntry,
   createMockExam,
   formatMockExamTimer,
@@ -162,7 +170,18 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
     setExamHash(ctx.ui.examFocusMode);
     app.innerHTML = renderExamView(ctx);
   } else if (route === "docs-ai") app.innerHTML = renderDocsAiView(ctx);
-  else app.innerHTML = renderHomeView(ctx);
+  else if (route === "session") {
+    let sessionMode: "active" | "summary" = id === "summary" ? "summary" : "active";
+    if (id === "start") {
+      if (!ctx.state.activeStudySession || ctx.state.activeStudySession.status === "completed") {
+        startStudySessionFromPlan(ctx);
+        saveState(ctx.state);
+      }
+      setSessionHash("active");
+      sessionMode = "active";
+    }
+    app.innerHTML = renderStudySessionView(ctx, sessionMode);
+  } else app.innerHTML = renderHomeView(ctx);
 
   syncChrome(ctx, route || "home", chapterId);
   app.focus({ preventScroll: true });
@@ -217,6 +236,13 @@ function setExamHash(mode: ExamFocusMode): void {
   }
 }
 
+function setSessionHash(mode: "active" | "summary"): void {
+  const next = mode === "summary" ? "#session/summary" : "#session";
+  if (window.location.hash !== next) {
+    history.replaceState(null, "", next);
+  }
+}
+
 function expireActiveMockIfNeeded(ctx: AppContext): boolean {
   const attempt = ctx.state.mockExam;
   if (!attempt || attempt.status !== "active") return false;
@@ -227,6 +253,42 @@ function expireActiveMockIfNeeded(ctx: AppContext): boolean {
 
 function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void {
   const target = event.target as Element;
+
+  if (target.closest("[data-session-complete]")) {
+    event.preventDefault();
+    handleSessionComplete(ctx);
+    saveState(ctx.state);
+    if (ctx.state.activeStudySession?.status === "completed") {
+      window.location.hash = "#session/summary";
+    } else {
+      renderRoute(app, ctx);
+    }
+    return;
+  }
+
+  if (target.closest("[data-session-pause]")) {
+    event.preventDefault();
+    handleSessionPause(ctx);
+    saveState(ctx.state);
+    window.location.hash = "#home";
+    return;
+  }
+
+  if (target.closest("[data-session-resume]")) {
+    event.preventDefault();
+    handleSessionResume(ctx);
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  if (target.closest("[data-session-dismiss]")) {
+    event.preventDefault();
+    handleSessionDismiss(ctx);
+    saveState(ctx.state);
+    window.location.hash = "#home";
+    return;
+  }
 
   if (target.closest("[data-go-exam-mock]")) {
     ctx.ui.examFocusMode = "mock";

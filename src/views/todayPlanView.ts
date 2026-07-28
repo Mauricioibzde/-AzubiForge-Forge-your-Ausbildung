@@ -4,6 +4,7 @@ import { getNormalizedCourseData } from "../data/normalizedCourse";
 import { generateDailyPlan } from "../domain/planner/generateDailyPlan";
 import { getResumeTab } from "../domain/course";
 import { userLearningStateFromAppState } from "../state/userLearningBridge";
+import { hasResumableSession } from "../domain/session/studySession";
 import { escapeAttribute } from "../ui/html";
 
 export function buildTodayPlan(ctx: AppContext): DailyPlan {
@@ -19,9 +20,11 @@ export function buildTodayPlan(ctx: AppContext): DailyPlan {
 export function renderTodayPlanSection(ctx: AppContext): string {
   const plan = buildTodayPlan(ctx);
   const primary = plan.tasks[0];
+  const pausedSession = ctx.state.activeStudySession?.status === "paused";
 
   return `
     <section class="ds-section today-plan-section rise-in" aria-label="Plano de hoje">
+      ${pausedSession ? renderPausedSessionAlert() : ""}
       <div class="ds-section-head">
         <div>
           <h2 class="ds-section-title">Hoje</h2>
@@ -44,6 +47,7 @@ export function renderTodayPlanSection(ctx: AppContext): string {
 
 function renderNextActionCard(task: DailyPlanTask, ctx: AppContext): string {
   const href = taskHref(task, ctx);
+  const canStartSession = !hasResumableSession(ctx.state) || ctx.state.activeStudySession?.status === "paused";
   return `
     <article class="ds-card today-next-action">
       <p class="ds-caption">Proxima acao recomendada</p>
@@ -53,7 +57,22 @@ function renderNextActionCard(task: DailyPlanTask, ctx: AppContext): string {
         <span class="today-task-type">${taskTypeLabel(task.type)}</span>
         <span class="today-task-time">${task.estimatedMinutes} min</span>
       </div>
-      <a class="button accent" href="${href}">Iniciar agora</a>
+      <div class="today-next-actions">
+        ${canStartSession
+          ? `<a class="button accent" href="#session/start">Iniciar sessao focada</a>`
+          : `<a class="button accent" href="#session">Retomar sessao</a>`}
+        <a class="button secondary" href="${href}">Abrir direto</a>
+      </div>
+    </article>
+  `;
+}
+
+function renderPausedSessionAlert(): string {
+  return `
+    <article class="ds-card ds-alert today-session-alert" role="status">
+      <strong>Sessao pausada</strong>
+      <p class="ds-aux">Voce tem uma sessao focada salva. Retome de onde parou.</p>
+      <a class="button accent" href="#session">Retomar sessao</a>
     </article>
   `;
 }
