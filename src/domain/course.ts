@@ -301,6 +301,17 @@ export function getChapterPathStatus(
   return "open";
 }
 
+export function getEstimatedStudyMinutes(data: AzubiForgeData, state: AppState): number {
+  return state.completed.reduce((sum, chapterId) => {
+    const chapter = findChapter(data, chapterId);
+    return sum + (chapter ? getReadingMinutes(chapter) : 0);
+  }, 0);
+}
+
+export function countChaptersWithNotes(state: AppState): number {
+  return Object.values(state.notes).filter((note) => note.trim()).length;
+}
+
 export function getEstimatedSessionMinutes(chapter: Chapter): number {
   return Math.max(12, Math.min(35, getReadingMinutes(chapter) + 8));
 }

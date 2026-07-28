@@ -92,7 +92,8 @@ function createFallbackState(data: AzubiForgeData): AppState {
       theme: "light",
       readingSize: "normal",
       onboardingDone: false,
-      dailyGoalSessions: 1
+      dailyGoalSessions: 1,
+      studyGoal: "Dominar a AP1 e organizar os fundamentos."
     }
   };
 }
@@ -302,6 +303,9 @@ function sanitizePreferences(value: unknown, fallback: Preferences): Preferences
       : fallback.onboardingDone,
     dailyGoalSessions: typeof preferences.dailyGoalSessions === "number" && preferences.dailyGoalSessions > 0
       ? Math.min(5, Math.round(preferences.dailyGoalSessions))
-      : fallback.dailyGoalSessions
+      : fallback.dailyGoalSessions,
+    studyGoal: typeof preferences.studyGoal === "string" && preferences.studyGoal.trim()
+      ? preferences.studyGoal.trim().slice(0, 240)
+      : fallback.studyGoal
   };
 }

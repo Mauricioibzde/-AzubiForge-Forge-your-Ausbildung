@@ -38,14 +38,28 @@ export function updateContinueChip(ctx: AppContext, route: RouteName): void {
   const chapter = findChapter(ctx.data, ctx.state.lastChapterId) || ctx.data.chapters[0];
   const hideOnReader = route === "reader";
   const useful = Boolean(chapter) && !hideOnReader;
+  const resumeTab = chapter ? getResumeTab(ctx.state, chapter.id) : "explain";
+  const href = chapter ? `#reader/${chapter.id}/${resumeTab}` : "#home";
+  const label = route === "home" ? `Continuar: ${chapter?.title || "estudo"}` : "Continuar estudo";
 
   document.querySelectorAll<HTMLAnchorElement>("[data-continue-study]").forEach((chip) => {
     chip.hidden = !useful;
     if (!chapter) return;
-    const resumeTab = getResumeTab(ctx.state, chapter.id);
-    chip.href = `#reader/${chapter.id}/${resumeTab}`;
-    chip.textContent = route === "home" ? `Continuar: ${chapter.title}` : "Continuar estudo";
+    chip.href = href;
     chip.title = chapter.title;
+
+    const textLabel = chip.querySelector<HTMLElement>("[data-continue-label]");
+    if (textLabel) textLabel.textContent = label;
+    else chip.textContent = label;
+  });
+}
+
+export function scrollToHomeSection(sectionId: string): void {
+  window.requestAnimationFrame(() => {
+    const target = document.getElementById(sectionId);
+    if (!target) return;
+    const top = target.getBoundingClientRect().top + window.scrollY - 96;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   });
 }
 

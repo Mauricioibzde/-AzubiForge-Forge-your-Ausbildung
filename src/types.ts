@@ -169,6 +169,7 @@ export interface Preferences {
   readingSize: ReadingSize;
   onboardingDone: boolean;
   dailyGoalSessions: number;
+  studyGoal: string;
 }
 
 export interface AppState {

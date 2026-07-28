@@ -29,6 +29,7 @@ import type {
 import {
   closeSidebar,
   registerConnectivityListeners,
+  scrollToHomeSection,
   scrollToPageTop,
   syncChrome,
   toggleSidebar
@@ -162,6 +163,8 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
   syncChrome(ctx, route || "home", chapterId);
   app.focus({ preventScroll: true });
 
+  if (route === "home" && id === "progress") scrollToHomeSection("dashboard-progress");
+
   if (previousRoute && previousRoute !== route) scrollToPageTop();
   maybeScrollReaderStep(route);
   maybeScrollMockPill(route || "home", ctx);
@@ -265,6 +268,38 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     saveState(ctx.state);
     renderRoute(app, ctx);
     return;
+  }
+
+  if (target.closest("[data-edit-study-goal]")) {
+    const current = ctx.state.preferences.studyGoal;
+    const next = window.prompt("Seu objetivo de estudo:", current);
+    if (next !== null) {
+      const trimmed = next.trim();
+      if (trimmed) {
+        ctx.state.preferences.studyGoal = trimmed.slice(0, 240);
+        saveState(ctx.state);
+        renderRoute(app, ctx);
+      }
+    }
+    return;
+  }
+
+  if (target.closest("[data-toggle-offline-tools]")) {
+    const panel = app.querySelector<HTMLDetailsElement>("[data-offline-tools]");
+    if (panel) {
+      panel.hidden = false;
+      panel.open = true;
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    return;
+  }
+
+  const courseFilterLink = target.closest<HTMLElement>("[data-course-filter]");
+  if (courseFilterLink?.dataset.courseFilter) {
+    const nextFilter = courseFilterLink.dataset.courseFilter as CourseFilter;
+    if (["all", "open", "done", "notes", "hard"].includes(nextFilter)) {
+      ctx.ui.courseFilter = nextFilter;
+    }
   }
 
   const goalButton = target.closest<HTMLElement>("[data-daily-goal]");
@@ -1136,9 +1171,12 @@ function applyPreferences(ctx: AppContext): void {
   document.documentElement.dataset.theme = ctx.state.preferences.theme;
   document.documentElement.dataset.readingSize = ctx.state.preferences.readingSize;
   const dark = ctx.state.preferences.theme === "dark";
+  const label = dark ? "Claro" : "Escuro";
 
   document.querySelectorAll(".theme-toggle[data-theme-toggle]").forEach((themeButton) => {
-    themeButton.textContent = dark ? "Claro" : "Escuro";
+    const textLabel = themeButton.querySelector(".theme-toggle-label");
+    if (textLabel) textLabel.textContent = label;
+    else themeButton.textContent = label;
     themeButton.setAttribute(
       "aria-label",
       dark ? "Alternar para tema claro" : "Alternar para tema escuro"

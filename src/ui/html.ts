@@ -48,6 +48,23 @@ export function inlineProgress(progress: Progress): string {
   `;
 }
 
+export function donutProgress(progress: Progress, caption: string): string {
+  const deg = Math.max(0, Math.min(100, progress.percent)) * 3.6;
+  return `
+    <div
+      class="donut-progress"
+      style="--donut-deg: ${deg}deg"
+      role="img"
+      aria-label="${progress.percent}% ${caption}"
+    >
+      <div class="donut-hole">
+        <strong>${progress.percent}%</strong>
+        <span>${caption}</span>
+      </div>
+    </div>
+  `;
+}
+
 export function confidenceBadge(state: AppState, chapterId: string): string {
   const value = state.confidence[chapterId];
   if (!value) return "";
