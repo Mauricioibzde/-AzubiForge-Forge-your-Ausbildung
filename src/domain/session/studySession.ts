@@ -61,12 +61,22 @@ export function buildSessionActivities(plan: DailyPlan, ctx: AppContext): StudyS
 
     const minutesEach = Math.max(3, Math.round(task.estimatedMinutes / steps.length));
     steps.forEach((step) => {
+      const instruction =
+        step.id === "explain"
+          ? "Leia e depois escreva 2 frases de memória (recuperação ativa)."
+          : step.id === "praxis"
+            ? "No caso JIKU: registre a decisão que você tomaria e por quê."
+            : step.id === "vocab"
+              ? "Digite o significado DE→PT antes de ver a resposta."
+              : step.id === "practice"
+                ? "Escreva a resposta, confira o gabarito e marque Acertei/Errei."
+                : "Resolva o desafio aplicado por escrito; só então marque os critérios.";
       activities.push({
         id: `activity-${task.missionId}-${step.id}`,
         kind: "reader-step",
         missionId: task.missionId,
         title: `${task.title} · ${step.label}`,
-        instruction: step.hint,
+        instruction,
         estimatedMinutes: minutesEach,
         readerTab: step.id,
         planTaskId: task.id

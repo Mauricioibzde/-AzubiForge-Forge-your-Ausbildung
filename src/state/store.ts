@@ -128,7 +128,13 @@ function createFallbackState(data: AzubiForgeData): AppState {
     activeMissionReview: null,
     missionReviewHistory: [],
     activeCheckpoint: null,
-    checkpointHistory: []
+    checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {}
   };
 }
 
@@ -168,7 +174,13 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     activeMissionReview: sanitizeMissionReviewAttempt(imported.activeMissionReview, validChapterIds),
     missionReviewHistory: sanitizeMissionReviewHistory(imported.missionReviewHistory, validChapterIds),
     activeCheckpoint: sanitizeCheckpointAttempt(imported.activeCheckpoint, data),
-    checkpointHistory: sanitizeCheckpointHistory(imported.checkpointHistory, data)
+    checkpointHistory: sanitizeCheckpointHistory(imported.checkpointHistory, data),
+    vocabAttempts: sanitizeAttemptRecord(imported.vocabAttempts),
+    practiceAttempts: sanitizeAttemptRecord(imported.practiceAttempts),
+    practiceRevealed: sanitizeBooleanMap(imported.practiceRevealed),
+    applyCriteriaChecks: sanitizeBooleanMap(imported.applyCriteriaChecks),
+    stepArtifacts: sanitizeAttemptRecord(imported.stepArtifacts),
+    stepArtifactSubmitted: sanitizeBooleanMap(imported.stepArtifactSubmitted)
   };
 }
 
@@ -657,4 +669,24 @@ function sanitizeCheckpointHistory(value: unknown, data: AzubiForgeData): Checkp
     })
     .filter((item): item is CheckpointHistoryEntry => Boolean(item))
     .slice(0, 50);
+}
+
+function sanitizeAttemptRecord(value: unknown): Record<string, string> {
+  const record: Record<string, string> = {};
+  if (!value || typeof value !== "object") return record;
+  Object.entries(value).forEach(([key, item]) => {
+    if (typeof key === "string" && typeof item === "string" && item.trim()) {
+      record[key] = item.trim().slice(0, 2000);
+    }
+  });
+  return record;
+}
+
+function sanitizeBooleanMap(value: unknown): Record<string, boolean> {
+  const record: Record<string, boolean> = {};
+  if (!value || typeof value !== "object") return record;
+  Object.entries(value).forEach(([key, item]) => {
+    if (typeof key === "string") record[key] = Boolean(item);
+  });
+  return record;
 }

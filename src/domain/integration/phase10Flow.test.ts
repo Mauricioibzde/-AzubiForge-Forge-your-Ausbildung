@@ -115,7 +115,13 @@ function createState(): AppState {
     activeMissionReview: null,
     missionReviewHistory: [],
     activeCheckpoint: null,
-    checkpointHistory: []
+    checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
   };
 }
 

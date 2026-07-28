@@ -80,6 +80,12 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
     missionReviewHistory: [],
     activeCheckpoint: null,
     checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
     ...overrides
   };
 }
@@ -102,11 +108,14 @@ describe("buildMissionPanelModel", () => {
     expect(model.continueHref).toBe("#reader/ch1/praxis");
     expect(model.continueLabel).toBe("Continuar missão");
     expect(model.estimatedMinutes).toBeGreaterThan(0);
-    expect(model.rewards.xp).toBeGreaterThan(0);
+    expect(model.rewards.potentialXp).toBeGreaterThanOrEqual(0);
+    expect(model.rewards.competencyLabel.toLowerCase()).not.toBe("1 competência");
+    expect(model.rewards.xpLabel.toLowerCase()).toMatch(/xp|domínio|dominio/);
     expect(model.currentStepIndex).toBe(2);
     expect(model.doneCount).toBe(1);
     expect(model.celebration.show).toBe(true);
     expect(model.celebration.title).toBe("Etapa concluída");
+    expect(model.celebration.detail).not.toMatch(/\+\d+\s*XP/);
     expect(model.importanceLabel.toLowerCase()).toContain("import");
   });
 });

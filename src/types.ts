@@ -335,6 +335,18 @@ export interface AppState {
   missionReviewHistory: MissionReviewHistoryEntry[];
   activeCheckpoint: CheckpointAttempt | null;
   checkpointHistory: CheckpointHistoryEntry[];
+  /** Typed vocab answers before reveal (production evidence). */
+  vocabAttempts: Record<string, string>;
+  /** Typed practice drafts before reveal. */
+  practiceAttempts: Record<string, string>;
+  /** Practice keys where the learner explicitly opened the gabarito. */
+  practiceRevealed: Record<string, boolean>;
+  /** Apply-task criteria checkboxes: `${missionId}:${index}` → checked. */
+  applyCriteriaChecks: Record<string, boolean>;
+  /** Free-text production for explain/praxis/apply didactic tasks. */
+  stepArtifacts: Record<string, string>;
+  /** Explicit submit flags for step artifacts (unlocks model answer / advance). */
+  stepArtifactSubmitted: Record<string, boolean>;
 }
 
 export interface UiState {
