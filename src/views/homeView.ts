@@ -250,6 +250,13 @@ export function renderHomeView(ctx: AppContext): string {
               `).join("")}
             </div>
           </div>
+          <div class="progress-backup">
+            <button class="button secondary" type="button" data-export-progress>Exportar progresso</button>
+            <label class="button secondary file-button">
+              Importar progresso
+              <input type="file" accept="application/json,.json" data-import-progress>
+            </label>
+          </div>
         </article>
       </section>
 

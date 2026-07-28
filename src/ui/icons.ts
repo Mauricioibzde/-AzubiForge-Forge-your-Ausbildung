@@ -7,6 +7,7 @@ import {
   Check,
   ClipboardList,
   CloudDownload,
+  FileCheck2,
   LayoutDashboard,
   Library,
   Menu,
@@ -32,6 +33,7 @@ export const APP_ICONS = {
   Check,
   ClipboardList,
   CloudDownload,
+  FileCheck2,
   LayoutDashboard,
   Library,
   Menu,
@@ -68,6 +70,7 @@ export type AppIconName =
   | "bell"
   | "target"
   | "cloud-download"
+  | "file-check-2"
   | "check";
 
 export function icon(name: AppIconName, className = "ui-icon", size = 18): string {

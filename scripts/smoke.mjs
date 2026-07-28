@@ -57,11 +57,12 @@ const desktopChrome = await desktop.evaluate(() => {
   return {
     sidebar: Boolean(sidebar),
     sidebarVisible: sidebar ? getComputedStyle(sidebar).transform === "none" || getComputedStyle(sidebar).position === "sticky" : false,
-    navHome: Boolean(document.querySelector('.sidebar [data-nav="home"]'))
+    navHome: Boolean(document.querySelector('.sidebar [data-nav="home"]')),
+    navExam: Boolean(document.querySelector('.sidebar [data-nav="exam"]'))
   };
 });
 
-if (!desktopChrome.sidebar || !desktopChrome.navHome) {
+if (!desktopChrome.sidebar || !desktopChrome.navHome || !desktopChrome.navExam) {
   issues.push("desktop: sidebar navigation missing");
 }
 
@@ -96,6 +97,8 @@ await mobile.screenshot({ path: `${screenshotsDir}/mobile-home.png`, fullPage: t
 const mobileHome = await mobile.evaluate(() => ({
   menuToggle: Boolean(document.querySelector("[data-sidebar-toggle]")),
   menuVisible: getComputedStyle(document.querySelector("[data-sidebar-toggle]")).display !== "none",
+  bottomNavVisible: Boolean(document.querySelector(".bottom-nav")) && getComputedStyle(document.querySelector(".bottom-nav")).display !== "none",
+  bottomNavExam: Boolean(document.querySelector('.bottom-nav [data-nav="exam"]')),
   scrollWidth: document.documentElement.scrollWidth,
   clientWidth: document.documentElement.clientWidth
 }));
@@ -148,6 +151,8 @@ console.log(`mobile-home: menu=${mobileHome.menuVisible} open=${sidebarOpen} clo
 console.log(`mobile-reader: dock=${mobileReader.dockVisible} swipeTabs=${mobileReader.swipeTabs} practiceFlash=${practiceFlash}`);
 
 if (!mobileHome.menuVisible) issues.push("mobile-home: menu toggle hidden");
+if (!mobileHome.bottomNavVisible) issues.push("mobile-home: bottom nav hidden");
+if (!mobileHome.bottomNavExam) issues.push("mobile-home: AP1 link missing in bottom nav");
 if (!sidebarOpen) issues.push("mobile-home: sidebar did not open");
 if (!sidebarClosed) issues.push("mobile-home: sidebar did not close");
 if (!mobileReader.dockVisible) issues.push("mobile-reader: study dock hidden");
