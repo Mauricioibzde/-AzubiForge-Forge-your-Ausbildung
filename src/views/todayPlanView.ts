@@ -5,11 +5,16 @@ import { generateDailyPlan } from "../domain/planner/generateDailyPlan";
 import { getResumeTab } from "../domain/course";
 import { userLearningStateFromAppState } from "../state/userLearningBridge";
 import { hasResumableSession } from "../domain/session/studySession";
-import { escapeAttribute } from "../ui/html";
+import {
+  labelForLearningAction,
+  resolveNextLearningAction,
+  type NextLearningAction
+} from "../domain/learning/nextLearningAction";
+import { escapeAttribute, escapeHtml } from "../ui/html";
 
 export function buildTodayPlan(ctx: AppContext): DailyPlan {
   const course = getNormalizedCourseData();
-  const userState = userLearningStateFromAppState(ctx.state);
+  const userState = userLearningStateFromAppState(ctx.state, course);
   return generateDailyPlan({
     course,
     state: ctx.state,
@@ -17,14 +22,21 @@ export function buildTodayPlan(ctx: AppContext): DailyPlan {
   });
 }
 
+export function resolveTodayNextAction(ctx: AppContext): NextLearningAction {
+  return resolveNextLearningAction({
+    course: getNormalizedCourseData(),
+    state: ctx.state
+  });
+}
+
 export function renderTodayPlanSection(ctx: AppContext): string {
   const plan = buildTodayPlan(ctx);
-  const primary = plan.tasks[0];
+  const nextAction = resolveTodayNextAction(ctx);
   const pausedSession = ctx.state.activeStudySession?.status === "paused";
 
   return `
     <section class="ds-section today-plan-section rise-in" aria-label="Plano de hoje">
-      ${pausedSession ? renderPausedSessionAlert() : ""}
+      ${pausedSession && nextAction.type !== "resume-session" ? renderPausedSessionAlert() : ""}
       <div class="ds-section-head">
         <div>
           <h2 class="ds-section-title">Hoje</h2>
@@ -32,7 +44,7 @@ export function renderTodayPlanSection(ctx: AppContext): string {
         </div>
       </div>
 
-      ${primary ? renderNextActionCard(primary, ctx) : ""}
+      ${renderNextActionCard(nextAction, ctx)}
 
       ${plan.tasks.length ? `
         <ol class="today-plan-list">
@@ -45,23 +57,26 @@ export function renderTodayPlanSection(ctx: AppContext): string {
   `;
 }
 
-function renderNextActionCard(task: DailyPlanTask, ctx: AppContext): string {
-  const href = taskHref(task, ctx);
+function renderNextActionCard(action: NextLearningAction, ctx: AppContext): string {
   const canStartSession = !hasResumableSession(ctx.state) || ctx.state.activeStudySession?.status === "paused";
+  const primaryHref = action.href;
+  const primaryLabel = labelForLearningAction(action);
   return `
     <article class="ds-card today-next-action">
       <p class="ds-caption">Proxima acao recomendada</p>
-      <h3 class="ds-card-title">${task.title}</h3>
-      <p class="ds-aux">${task.reason}</p>
+      <h3 class="ds-card-title">${escapeHtml(action.title)}</h3>
+      <p class="ds-aux">${escapeHtml(action.description)}</p>
       <div class="today-task-meta">
-        <span class="today-task-type">${taskTypeLabel(task.type)}</span>
-        <span class="today-task-time">${task.estimatedMinutes} min</span>
+        <span class="today-task-type">${actionTypeLabel(action.type)}</span>
+        ${action.estimatedMinutes ? `<span class="today-task-time">${action.estimatedMinutes} min</span>` : ""}
       </div>
       <div class="today-next-actions">
-        ${canStartSession
-          ? `<a class="button accent" href="#session/start">Iniciar sessao focada</a>`
-          : `<a class="button accent" href="#session">Retomar sessao</a>`}
-        <a class="button secondary" href="${href}">Abrir direto</a>
+        <a class="button accent" href="${escapeAttribute(primaryHref)}">${escapeHtml(primaryLabel)}</a>
+        ${action.type === "resume-session"
+          ? ""
+          : canStartSession
+            ? `<a class="button secondary" href="#session/start">Sessao focada</a>`
+            : `<a class="button secondary" href="#session">Retomar sessao</a>`}
       </div>
     </article>
   `;
@@ -92,6 +107,18 @@ function renderPlanTask(task: DailyPlanTask, ctx: AppContext, isPrimary: boolean
       </div>
     </li>
   `;
+}
+
+function actionTypeLabel(type: NextLearningAction["type"]): string {
+  if (type === "resume-session") return "Sessao";
+  if (type === "start-review") return "Revisao";
+  if (type === "start-mastery" || type === "retry-mastery") return "Teste";
+  if (type === "start-checkpoint") return "Checkpoint";
+  if (type === "start-practice") return "Pratica";
+  if (type === "continue-study") return "Continuar";
+  if (type === "start-next-mission") return "Nova missao";
+  if (type === "start-exam") return "AP1";
+  return "Trilha";
 }
 
 function taskTypeLabel(type: DailyPlanTask["type"]): string {

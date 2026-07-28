@@ -27,6 +27,10 @@ import {
   isCheckpointCompleted,
   isCheckpointUnlocked
 } from "../domain/checkpoint/checkpoints";
+import {
+  labelForLearningAction,
+  resolveNextLearningAction
+} from "../domain/learning/nextLearningAction";
 import { confidenceBadge, escapeAttribute, escapeHtml, inlineProgress, kpiCard, readinessBadge } from "../ui/html";
 
 export function renderCourseView(ctx: AppContext): string {
@@ -36,6 +40,29 @@ export function renderCourseView(ctx: AppContext): string {
   const activeModule = getActiveModule(ctx.data, ctx.state);
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, activeModule);
   const continueTab = getResumeTab(ctx.state, continueChapter.id);
+  let continueHref = `#reader/${continueChapter.id}/${continueTab}`;
+  let continueTitle = continueChapter.title;
+  let continueLabel = "Continuar estudo";
+  let continueCaption = `Agora · ${activeModule.title}`;
+  try {
+    const nextAction = resolveNextLearningAction({
+      course: getNormalizedCourseData(),
+      state: ctx.state
+    });
+    continueHref = nextAction.href;
+    continueLabel = labelForLearningAction(nextAction);
+    continueCaption = `Agora · ${nextAction.description}`;
+    const focusChapter = nextAction.missionId ? findChapter(ctx.data, nextAction.missionId) : null;
+    if (focusChapter) {
+      const focusModule = getChapterModule(ctx.data, focusChapter.id);
+      if (focusModule) continueCaption = `Agora · ${focusModule.title}`;
+      continueTitle = focusChapter.title;
+    } else {
+      continueTitle = nextAction.title;
+    }
+  } catch {
+    // keep legacy continue strip when normalized course is unavailable
+  }
   const filtered = getFilteredChapters(ctx);
   const queue = getReviewQueue(ctx.data, ctx.state);
   const dueReviewChapter = queue.find((chapter) => isReviewDue(ctx.state, chapter.id));
@@ -50,14 +77,14 @@ export function renderCourseView(ctx: AppContext): string {
     <section class="ds-page course-shell">
       <section class="course-now-strip rise-in" aria-label="Continuar estudo">
         <div class="course-now-copy">
-          <p class="ds-caption">Agora · ${activeModule.title}</p>
-          <h1 class="course-now-title">${continueChapter.title}</h1>
+          <p class="ds-caption">${escapeHtml(continueCaption)}</p>
+          <h1 class="course-now-title">${escapeHtml(continueTitle)}</h1>
           <p class="ds-aux">${activeModule.subtitle} · ${progress.completed}/${progress.total} capitulos (${progress.percent}%)</p>
           <div class="course-now-progress" aria-hidden="true">
             <span style="width:${progress.percent}%"></span>
           </div>
         </div>
-        <a class="button accent course-now-cta" href="#reader/${continueChapter.id}/${continueTab}">Continuar estudo</a>
+        <a class="button accent course-now-cta" href="${escapeAttribute(continueHref)}">${escapeHtml(continueLabel)}</a>
         <details class="course-about-details">
           <summary>Sobre a trilha</summary>
           <p class="ds-lead">${ctx.data.course.description}</p>

@@ -24,6 +24,7 @@ import { getJourneyProgress, getNextJourneyHref } from "../domain/journey";
 import type { Chapter, ChapterFullContent, ContentBlock, Diagram, ReaderTab } from "../types";
 import {
   confidenceControls,
+  escapeAttribute,
   escapeHtml,
   list,
   paragraphs,
@@ -32,6 +33,8 @@ import {
   vocabularyTable
 } from "../ui/html";
 import { exerciseCard } from "../ui/components";
+import { hasMasteryEvidence, evaluateMasteryGate } from "../domain/learning/masteryGate";
+import { getNormalizedCourseData } from "../data/normalizedCourse";
 
 export function renderReaderView(ctx: AppContext, chapterId: string): string {
   const chapter = findChapter(ctx.data, chapterId) || ctx.data.chapters[0];
@@ -288,22 +291,38 @@ function renderCompleteButton(
   session: { completed: number; total: number; percent: number },
   exerciseStats: { answered: number }
 ): string {
+  const mastered = hasMasteryEvidence(ctx.state, chapterId);
+  if (mastered) {
+    return `<a class="button complete" href="#mastery/${escapeAttribute(chapterId)}">Domínio comprovado</a>`;
+  }
+
+  let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
+  try {
+    mission = getNormalizedCourseData().missionsById[chapterId] || null;
+  } catch {
+    mission = null;
+  }
+  const gate = evaluateMasteryGate(ctx.state, chapterId, mission);
+  if (gate.allowed) {
+    return `<a class="button accent" href="#mastery/${escapeAttribute(chapterId)}">Provar domínio agora</a>`;
+  }
+
   const gated = ctx.ui.completeGateChapterId === chapterId;
   if (done) {
-    return `<button class="button complete" type="button" data-complete="${chapterId}">Concluido</button>`;
+    return `<button class="button secondary" type="button" data-complete="${chapterId}">Estudo marcado (sem domínio)</button>`;
   }
   if (gated) {
     return `
-      <button class="button" type="button" data-complete="${chapterId}" data-complete-confirm="true">
-        Confirmar conclusao
+      <button class="button secondary" type="button" data-complete="${chapterId}" data-complete-confirm="true">
+        Só marcar estudo (sem domínio)
       </button>
       <button class="button secondary" type="button" data-complete-cancel="${chapterId}">Cancelar</button>
     `;
   }
-  const soft = session.percent < 100 || exerciseStats.answered === 0;
+  const soft = session.percent < 100 || exerciseStats.answered < 3;
   return `
-    <button class="button ${soft ? "soft-complete" : ""}" type="button" data-complete="${chapterId}">
-      ${soft ? "Fechar (sessao incompleta)" : "Marcar como concluido"}
+    <button class="button ${soft ? "soft-complete" : "secondary"}" type="button" data-complete="${chapterId}">
+      ${soft ? "Marcar estudo incompleto" : "Marcar estudo (sem domínio)"}
     </button>
   `;
 }
@@ -317,14 +336,17 @@ function renderCompleteGateNote(
   if (ctx.ui.completeGateChapterId !== chapterId) return "";
   const reasons: string[] = [];
   if (session.percent < 100) {
-    reasons.push(`Voce visitou ${session.completed} de ${session.total} etapas da sessao.`);
+    reasons.push(`Você visitou ${session.completed} de ${session.total} etapas.`);
   }
-  if (exerciseStats.answered === 0) {
-    reasons.push("Ainda nao marcou exercicios como Acertei/Errei.");
+  if (exerciseStats.answered < 3) {
+    reasons.push("Ainda há pouca prática marcada (Acertei/Errei).");
+  }
+  if (!hasMasteryEvidence(ctx.state, chapterId)) {
+    reasons.push("Isso só marca estudo — domínio exige o teste.");
   }
   return `
     <p class="session-gate-note" role="status">
-      ${reasons.join(" ")} Confirme se quiser concluir mesmo assim.
+      ${reasons.join(" ")} Confirme se quiser marcar o estudo mesmo assim.
     </p>
   `;
 }
@@ -433,6 +455,8 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
   const current = rows[index];
   const key = current ? vocabCheckKey(chapter.id, current.index) : "";
   const check = key ? ctx.state.vocabChecks[key] : undefined;
+  const attempt = key ? (ctx.state.vocabAttempts?.[key] || "") : "";
+  const revealed = Boolean(check);
   const row = current?.row;
 
   return `
@@ -444,38 +468,40 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
           <button class="${mode === "grid" ? "active" : ""}" type="button" data-filter-group="reader-vocab-mode" data-filter-value="grid">Grade</button>
         </div>
       </div>
-      <p>Veja o termo em alemao, explique em voz alta e so depois revele o significado. Espaco / 1 / 2 no teclado.</p>
+      <p>Escreva o significado (DE→PT) <strong>antes</strong> de ver a resposta. Isso gera evidência real de aprendizagem.</p>
       ${mode === "flash" && row ? `
         <section class="review-focus" aria-label="Flash Wortschatz">
           <div class="focus-stage" data-swipe-deck="reader-vocab">
             <article class="focus-card-big ${check ? `checked-${check}` : ""}">
               <span class="card-label">Termo ${index + 1}/${total}</span>
               <h2>${row.de}</h2>
-              <p class="focus-prompt">Explique antes de revelar.</p>
-              <details class="focus-reveal">
-                <summary>Revelar significado</summary>
-                <p><strong>${row.pt}</strong></p>
-                <p>${row.explanation}</p>
-                <p class="small-note">${row.example}</p>
-                <div class="self-check-actions">
-                  <button
-                    class="button secondary ${check === "correct" ? "active-check" : ""}"
-                    type="button"
-                    data-vocab-check="correct"
-                    data-check-key="${key}"
-                    data-check-chapter="${chapter.id}"
-                    data-auto-advance="reader-vocab"
-                  >Acertei</button>
-                  <button
-                    class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
-                    type="button"
-                    data-vocab-check="wrong"
-                    data-check-key="${key}"
-                    data-check-chapter="${chapter.id}"
-                    data-auto-advance="reader-vocab"
-                  >Errei</button>
+              <p class="focus-prompt">Digite o significado em português:</p>
+              <label class="sr-only" for="vocab-attempt-input">Sua resposta</label>
+              <textarea
+                id="vocab-attempt-input"
+                class="note-area production-attempt"
+                rows="2"
+                placeholder="Ex.: direitos e deveres do aprendiz"
+                data-vocab-attempt="${escapeAttribute(key)}"
+                data-vocab-expected="${escapeAttribute(row.pt)}"
+                ${check ? "readonly" : ""}
+              >${escapeHtml(attempt)}</textarea>
+              ${!revealed ? `
+                <button class="button accent" type="button" data-vocab-submit="${escapeAttribute(key)}" data-vocab-expected="${escapeAttribute(row.pt)}" data-check-chapter="${chapter.id}" data-auto-advance="reader-vocab">
+                  Conferir resposta
+                </button>
+              ` : `
+                <div class="production-feedback ${check === "correct" ? "is-correct" : "is-wrong"}" role="status">
+                  <p><strong>${check === "correct" ? "Produção correta" : "Revise este termo"}</strong></p>
+                  <p><strong>Esperado:</strong> ${escapeHtml(row.pt)}</p>
+                  <p>${escapeHtml(row.explanation)}</p>
+                  <p class="small-note">${escapeHtml(row.example)}</p>
                 </div>
-              </details>
+                <div class="self-check-actions">
+                  <button class="button secondary ${check === "correct" ? "active-check" : ""}" type="button" data-vocab-check="correct" data-check-key="${key}" data-check-chapter="${chapter.id}" data-auto-advance="reader-vocab">Manter acerto</button>
+                  <button class="button secondary ${check === "wrong" ? "active-check wrong" : ""}" type="button" data-vocab-check="wrong" data-check-key="${key}" data-check-chapter="${chapter.id}" data-auto-advance="reader-vocab">Marcar para revisar</button>
+                </div>
+              `}
             </article>
           </div>
           <div class="focus-controls">
@@ -484,7 +510,7 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
             <button class="button" type="button" data-reader-vocab-step="1">Proximo</button>
           </div>
         </section>
-      ` : vocabularyRecallCards(rawRows, chapter.id, ctx.state.vocabChecks)}
+      ` : vocabularyRecallCards(rawRows, chapter.id, ctx.state.vocabChecks, ctx.state.vocabAttempts || {})}
     </section>
     <details class="vocab-table-details">
       <summary>Ver tabela completa</summary>
@@ -530,7 +556,7 @@ function practiceTab(ctx: AppContext, chapter: Chapter): string {
           <button class="${filter === "wrong" ? "active" : ""}" type="button" data-filter-group="practice-filter" data-filter-value="wrong">So erros (${stats.wrong})</button>
         </div>
       </div>
-      <p>Responda mentalmente, abra a solucao e marque se acertou. Erros entram na revisao.</p>
+      <p>Escreva sua resposta <strong>antes</strong> de ver o gabarito. Sem produção, não há evidência.</p>
       ${!total ? `<p class="empty-state">${filter === "wrong" ? "Nenhum erro marcado neste capitulo." : "Nenhum exercicio neste capitulo."}</p>` : ""}
       ${total && mode === "flash" && current ? `
         <section class="review-focus" aria-label="Flash Uebungen">
@@ -563,15 +589,36 @@ function renderPracticeFlash(
 ): string {
   const checkKey = exerciseCheckKey(chapterId, exerciseIndex);
   const check = ctx.state.exerciseChecks[checkKey];
+  const attempt = ctx.state.practiceAttempts?.[checkKey] || "";
+  const revealed = Boolean(check) || Boolean(ctx.state.practiceRevealed?.[checkKey]);
   return `
     <article class="focus-card-big ${check ? `checked-${check}` : ""}">
       <span class="card-label">Uebung ${displayIndex + 1}/${total}</span>
       <h2>Aufgabe</h2>
       <p class="focus-question">${exercise.question}</p>
-      <details class="focus-reveal">
-        <summary>Revelar resposta</summary>
-        <p><strong>Antwort:</strong> ${exercise.answer}</p>
-        ${exercise.explanation ? `<p><strong>Erklaerung:</strong> ${exercise.explanation}</p>` : ""}
+      <label class="sr-only" for="practice-attempt-input">Sua resposta</label>
+      <textarea
+        id="practice-attempt-input"
+        class="note-area production-attempt"
+        rows="3"
+        placeholder="Escreva sua resposta aqui antes de conferir"
+        data-practice-attempt="${escapeAttribute(checkKey)}"
+        ${check ? "readonly" : ""}
+      >${escapeHtml(attempt)}</textarea>
+      ${!revealed ? `
+        <button
+          class="button accent"
+          type="button"
+          data-practice-submit="${escapeAttribute(checkKey)}"
+          data-check-chapter="${escapeAttribute(chapterId)}"
+          data-auto-advance="reader-practice"
+        >Conferir com gabarito</button>
+      ` : `
+        <div class="production-feedback" role="status">
+          <p><strong>Gabarito:</strong> ${escapeHtml(exercise.answer)}</p>
+          ${exercise.explanation ? `<p><strong>Erklaerung:</strong> ${escapeHtml(exercise.explanation)}</p>` : ""}
+          <p class="ds-aux">Compare com o que você escreveu e marque com honestidade.</p>
+        </div>
         <div class="self-check-actions">
           <button
             class="button secondary ${check === "correct" ? "active-check" : ""}"
@@ -590,13 +637,51 @@ function renderPracticeFlash(
             data-auto-advance="reader-practice"
           >Errei / revisar</button>
         </div>
-      </details>
+      `}
     </article>
   `;
 }
 
 function ap1Tab(ctx: AppContext, chapter: Chapter): string {
   const content = chapter.fullContent;
+  let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
+  try {
+    mission = getNormalizedCourseData().missionsById[chapter.id] || null;
+  } catch {
+    mission = null;
+  }
+  const gate = evaluateMasteryGate(ctx.state, chapter.id, mission);
+  const applyActivities = mission?.phases.apply.activities || [];
+  let criteriaIndex = 0;
+  const applyBlock = applyActivities.length ? `
+    <section class="chapter-section apply-task-card" aria-label="Tarefa aplicada">
+      <h2>Tarefa aplicada (evidência)</h2>
+      <p class="ds-aux">Marque os critérios que você consegue cumprir de verdade. Isso libera o teste de domínio.</p>
+      ${applyActivities.map((activity) => {
+        const criteria = activity.criteria || [];
+        const items = criteria.map((criterion) => {
+          const index = criteriaIndex;
+          criteriaIndex += 1;
+          const key = `${chapter.id}:${index}`;
+          const checked = Boolean(ctx.state.applyCriteriaChecks?.[key]);
+          return `
+            <label class="check-row apply-criteria-row">
+              <input type="checkbox" data-apply-criteria="${escapeAttribute(key)}" ${checked ? "checked" : ""}>
+              <span>${escapeHtml(criterion)}</span>
+            </label>
+          `;
+        }).join("");
+        return `
+          <article class="ds-card apply-activity">
+            <h3 class="ds-card-title">${escapeHtml(activity.title || activity.instruction || "Desafio aplicado")}</h3>
+            ${activity.modelAnswer ? `<p class="ds-aux">Dica de qualidade: compare depois com um modelo mental curto (não copie).</p>` : ""}
+            <div class="apply-criteria-list">${items}</div>
+          </article>
+        `;
+      }).join("")}
+      <p class="ds-aux">${gate.applyDone ? "Critérios suficientes marcados." : "Ainda faltam critérios para liberar o domínio."}</p>
+    </section>
+  ` : "";
 
   return `
     <section class="info-box ihk">
@@ -611,6 +696,7 @@ function ap1Tab(ctx: AppContext, chapter: Chapter): string {
         "Eine technische Antwort geben, aber keine kurze Begruendung liefern."
       ])}
     </section>
+    ${applyBlock}
     <section class="info-box summary">
       <h2>Zusammenfassung</h2>
       ${content ? paragraphs(content.summary) : `<p>${chapter.summary}</p>`}
@@ -630,6 +716,14 @@ function ap1Tab(ctx: AppContext, chapter: Chapter): string {
         "Ich kann eine kurze AP1-Antwort formulieren."
       ])}
       ${confidenceControls(ctx.state, chapter, confidenceGateOptions(ctx, chapter.id))}
+    </section>
+    <section class="chapter-section mastery-gate-card" aria-label="Teste de domínio">
+      <h2>Provar domínio</h2>
+      <p class="ds-aux">${escapeHtml(gate.reason)}</p>
+      <p class="ds-aux">Prática: ${gate.practiceAnswered} respostas · ${gate.practiceScore ?? 0}% acertos${gate.applyRequired ? ` · Apply: ${gate.applyDone ? "ok" : "pendente"}` : ""}</p>
+      ${gate.allowed
+        ? `<a class="button accent" href="#mastery/${escapeAttribute(chapter.id)}">Iniciar teste de domínio</a>`
+        : `<a class="button secondary" href="#reader/${escapeAttribute(chapter.id)}/practice">Voltar à prática</a>`}
     </section>
   `;
 }

@@ -77,7 +77,7 @@ export function renderNextStepCard(model: MissionPanelModel): string {
             : "Você percorreu as 5 etapas. Continue pela trilha ou revise pontos fracos."}</p>
           <div class="mission-next-meta">
             <span>${model.stepsTotal}/${model.stepsTotal} etapas</span>
-            <span class="mission-xp">+${model.rewards.xp} XP</span>
+            <span class="mission-xp">${escapeHtml(model.rewards.evidenceSummary)}</span>
           </div>
           <a class="button mission-next-cta" href="${escapeAttribute(model.continueHref)}">${escapeHtml(model.continueLabel)}</a>
         </div>
@@ -101,7 +101,7 @@ export function renderNextStepCard(model: MissionPanelModel): string {
         </ul>
         <div class="mission-next-meta">
           <span>~ ${model.remainingMinutes} min restantes na missão</span>
-          <span class="mission-xp">+${step.xp} XP</span>
+          <span class="mission-xp">${escapeHtml(model.rewards.practiceLabel)}</span>
         </div>
         <a class="button mission-next-cta" href="${escapeAttribute(step.href)}" data-mission-focus>
           Começar etapa
@@ -146,20 +146,29 @@ export function renderAfterThisStep(model: MissionPanelModel): string {
 export function renderMissionRewards(model: MissionPanelModel): string {
   const { rewards } = model;
   return `
-    <section class="mission-rewards rise-in" style="animation-delay:36ms" aria-label="Recompensas da missão">
-      <h3 class="mission-section-title">Ao concluir esta missão</h3>
+    <section class="mission-rewards rise-in" style="animation-delay:36ms" aria-label="Evidência da missão">
+      <h3 class="mission-section-title">Evidência de aprendizagem</h3>
+      <p class="ds-aux mission-evidence-lead">${escapeHtml(rewards.evidenceSummary)}</p>
       <div class="mission-rewards-grid">
         <div class="mission-reward-tile">
-          <span class="ds-caption">Experiência</span>
-          <strong>+${rewards.xp} XP</strong>
+          <span class="ds-caption">XP</span>
+          <strong>${escapeHtml(rewards.xpLabel)}</strong>
         </div>
         <div class="mission-reward-tile">
-          <span class="ds-caption">Competência</span>
-          <strong>${escapeHtml(rewards.competencyLabel)}</strong>
+          <span class="ds-caption">Prática</span>
+          <strong>${escapeHtml(rewards.practiceLabel)}</strong>
+        </div>
+        <div class="mission-reward-tile">
+          <span class="ds-caption">Domínio</span>
+          <strong>${escapeHtml(rewards.masteryLabel)}</strong>
         </div>
         <div class="mission-reward-tile">
           <span class="ds-caption">Revisão</span>
           <strong>${escapeHtml(rewards.reviewLabel)}</strong>
+        </div>
+        <div class="mission-reward-tile">
+          <span class="ds-caption">Competências</span>
+          <strong>${escapeHtml(rewards.competencyLabel)}</strong>
         </div>
         <div class="mission-reward-tile">
           <span class="ds-caption">Próximo</span>
