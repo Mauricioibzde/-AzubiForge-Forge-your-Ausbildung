@@ -1,4 +1,4 @@
-export type RouteName = "home" | "course" | "reader" | "review" | "glossary" | "docs-ai" | "exam" | "session" | "mastery";
+export type RouteName = "home" | "course" | "reader" | "review" | "glossary" | "docs-ai" | "exam" | "session" | "mastery" | "review-mission" | "checkpoint";
 
 export type CourseFilter = "all" | "open" | "done" | "notes" | "hard";
 export type GlossaryFilter = "all" | "network" | "security" | "database" | "programming";
@@ -6,7 +6,7 @@ export type ReaderTab = "explain" | "praxis" | "vocab" | "practice" | "ap1";
 export type Confidence = "ok" | "review" | "hard" | "ready";
 export type Theme = "light" | "dark";
 export type ReadingSize = "normal" | "large";
-export type ExamFocusMode = "weak" | "signals" | "drill" | "checklist" | "mock" | "mistakes";
+export type ExamFocusMode = "weak" | "signals" | "drill" | "checklist" | "mock" | "mistakes" | "lernfeld";
 export type StudySessionStatus = "active" | "paused" | "completed";
 export type StudySessionActivityKind = "reader-step" | "review" | "mastery-test";
 export type MissionReviewStatus = "scheduled" | "due" | "completed";
@@ -43,6 +43,8 @@ export interface MockExamAttempt {
   currentIndex: number;
   questions: MockExamQuestion[];
   responses: Record<string, MockExamResponse>;
+  learningFieldId?: string;
+  simulationLabel?: string;
 }
 
 export interface MockExamHistoryEntry {
@@ -261,6 +263,51 @@ export interface MasteryTestHistoryEntry {
   competencyIds: string[];
 }
 
+export interface SelfCheckAssessment {
+  status: MasteryTestStatus;
+  passingScore: number;
+  currentIndex: number;
+  questions: MasteryTestQuestion[];
+  responses: Record<string, MasteryTestResponse>;
+  score: number | null;
+}
+
+export type MissionReviewAttempt = MasteryTestAttempt;
+
+export interface CheckpointAttempt {
+  id: string;
+  situationId: string;
+  situationTitle: string;
+  learningFieldId: string;
+  missionIds: string[];
+  status: MasteryTestStatus;
+  passingScore: number;
+  startedAt: string;
+  finishedAt?: string;
+  currentIndex: number;
+  questions: MasteryTestQuestion[];
+  responses: Record<string, MasteryTestResponse>;
+  score: number | null;
+}
+
+export interface CheckpointHistoryEntry {
+  id: string;
+  situationId: string;
+  learningFieldId: string;
+  situationTitle: string;
+  score: number;
+  passed: boolean;
+  finishedAt: string;
+}
+
+export interface MissionReviewHistoryEntry {
+  id: string;
+  missionId: string;
+  score: number;
+  passed: boolean;
+  finishedAt: string;
+}
+
 export interface AppState {
   completed: string[];
   lastChapterId: string;
@@ -284,6 +331,10 @@ export interface AppState {
   missionReviews: Record<string, MissionReviewRecord>;
   activeMasteryTest: MasteryTestAttempt | null;
   masteryTestHistory: MasteryTestHistoryEntry[];
+  activeMissionReview: MissionReviewAttempt | null;
+  missionReviewHistory: MissionReviewHistoryEntry[];
+  activeCheckpoint: CheckpointAttempt | null;
+  checkpointHistory: CheckpointHistoryEntry[];
 }
 
 export interface UiState {

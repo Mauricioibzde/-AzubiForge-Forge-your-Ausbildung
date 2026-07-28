@@ -23,6 +23,7 @@ import {
   MOCK_EXAM_PRESETS,
   scoreMockExam
 } from "../domain/mockExam";
+import { listAvailableLernfelder } from "../domain/simulation/lernfeldSimulation";
 import type { ExamFocusMode, MockExamAttempt, MockExamLength, MockExamQuestion } from "../types";
 import { escapeAttribute, escapeHtml, kpiCard, readinessBadge } from "../ui/html";
 
@@ -62,6 +63,7 @@ export function renderExamView(ctx: AppContext): string {
 
       <div class="segmented-control exam-mode-control rise-in" style="animation-delay:40ms" aria-label="Modo de treino AP1">
         ${modeButton("mock", "Simulado", mode)}
+        ${modeButton("lernfeld", "Por Lernfeld", mode)}
         ${modeButton("weak", "Pontos fracos", mode)}
         ${modeButton("signals", "Signalwoerter", mode)}
         ${modeButton("drill", "Perguntas AP1", mode)}
@@ -70,6 +72,7 @@ export function renderExamView(ctx: AppContext): string {
       </div>
 
       ${mode === "mock" ? renderMockMode(ctx) : ""}
+      ${mode === "lernfeld" ? renderLernfeldMode(ctx) : ""}
       ${mode === "weak" ? renderWeakMode(ctx) : ""}
       ${mode === "signals" ? renderSignalsMode(ctx) : ""}
       ${mode === "drill" ? renderDrillMode(ctx) : ""}
@@ -93,9 +96,46 @@ function modeButton(value: ExamFocusMode, label: string, current: ExamFocusMode)
 function renderMockMode(ctx: AppContext): string {
   const attempt = ctx.state.mockExam;
   if (!attempt) return renderMockLobby(ctx);
+  if (attempt.learningFieldId) return renderLernfeldActive(ctx, attempt);
   if (attempt.status === "active") return renderMockActive(attempt);
   if (attempt.status === "grading") return renderMockGrading(ctx, attempt);
   return renderMockResults(attempt);
+}
+
+function renderLernfeldMode(ctx: AppContext): string {
+  const attempt = ctx.state.mockExam;
+  if (attempt?.learningFieldId) {
+    if (attempt.status === "active") return renderLernfeldActive(ctx, attempt);
+    if (attempt.status === "grading") return renderMockGrading(ctx, attempt);
+    if (attempt.status === "finished") return renderMockResults(attempt);
+  }
+
+  const modules = listAvailableLernfelder(ctx.data);
+  return `
+    <section class="mock-lobby" aria-label="Simulado por Lernfeld">
+      <div class="panel mock-intro">
+        <span class="card-label">Simulado por Lernfeld</span>
+        <h2>Prova cronometrada focada em um modulo.</h2>
+        <p>Perguntas AP1 filtradas por Lernfeld, com cronometro e correcao ao final.</p>
+      </div>
+      <div class="mock-preset-grid">
+        ${modules.map((module) => `
+          <article class="panel mock-preset-card">
+            <span class="card-label">${module.title}</span>
+            <h2>${module.poolSize} perguntas</h2>
+            <p>Simulado cronometrado · 20 min · 10 perguntas</p>
+            <button class="button large" type="button" data-lernfeld-start="${escapeAttribute(module.id)}" data-lernfeld-title="${escapeAttribute(module.title)}">
+              Iniciar simulado
+            </button>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderLernfeldActive(_ctx: AppContext, attempt: MockExamAttempt): string {
+  return renderMockActive({ ...attempt, length: "short" });
 }
 
 function renderMockLobby(ctx: AppContext): string {

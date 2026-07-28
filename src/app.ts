@@ -23,6 +23,8 @@ import type {
   ExerciseCheck,
   GlossaryFilter,
   MockExamLength,
+  MissionReviewAttempt,
+  CheckpointAttempt,
   ReadingSize,
   ReaderTab,
   RouteName,
@@ -63,6 +65,22 @@ import {
   setMasteryTestResponse,
   setMasteryTestSelfCheck
 } from "./domain/mastery/masteryTest";
+import { applyMissionReviewResult } from "./domain/review/applyMissionReviewResult";
+import { applyCheckpointResult } from "./domain/checkpoint/applyCheckpointResult";
+import {
+  setAssessmentResponse,
+  setAssessmentSelfCheck
+} from "./domain/assessment/assessmentFlow";
+import {
+  finishAssessment,
+  renderCheckpointView,
+  renderMissionReviewView,
+  submitAssessmentForGrading
+} from "./views/assessmentView";
+import { createMissionReview } from "./domain/review/missionReviewSession";
+import { createCheckpointAttempt } from "./domain/checkpoint/checkpoints";
+import { getNormalizedCourseData } from "./data/normalizedCourse";
+import { createLernfeldSimulation } from "./domain/simulation/lernfeldSimulation";
 import {
   buildMockExamHistoryEntry,
   createMockExam,
@@ -76,7 +94,7 @@ import {
 } from "./domain/mockExam";
 
 const READER_TABS: ReaderTab[] = ["explain", "praxis", "vocab", "practice", "ap1"];
-const EXAM_MODES: ExamFocusMode[] = ["mock", "weak", "signals", "drill", "checklist", "mistakes"];
+const EXAM_MODES: ExamFocusMode[] = ["mock", "lernfeld", "weak", "signals", "drill", "checklist", "mistakes"];
 let mockExamTimerId: number | null = null;
 
 export function startApp(): void {
@@ -200,6 +218,23 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
       saveState(ctx.state);
     } else {
       app.innerHTML = renderHomeView(ctx);
+    }
+  } else if (route === "review-mission") {
+    const missionId = id || ctx.state.lastChapterId || ctx.data.chapters[0]?.id || "";
+    const returnToSession = tab === "session";
+    if (missionId) {
+      app.innerHTML = renderMissionReviewView(ctx, missionId, returnToSession);
+      saveState(ctx.state);
+    } else {
+      app.innerHTML = renderHomeView(ctx);
+    }
+  } else if (route === "checkpoint") {
+    const situationId = id || "";
+    if (situationId) {
+      app.innerHTML = renderCheckpointView(ctx, situationId);
+      saveState(ctx.state);
+    } else {
+      app.innerHTML = renderCourseView(ctx);
     }
   } else app.innerHTML = renderHomeView(ctx);
 
@@ -401,6 +436,8 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     renderRoute(app, ctx);
     return;
   }
+
+  if (handleAssessmentClick(event, app, ctx, target)) return;
 
   if (target.closest("[data-go-exam-mock]")) {
     ctx.ui.examFocusMode = "mock";
@@ -760,6 +797,26 @@ function handleInput(event: Event, app: HTMLElement, ctx: AppContext): void {
       answered
     });
     saveState(ctx.state);
+  }
+
+  if (target.matches("[data-assessment-notes]")) {
+    const route = (window.location.hash.replace("#", "").split("/")[0] || "home") as RouteName;
+    const questionId = target.dataset.assessmentNotes || "";
+    if (route === "review-mission" && ctx.state.activeMissionReview) {
+      const answered = Boolean(target.value.trim()) || Boolean(ctx.state.activeMissionReview.responses[questionId]?.answered);
+      ctx.state.activeMissionReview = setAssessmentResponse(ctx.state.activeMissionReview, questionId, {
+        notes: target.value,
+        answered
+      }) as MissionReviewAttempt;
+      saveState(ctx.state);
+    } else if (route === "checkpoint" && ctx.state.activeCheckpoint) {
+      const answered = Boolean(target.value.trim()) || Boolean(ctx.state.activeCheckpoint.responses[questionId]?.answered);
+      ctx.state.activeCheckpoint = setAssessmentResponse(ctx.state.activeCheckpoint, questionId, {
+        notes: target.value,
+        answered
+      }) as CheckpointAttempt;
+      saveState(ctx.state);
+    }
   }
 }
 
@@ -1124,6 +1181,23 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
     return true;
   }
 
+  const lernfeldStart = target.closest<HTMLElement>("[data-lernfeld-start]");
+  if (lernfeldStart?.dataset.lernfeldStart) {
+    event.preventDefault();
+    ctx.ui.examFocusMode = "lernfeld";
+    const module = ctx.data.modules.find((item) => item.id === lernfeldStart.dataset.lernfeldStart);
+    ctx.state.mockExam = createLernfeldSimulation(
+      ctx.data,
+      lernfeldStart.dataset.lernfeldStart,
+      lernfeldStart.dataset.lernfeldTitle || module?.subtitle || "Lernfeld",
+      10,
+      20
+    );
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
   const step = target.closest<HTMLElement>("[data-mock-step]");
   if (step?.dataset.mockStep && ctx.state.mockExam) {
     const delta = Number(step.dataset.mockStep);
@@ -1268,6 +1342,129 @@ function handleMockExamClick(event: MouseEvent, app: HTMLElement, ctx: AppContex
   }
 
   return false;
+}
+
+function handleAssessmentClick(event: MouseEvent, app: HTMLElement, ctx: AppContext, target: Element): boolean {
+  const route = (window.location.hash.replace("#", "").split("/")[0] || "home") as RouteName;
+  if (route !== "review-mission" && route !== "checkpoint") return false;
+
+  if (target.closest("[data-assessment-submit]")) {
+    event.preventDefault();
+    mutateActiveAssessment(ctx, route, (attempt) => submitAssessmentForGrading(attempt));
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  if (target.closest("[data-assessment-finish]")) {
+    event.preventDefault();
+    mutateActiveAssessment(ctx, route, (attempt) => finishAssessment(attempt));
+    if (route === "review-mission" && ctx.state.activeMissionReview) {
+      applyMissionReviewResult(ctx, ctx.state.activeMissionReview);
+    } else if (route === "checkpoint" && ctx.state.activeCheckpoint) {
+      applyCheckpointResult(ctx, ctx.state.activeCheckpoint);
+    }
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  if (target.closest("[data-assessment-retry]")) {
+    event.preventDefault();
+    if (route === "review-mission" && ctx.state.activeMissionReview) {
+      const missionId = ctx.state.activeMissionReview.missionId;
+      ctx.state.activeMissionReview = createMissionReview(
+        missionId,
+        getNormalizedCourseData(),
+        { returnToSession: ctx.state.activeMissionReview.returnToSession }
+      );
+    } else if (route === "checkpoint" && ctx.state.activeCheckpoint) {
+      ctx.state.activeCheckpoint = createCheckpointAttempt(
+        ctx.state.activeCheckpoint.situationId,
+        getNormalizedCourseData()
+      );
+    }
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  if (target.closest("[data-assessment-clear]")) {
+    event.preventDefault();
+    if (route === "review-mission") ctx.state.activeMissionReview = null;
+    if (route === "checkpoint") ctx.state.activeCheckpoint = null;
+    saveState(ctx.state);
+    window.location.hash = route === "checkpoint" ? "#course" : "#home";
+    return true;
+  }
+
+  const step = target.closest<HTMLElement>("[data-assessment-step]");
+  if (step?.dataset.assessmentStep) {
+    event.preventDefault();
+    const delta = Number(step.dataset.assessmentStep);
+    mutateActiveAssessment(ctx, route, (attempt) => ({
+      ...attempt,
+      currentIndex: Math.max(0, Math.min(attempt.questions.length - 1, attempt.currentIndex + delta))
+    }));
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  const goto = target.closest<HTMLElement>("[data-assessment-goto]");
+  if (goto?.dataset.assessmentGoto !== undefined) {
+    event.preventDefault();
+    const index = Number(goto.dataset.assessmentGoto);
+    if (!Number.isNaN(index)) {
+      mutateActiveAssessment(ctx, route, (attempt) => ({
+        ...attempt,
+        currentIndex: Math.max(0, Math.min(attempt.questions.length - 1, index))
+      }));
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
+    return true;
+  }
+
+  const answered = target.closest<HTMLElement>("[data-assessment-answered]");
+  if (answered?.dataset.assessmentAnswered) {
+    event.preventDefault();
+    const questionId = answered.dataset.assessmentAnswered;
+    mutateActiveAssessment(ctx, route, (attempt) => {
+      const current = Boolean(attempt.responses[questionId]?.answered);
+      return setAssessmentResponse(attempt, questionId, { answered: !current });
+    });
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  const grade = target.closest<HTMLElement>("[data-assessment-grade]");
+  if (grade?.dataset.assessmentGrade && grade.dataset.assessmentQuestion) {
+    event.preventDefault();
+    mutateActiveAssessment(ctx, route, (attempt) => setAssessmentSelfCheck(
+      attempt,
+      grade.dataset.assessmentQuestion!,
+      grade.dataset.assessmentGrade as ExerciseCheck
+    ));
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return true;
+  }
+
+  return false;
+}
+
+function mutateActiveAssessment(
+  ctx: AppContext,
+  route: RouteName,
+  updater: (attempt: MissionReviewAttempt | CheckpointAttempt) => MissionReviewAttempt | CheckpointAttempt
+): void {
+  if (route === "review-mission" && ctx.state.activeMissionReview) {
+    ctx.state.activeMissionReview = updater(ctx.state.activeMissionReview) as MissionReviewAttempt;
+  } else if (route === "checkpoint" && ctx.state.activeCheckpoint) {
+    ctx.state.activeCheckpoint = updater(ctx.state.activeCheckpoint) as CheckpointAttempt;
+  }
 }
 
 function submitMockExam(ctx: AppContext): void {

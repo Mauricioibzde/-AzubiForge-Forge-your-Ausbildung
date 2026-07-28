@@ -56,7 +56,7 @@ function renderActiveSession(ctx: AppContext, session: NonNullable<AppContext["s
   const readerHref = current.readerTab
     ? `#reader/${escapeAttribute(current.missionId)}/${current.readerTab}`
     : current.kind === "review"
-      ? "#review"
+      ? `#review-mission/${escapeAttribute(current.missionId)}/session`
       : `#reader/${escapeAttribute(current.missionId)}/ap1`;
 
   return `
@@ -83,8 +83,10 @@ function renderActiveSession(ctx: AppContext, session: NonNullable<AppContext["s
         <div class="study-session-actions">
           ${isMasteryTest
             ? `<a class="button accent" href="${masteryHref}">Iniciar teste de dominio</a>`
-            : `<a class="button accent" href="${readerHref}" data-session-open-reader>Abrir conteudo</a>`}
-          ${isMasteryTest ? "" : `<button class="button" type="button" data-session-complete>Concluir atividade</button>`}
+            : current.kind === "review"
+              ? `<a class="button accent" href="#review-mission/${escapeAttribute(current.missionId)}/session">Iniciar revisao de retencao</a>`
+              : `<a class="button accent" href="${readerHref}" data-session-open-reader>Abrir conteudo</a>`}
+          ${isMasteryTest || current.kind === "review" ? "" : `<button class="button" type="button" data-session-complete>Concluir atividade</button>`}
           <button class="button secondary" type="button" data-session-pause>Salvar e sair</button>
         </div>
       </article>

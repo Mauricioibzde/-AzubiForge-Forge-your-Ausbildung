@@ -16,6 +16,10 @@ import type {
   MasteryTestResponse,
   MasteryTestStatus,
   MasteryQuestionType,
+  CheckpointAttempt,
+  CheckpointHistoryEntry,
+  MissionReviewAttempt,
+  MissionReviewHistoryEntry,
   Preferences,
   ReaderTab,
   StudySession,
@@ -57,7 +61,7 @@ export function saveState(state: AppState): void {
 export function exportState(state: AppState): void {
   const payload = {
     app: "AzubiForge",
-    version: 10,
+    version: 11,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -120,7 +124,11 @@ function createFallbackState(data: AzubiForgeData): AppState {
     studySessionHistory: [],
     missionReviews: {},
     activeMasteryTest: null,
-    masteryTestHistory: []
+    masteryTestHistory: [],
+    activeMissionReview: null,
+    missionReviewHistory: [],
+    activeCheckpoint: null,
+    checkpointHistory: []
   };
 }
 
@@ -156,7 +164,11 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     studySessionHistory: sanitizeStudySessionHistory(imported.studySessionHistory),
     missionReviews: sanitizeMissionReviews(imported.missionReviews, validChapterIds),
     activeMasteryTest: sanitizeMasteryTestAttempt(imported.activeMasteryTest, validChapterIds),
-    masteryTestHistory: sanitizeMasteryTestHistory(imported.masteryTestHistory, validChapterIds)
+    masteryTestHistory: sanitizeMasteryTestHistory(imported.masteryTestHistory, validChapterIds),
+    activeMissionReview: sanitizeMissionReviewAttempt(imported.activeMissionReview, validChapterIds),
+    missionReviewHistory: sanitizeMissionReviewHistory(imported.missionReviewHistory, validChapterIds),
+    activeCheckpoint: sanitizeCheckpointAttempt(imported.activeCheckpoint, data),
+    checkpointHistory: sanitizeCheckpointHistory(imported.checkpointHistory, data)
   };
 }
 
@@ -213,7 +225,9 @@ function sanitizeMockExam(value: unknown): MockExamAttempt | null {
       ? Math.min(questions.length - 1, Math.round(raw.currentIndex))
       : 0,
     questions,
-    responses
+    responses,
+    learningFieldId: typeof raw.learningFieldId === "string" ? raw.learningFieldId : undefined,
+    simulationLabel: typeof raw.simulationLabel === "string" ? raw.simulationLabel.slice(0, 120) : undefined
   };
 }
 
@@ -564,4 +578,83 @@ function sanitizeMasteryTestHistory(value: unknown, validChapterIds: Set<string>
     })
     .filter((item): item is MasteryTestHistoryEntry => Boolean(item))
     .slice(0, 100);
+}
+
+function sanitizeMissionReviewAttempt(value: unknown, validChapterIds: Set<string>): MissionReviewAttempt | null {
+  return sanitizeMasteryTestAttempt(value, validChapterIds);
+}
+
+function sanitizeMissionReviewHistory(value: unknown, validChapterIds: Set<string>): MissionReviewHistoryEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const raw = item as Partial<MissionReviewHistoryEntry>;
+      if (!raw.id || !raw.missionId || !validChapterIds.has(raw.missionId)) return null;
+      return {
+        id: raw.id,
+        missionId: raw.missionId,
+        score: typeof raw.score === "number" ? Math.max(0, Math.min(100, Math.round(raw.score))) : 0,
+        passed: Boolean(raw.passed),
+        finishedAt: typeof raw.finishedAt === "string" ? raw.finishedAt : new Date().toISOString()
+      };
+    })
+    .filter((item): item is MissionReviewHistoryEntry => Boolean(item))
+    .slice(0, 100);
+}
+
+function sanitizeCheckpointAttempt(value: unknown, data: AzubiForgeData): CheckpointAttempt | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<CheckpointAttempt>;
+  const validSituationIds = new Set(
+    Object.values(data.learningSituations || {}).flat().map((situation) => situation.id)
+  );
+  if (!raw.situationId || !validSituationIds.has(raw.situationId)) return null;
+  if (!MASTERY_TEST_STATUS_VALUES.has(raw.status as MasteryTestStatus)) return null;
+  if (!Array.isArray(raw.questions) || !raw.questions.length) return null;
+
+  const questions = raw.questions
+    .map((item) => sanitizeMasteryTestQuestion(item, String(raw.missionIds?.[0] || "unknown")))
+    .filter((item): item is MasteryTestQuestion => Boolean(item));
+  if (!questions.length) return null;
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : `checkpoint-${Date.now()}`,
+    situationId: raw.situationId,
+    situationTitle: typeof raw.situationTitle === "string" ? raw.situationTitle.slice(0, 200) : "Checkpoint",
+    learningFieldId: typeof raw.learningFieldId === "string" ? raw.learningFieldId : "",
+    missionIds: Array.isArray(raw.missionIds) ? raw.missionIds.filter((id): id is string => typeof id === "string") : [],
+    status: raw.status as MasteryTestStatus,
+    passingScore: typeof raw.passingScore === "number" ? Math.max(50, Math.min(100, Math.round(raw.passingScore))) : 75,
+    startedAt: typeof raw.startedAt === "string" ? raw.startedAt : new Date().toISOString(),
+    finishedAt: typeof raw.finishedAt === "string" ? raw.finishedAt : undefined,
+    currentIndex: typeof raw.currentIndex === "number" ? Math.max(0, Math.round(raw.currentIndex)) : 0,
+    questions,
+    responses: typeof raw.responses === "object" && raw.responses ? raw.responses as CheckpointAttempt["responses"] : {},
+    score: typeof raw.score === "number" ? Math.max(0, Math.min(100, Math.round(raw.score))) : null
+  };
+}
+
+function sanitizeCheckpointHistory(value: unknown, data: AzubiForgeData): CheckpointHistoryEntry[] {
+  if (!Array.isArray(value)) return [];
+  const validSituationIds = new Set(
+    Object.values(data.learningSituations || {}).flat().map((situation) => situation.id)
+  );
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const raw = item as Partial<CheckpointHistoryEntry>;
+      if (!raw.id || !raw.situationId || !validSituationIds.has(raw.situationId)) return null;
+      return {
+        id: raw.id,
+        situationId: raw.situationId,
+        learningFieldId: typeof raw.learningFieldId === "string" ? raw.learningFieldId : "",
+        situationTitle: typeof raw.situationTitle === "string" ? raw.situationTitle.slice(0, 200) : "Checkpoint",
+        score: typeof raw.score === "number" ? Math.max(0, Math.min(100, Math.round(raw.score))) : 0,
+        passed: Boolean(raw.passed),
+        finishedAt: typeof raw.finishedAt === "string" ? raw.finishedAt : new Date().toISOString()
+      };
+    })
+    .filter((item): item is CheckpointHistoryEntry => Boolean(item))
+    .slice(0, 50);
 }

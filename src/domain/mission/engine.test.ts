@@ -109,7 +109,11 @@ describe("legacy mastery bridge", () => {
         finishedAt: new Date().toISOString(),
         wrongQuestionIds: ["q1"],
         competencyIds: ["c1"]
-      }]
+      }],
+      activeMissionReview: null,
+      missionReviewHistory: [],
+      activeCheckpoint: null,
+      checkpointHistory: []
     };
 
     const progress = missionProgressFromLegacyState("m1", state, 2);

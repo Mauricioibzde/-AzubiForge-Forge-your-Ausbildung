@@ -211,6 +211,18 @@ export function missionProgressFromLegacyState(
     }
   }
 
+  const reviewRecord = state.missionReviews[missionId];
+  if (
+    reviewRecord?.status === "completed"
+    && reviewRecord.lastScore !== null
+    && reviewRecord.lastScore >= DEFAULT_COMPLETION_RULES.minimumReviewScore
+  ) {
+    progress.status = "mastered";
+    progress.reviewScore = reviewRecord.lastScore;
+    progress.completedAt = reviewRecord.lastReviewedAt;
+    progress.masteryLevel = 6;
+  }
+
   progress.masteryLevel = masteryFromProgress(progress, DEFAULT_COMPLETION_RULES);
   if (progress.completedBlockIds.length >= totalStudyBlocks && progress.status === "in-progress") {
     progress.status = "study-completed";

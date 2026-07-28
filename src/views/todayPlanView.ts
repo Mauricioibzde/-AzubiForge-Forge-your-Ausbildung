@@ -104,7 +104,7 @@ function taskTypeLabel(type: DailyPlanTask["type"]): string {
 
 function taskHref(task: DailyPlanTask, ctx: AppContext): string {
   const id = escapeAttribute(task.missionId);
-  if (task.type === "review") return "#review";
+  if (task.type === "review") return `#review-mission/${id}`;
   if (task.type === "test") return `#mastery/${id}`;
   if (task.type === "new-mission") return `#reader/${id}/explain`;
   return `#reader/${id}/${getResumeTab(ctx.state, task.missionId)}`;
