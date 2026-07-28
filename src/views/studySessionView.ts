@@ -49,14 +49,15 @@ function renderActiveSession(ctx: AppContext, session: NonNullable<AppContext["s
   }
 
   const activityIndex = session.activities.findIndex((activity) => activity.id === current.id);
+  const chapter = findChapter(ctx.data, current.missionId);
+  const preview = chapter?.summary || chapter?.description || "";
+  const isMasteryTest = current.kind === "mastery-test";
+  const masteryHref = `#mastery/${escapeAttribute(current.missionId)}/session`;
   const readerHref = current.readerTab
     ? `#reader/${escapeAttribute(current.missionId)}/${current.readerTab}`
     : current.kind === "review"
       ? "#review"
       : `#reader/${escapeAttribute(current.missionId)}/ap1`;
-
-  const chapter = findChapter(ctx.data, current.missionId);
-  const preview = chapter?.summary || chapter?.description || "";
 
   return `
     <section class="ds-page study-session-page">
@@ -73,14 +74,17 @@ function renderActiveSession(ctx: AppContext, session: NonNullable<AppContext["s
         <span class="today-task-type">${activityKindLabel(current.kind)}</span>
         <h2 class="ds-card-title">${current.title}</h2>
         <p class="ds-lead">${current.instruction}</p>
-        ${preview ? `<p class="ds-aux">${preview}</p>` : ""}
+        ${preview && !isMasteryTest ? `<p class="ds-aux">${preview}</p>` : ""}
+        ${isMasteryTest ? `<p class="ds-aux">Teste local com nota minima configuravel. Feedback e analise de erros somente ao final.</p>` : ""}
         <div class="today-task-meta">
           <span class="today-task-time">${current.estimatedMinutes} min estimados</span>
         </div>
 
         <div class="study-session-actions">
-          <a class="button accent" href="${readerHref}" data-session-open-reader>Abrir conteudo</a>
-          <button class="button" type="button" data-session-complete>Concluir atividade</button>
+          ${isMasteryTest
+            ? `<a class="button accent" href="${masteryHref}">Iniciar teste de dominio</a>`
+            : `<a class="button accent" href="${readerHref}" data-session-open-reader>Abrir conteudo</a>`}
+          ${isMasteryTest ? "" : `<button class="button" type="button" data-session-complete>Concluir atividade</button>`}
           <button class="button secondary" type="button" data-session-pause>Salvar e sair</button>
         </div>
       </article>

@@ -11,7 +11,8 @@ const ROUTE_TITLES: Record<RouteName, string> = {
   glossary: "Glossario",
   exam: "AP1",
   "docs-ai": "Docs AI",
-  session: "Sessao focada"
+  session: "Sessao focada",
+  mastery: "Teste de dominio"
 };
 
 export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string): void {
@@ -40,7 +41,7 @@ export function setActiveNav(route: RouteName): void {
 
 export function updateContinueChip(ctx: AppContext, route: RouteName): void {
   const chapter = findChapter(ctx.data, ctx.state.lastChapterId) || ctx.data.chapters[0];
-  const hideOnReader = route === "reader" || route === "session";
+  const hideOnReader = route === "reader" || route === "session" || route === "mastery";
   const useful = Boolean(chapter) && !hideOnReader;
   const href = getNextJourneyHref(ctx.data, ctx.state);
   const label = route === "home" ? "Continuar jornada" : "Continuar estudo";

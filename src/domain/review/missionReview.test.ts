@@ -33,7 +33,9 @@ function emptyState(): AppState {
     },
     activeStudySession: null,
     studySessionHistory: [],
-    missionReviews: {}
+    missionReviews: {},
+    activeMasteryTest: null,
+    masteryTestHistory: []
   };
 }
 

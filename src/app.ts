@@ -53,6 +53,17 @@ import {
   startStudySessionFromPlan
 } from "./views/studySessionView";
 import {
+  finishMasteryTest,
+  renderMasteryTestView,
+  startMasteryTest,
+  submitMasteryTestForGrading
+} from "./views/masteryTestView";
+import { applyMasteryTestResult } from "./domain/mastery/applyMasteryResult";
+import {
+  setMasteryTestResponse,
+  setMasteryTestSelfCheck
+} from "./domain/mastery/masteryTest";
+import {
   buildMockExamHistoryEntry,
   createMockExam,
   formatMockExamTimer,
@@ -181,6 +192,15 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
       sessionMode = "active";
     }
     app.innerHTML = renderStudySessionView(ctx, sessionMode);
+  } else if (route === "mastery") {
+    const missionId = id || ctx.state.lastChapterId || ctx.data.chapters[0]?.id || "";
+    const returnToSession = tab === "session";
+    if (missionId) {
+      app.innerHTML = renderMasteryTestView(ctx, missionId, returnToSession);
+      saveState(ctx.state);
+    } else {
+      app.innerHTML = renderHomeView(ctx);
+    }
   } else app.innerHTML = renderHomeView(ctx);
 
   syncChrome(ctx, route || "home", chapterId);
@@ -287,6 +307,98 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     handleSessionDismiss(ctx);
     saveState(ctx.state);
     window.location.hash = "#home";
+    return;
+  }
+
+  if (target.closest("[data-mastery-submit]")) {
+    event.preventDefault();
+    submitMasteryTestForGrading(ctx);
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  if (target.closest("[data-mastery-finish]")) {
+    event.preventDefault();
+    finishMasteryTest(ctx);
+    if (ctx.state.activeMasteryTest) {
+      applyMasteryTestResult(ctx, ctx.state.activeMasteryTest);
+    }
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  if (target.closest("[data-mastery-retry]")) {
+    event.preventDefault();
+    const missionId = ctx.state.activeMasteryTest?.missionId || ctx.state.lastChapterId;
+    const returnToSession = ctx.state.activeMasteryTest?.returnToSession || false;
+    if (missionId) {
+      startMasteryTest(ctx, missionId, returnToSession);
+      saveState(ctx.state);
+      window.location.hash = `#mastery/${missionId}${returnToSession ? "/session" : ""}`;
+    }
+    return;
+  }
+
+  if (target.closest("[data-mastery-clear]")) {
+    event.preventDefault();
+    ctx.state.activeMasteryTest = null;
+    saveState(ctx.state);
+    window.location.hash = "#home";
+    return;
+  }
+
+  const masteryStep = target.closest<HTMLElement>("[data-mastery-step]");
+  if (masteryStep?.dataset.masteryStep && ctx.state.activeMasteryTest) {
+    event.preventDefault();
+    const delta = Number(masteryStep.dataset.masteryStep);
+    const attempt = ctx.state.activeMasteryTest;
+    ctx.state.activeMasteryTest = {
+      ...attempt,
+      currentIndex: Math.max(0, Math.min(attempt.questions.length - 1, attempt.currentIndex + delta))
+    };
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const masteryGoto = target.closest<HTMLElement>("[data-mastery-goto]");
+  if (masteryGoto?.dataset.masteryGoto !== undefined && ctx.state.activeMasteryTest) {
+    event.preventDefault();
+    const index = Number(masteryGoto.dataset.masteryGoto);
+    if (!Number.isNaN(index)) {
+      ctx.state.activeMasteryTest = {
+        ...ctx.state.activeMasteryTest,
+        currentIndex: Math.max(0, Math.min(ctx.state.activeMasteryTest.questions.length - 1, index))
+      };
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
+    return;
+  }
+
+  const masteryAnswered = target.closest<HTMLElement>("[data-mastery-answered]");
+  if (masteryAnswered?.dataset.masteryAnswered && ctx.state.activeMasteryTest) {
+    event.preventDefault();
+    const questionId = masteryAnswered.dataset.masteryAnswered;
+    const current = Boolean(ctx.state.activeMasteryTest.responses[questionId]?.answered);
+    ctx.state.activeMasteryTest = setMasteryTestResponse(ctx.state.activeMasteryTest, questionId, { answered: !current });
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const masteryGrade = target.closest<HTMLElement>("[data-mastery-grade]");
+  if (masteryGrade?.dataset.masteryGrade && masteryGrade.dataset.masteryQuestion && ctx.state.activeMasteryTest) {
+    event.preventDefault();
+    ctx.state.activeMasteryTest = setMasteryTestSelfCheck(
+      ctx.state.activeMasteryTest,
+      masteryGrade.dataset.masteryQuestion,
+      masteryGrade.dataset.masteryGrade as ExerciseCheck
+    );
+    saveState(ctx.state);
+    renderRoute(app, ctx);
     return;
   }
 
@@ -638,6 +750,16 @@ function handleInput(event: Event, app: HTMLElement, ctx: AppContext): void {
     });
     saveState(ctx.state);
     syncMockAnsweredUi(app, ctx, questionId, answered);
+  }
+
+  if (target.matches("[data-mastery-notes]") && ctx.state.activeMasteryTest) {
+    const questionId = target.dataset.masteryNotes || "";
+    const answered = Boolean(target.value.trim()) || Boolean(ctx.state.activeMasteryTest.responses[questionId]?.answered);
+    ctx.state.activeMasteryTest = setMasteryTestResponse(ctx.state.activeMasteryTest, questionId, {
+      notes: target.value,
+      answered
+    });
+    saveState(ctx.state);
   }
 }
 

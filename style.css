@@ -5261,8 +5261,43 @@ a.session-step:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.study-session-kpis .ds-kpi {
+.mastery-score {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 600;
+  line-height: 1;
+  margin: var(--space-2) 0;
+}
+
+.mastery-score.passed {
+  color: var(--success);
+}
+
+.mastery-score.failed {
+  color: var(--warning, #f0a030);
+}
+
+.mastery-error-list {
+  list-style: none;
+  margin: var(--space-2) 0;
+  padding: 0;
   display: grid;
-  gap: var(--space-1);
-  padding: var(--space-3);
+  gap: var(--space-2);
+}
+
+.mastery-error-list li {
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.mastery-answer-reveal {
+  margin: var(--space-2) 0;
+}
+
+.mastery-test-page {
+  max-width: 820px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--space-4);
 }

@@ -10,6 +10,12 @@ import type {
   MockExamLength,
   MockExamQuestion,
   MockExamStatus,
+  MasteryTestAttempt,
+  MasteryTestHistoryEntry,
+  MasteryTestQuestion,
+  MasteryTestResponse,
+  MasteryTestStatus,
+  MasteryQuestionType,
   Preferences,
   ReaderTab,
   StudySession,
@@ -25,6 +31,8 @@ const READER_TAB_VALUES = new Set<ReaderTab>(["explain", "praxis", "vocab", "pra
 const SESSION_STATUS_VALUES = new Set<StudySessionStatus>(["active", "paused", "completed"]);
 const SESSION_ACTIVITY_KIND_VALUES = new Set<StudySessionActivityKind>(["reader-step", "review", "mastery-test"]);
 const MISSION_REVIEW_STATUS_VALUES = new Set<MissionReviewStatus>(["scheduled", "due", "completed"]);
+const MASTERY_TEST_STATUS_VALUES = new Set<MasteryTestStatus>(["active", "grading", "finished"]);
+const MASTERY_QUESTION_TYPE_VALUES = new Set<MasteryQuestionType>(["scenario-choice", "open-question", "true-false"]);
 const EXERCISE_CHECK_VALUES = new Set<ExerciseCheck>(["correct", "wrong"]);
 const MOCK_LENGTH_VALUES = new Set<MockExamLength>(["short", "full"]);
 const MOCK_STATUS_VALUES = new Set<MockExamStatus>(["active", "grading", "finished"]);
@@ -49,7 +57,7 @@ export function saveState(state: AppState): void {
 export function exportState(state: AppState): void {
   const payload = {
     app: "AzubiForge",
-    version: 9,
+    version: 10,
     exportedAt: new Date().toISOString(),
     state
   };
@@ -110,7 +118,9 @@ function createFallbackState(data: AzubiForgeData): AppState {
     },
     activeStudySession: null,
     studySessionHistory: [],
-    missionReviews: {}
+    missionReviews: {},
+    activeMasteryTest: null,
+    masteryTestHistory: []
   };
 }
 
@@ -144,7 +154,9 @@ function sanitizeState(imported: Partial<AppState>, data: AzubiForgeData, fallba
     preferences: sanitizePreferences(imported.preferences, fallback.preferences),
     activeStudySession: sanitizeStudySession(imported.activeStudySession, validChapterIds),
     studySessionHistory: sanitizeStudySessionHistory(imported.studySessionHistory),
-    missionReviews: sanitizeMissionReviews(imported.missionReviews, validChapterIds)
+    missionReviews: sanitizeMissionReviews(imported.missionReviews, validChapterIds),
+    activeMasteryTest: sanitizeMasteryTestAttempt(imported.activeMasteryTest, validChapterIds),
+    masteryTestHistory: sanitizeMasteryTestHistory(imported.masteryTestHistory, validChapterIds)
   };
 }
 
@@ -464,4 +476,92 @@ function sanitizeMissionReviews(value: unknown, validChapterIds: Set<string>): R
   });
 
   return record;
+}
+
+function sanitizeMasteryTestAttempt(value: unknown, validChapterIds: Set<string>): MasteryTestAttempt | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<MasteryTestAttempt>;
+  if (!raw.missionId || !validChapterIds.has(raw.missionId)) return null;
+  if (!MASTERY_TEST_STATUS_VALUES.has(raw.status as MasteryTestStatus)) return null;
+  if (!Array.isArray(raw.questions) || !raw.questions.length) return null;
+
+  const questions = raw.questions
+    .map((item) => sanitizeMasteryTestQuestion(item, raw.missionId!))
+    .filter((item): item is MasteryTestQuestion => Boolean(item));
+  if (!questions.length) return null;
+
+  const responses: MasteryTestAttempt["responses"] = {};
+  if (raw.responses && typeof raw.responses === "object") {
+    Object.entries(raw.responses).forEach(([key, item]) => {
+      if (!item || typeof item !== "object") return;
+      const response = item as MasteryTestResponse;
+      responses[key] = {
+        answered: Boolean(response.answered),
+        notes: typeof response.notes === "string" ? response.notes.slice(0, 4000) : undefined,
+        selfCheck: EXERCISE_CHECK_VALUES.has(response.selfCheck as ExerciseCheck)
+          ? response.selfCheck as ExerciseCheck
+          : undefined
+      };
+    });
+  }
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : `mastery-${Date.now()}`,
+    missionId: raw.missionId,
+    missionTitle: typeof raw.missionTitle === "string" ? raw.missionTitle.slice(0, 200) : "Missao",
+    status: raw.status as MasteryTestStatus,
+    passingScore: typeof raw.passingScore === "number" ? Math.max(50, Math.min(100, Math.round(raw.passingScore))) : 80,
+    startedAt: typeof raw.startedAt === "string" ? raw.startedAt : new Date().toISOString(),
+    finishedAt: typeof raw.finishedAt === "string" ? raw.finishedAt : undefined,
+    currentIndex: typeof raw.currentIndex === "number" && raw.currentIndex >= 0
+      ? Math.min(questions.length - 1, Math.round(raw.currentIndex))
+      : 0,
+    questions,
+    responses,
+    score: typeof raw.score === "number" ? Math.max(0, Math.min(100, Math.round(raw.score))) : null,
+    returnToSession: Boolean(raw.returnToSession)
+  };
+}
+
+function sanitizeMasteryTestQuestion(value: unknown, missionId: string): MasteryTestQuestion | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<MasteryTestQuestion>;
+  if (!raw.id || !raw.question || !raw.answer) return null;
+
+  return {
+    id: raw.id,
+    missionId,
+    competencyId: typeof raw.competencyId === "string" ? raw.competencyId : `${missionId}-understand`,
+    type: MASTERY_QUESTION_TYPE_VALUES.has(raw.type as MasteryQuestionType)
+      ? raw.type as MasteryQuestionType
+      : "open-question",
+    question: raw.question.slice(0, 2000),
+    answer: raw.answer.slice(0, 2000),
+    explanation: typeof raw.explanation === "string" ? raw.explanation.slice(0, 2000) : undefined
+  };
+}
+
+function sanitizeMasteryTestHistory(value: unknown, validChapterIds: Set<string>): MasteryTestHistoryEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const raw = item as Partial<MasteryTestHistoryEntry>;
+      if (!raw.id || !raw.missionId || !validChapterIds.has(raw.missionId)) return null;
+      return {
+        id: raw.id,
+        missionId: raw.missionId,
+        score: typeof raw.score === "number" ? Math.max(0, Math.min(100, Math.round(raw.score))) : 0,
+        passed: Boolean(raw.passed),
+        finishedAt: typeof raw.finishedAt === "string" ? raw.finishedAt : new Date().toISOString(),
+        wrongQuestionIds: Array.isArray(raw.wrongQuestionIds)
+          ? raw.wrongQuestionIds.filter((id): id is string => typeof id === "string")
+          : [],
+        competencyIds: Array.isArray(raw.competencyIds)
+          ? raw.competencyIds.filter((id): id is string => typeof id === "string")
+          : []
+      };
+    })
+    .filter((item): item is MasteryTestHistoryEntry => Boolean(item))
+    .slice(0, 100);
 }

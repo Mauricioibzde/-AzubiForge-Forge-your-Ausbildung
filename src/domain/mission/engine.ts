@@ -1,6 +1,7 @@
 import type { AppState } from "../../types";
 import type { CompletionRules, MissionPhaseId, MissionProgress, MissionStatus, MasteryLevel } from "../../schemas/mission";
 import { DEFAULT_COMPLETION_RULES } from "../../schemas/mission";
+import { getLatestMasteryTestForMission } from "../mastery/masteryTest";
 
 export type MissionEvent =
   | { type: "UNLOCK" }
@@ -182,6 +183,23 @@ export function missionProgressFromLegacyState(
     progress.practiceScore = score;
     if (score >= DEFAULT_COMPLETION_RULES.minimumPracticeScore) {
       progress.status = progress.status === "in-progress" ? "ready-for-test" : progress.status;
+    }
+  }
+
+  const lastMasteryTest = getLatestMasteryTestForMission(state.masteryTestHistory || [], missionId);
+  if (lastMasteryTest) {
+    progress.masteryTestScore = lastMasteryTest.score;
+    progress.attempts = state.masteryTestHistory.filter((entry) => entry.missionId === missionId).length;
+    if (lastMasteryTest.passed) {
+      progress.status = DEFAULT_COMPLETION_RULES.delayedReviewRequired
+        ? "provisionally-mastered"
+        : "mastered";
+      if (!DEFAULT_COMPLETION_RULES.delayedReviewRequired) {
+        progress.completedAt = lastMasteryTest.finishedAt;
+      }
+    } else {
+      progress.status = "test-failed";
+      progress.currentPhase = "test";
     }
   }
 

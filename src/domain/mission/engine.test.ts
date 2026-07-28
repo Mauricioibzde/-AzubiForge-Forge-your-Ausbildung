@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyMissionEvent, createInitialMissionProgress, isMissionUnlocked } from "./engine";
+import { applyMissionEvent, createInitialMissionProgress, isMissionUnlocked, missionProgressFromLegacyState } from "./engine";
 import { DEFAULT_COMPLETION_RULES } from "../../schemas/mission";
 
 describe("mission state engine", () => {
@@ -68,5 +68,52 @@ function applyInitialTestPath(practiceScore: number) {
 describe("completion rules defaults", () => {
   it("uses 80% mastery threshold", () => {
     expect(DEFAULT_COMPLETION_RULES.minimumMasteryTestScore).toBe(80);
+  });
+});
+
+describe("legacy mastery bridge", () => {
+  it("reflects failed mastery test in mission progress", () => {
+    const state = {
+      completed: [],
+      lastChapterId: "m1",
+      notes: {},
+      confidence: {},
+      collapsedModules: {},
+      sessionSteps: {},
+      exerciseChecks: {},
+      vocabChecks: {},
+      reviewSchedule: {},
+      reviewDailyResolved: {},
+      reviewResolvedKeyDay: {},
+      examChecklist: {},
+      mockExam: null,
+      mockExamHistory: [],
+      lastStudiedAt: {},
+      studyDates: [],
+      preferences: {
+        theme: "dark" as const,
+        readingSize: "normal" as const,
+        onboardingDone: true,
+        dailyGoalSessions: 1,
+        studyGoal: "Test"
+      },
+      activeStudySession: null,
+      studySessionHistory: [],
+      missionReviews: {},
+      activeMasteryTest: null,
+      masteryTestHistory: [{
+        id: "t1",
+        missionId: "m1",
+        score: 55,
+        passed: false,
+        finishedAt: new Date().toISOString(),
+        wrongQuestionIds: ["q1"],
+        competencyIds: ["c1"]
+      }]
+    };
+
+    const progress = missionProgressFromLegacyState("m1", state, 2);
+    expect(progress.status).toBe("test-failed");
+    expect(progress.masteryTestScore).toBe(55);
   });
 });
