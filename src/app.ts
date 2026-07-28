@@ -248,8 +248,20 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
 
   if (previousRoute && previousRoute !== route) scrollToPageTop();
   maybeScrollReaderStep(route);
+  maybeScrollMissionStepper(route || "home");
   maybeScrollMockPill(route || "home", ctx);
   syncMockExamTimer(app, ctx);
+}
+
+function maybeScrollMissionStepper(route: RouteName): void {
+  if (route !== "home") return;
+  window.requestAnimationFrame(() => {
+    document.querySelector<HTMLElement>(".mission-stepper-item.is-current")?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest"
+    });
+  });
 }
 
 function maybeScrollReaderStep(route: RouteName): void {

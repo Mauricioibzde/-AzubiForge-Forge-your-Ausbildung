@@ -6,6 +6,7 @@ import { getNormalizedCourseData } from "../data/normalizedCourse";
 import { hasResumableSession } from "../domain/session/studySession";
 import {
   renderAfterThisStep,
+  renderMissionCelebration,
   renderMissionFocusBar,
   renderMissionHero,
   renderMissionMaterials,
@@ -27,6 +28,7 @@ export function renderHomeView(ctx: AppContext): string {
   return `
     <section class="ds-page mission-panel" data-mission-panel>
       ${renderAlerts(ctx, unfinishedMock)}
+      ${renderMissionCelebration(model)}
 
       <div class="mission-panel-layout">
         <div class="mission-panel-main">
@@ -48,21 +50,20 @@ export function renderHomeView(ctx: AppContext): string {
           </div>
           ${renderMissionTips(model)}
 
-          <section class="mission-side-links ds-card" aria-label="Atalhos">
-            <a class="mission-side-link" href="${sessionHref}">${sessionLabel}</a>
-            <a class="mission-side-link" href="${insights.dueMissionReviews > 0 ? "#review-mission" : "#review"}">
-              Revisões${insights.dueMissionReviews > 0 ? ` (${insights.dueMissionReviews})` : ""}
-            </a>
-            <a class="mission-side-link" href="#exam">Treino AP1</a>
-            <a class="mission-side-link" href="#course">Trilha completa</a>
-            <a class="mission-side-link" href="#docs-ai">Docs AI</a>
-          </section>
-
-          <details class="mission-tools-details ds-card" id="dashboard-progress">
-            <summary>Ferramentas e backup</summary>
-            <div class="progress-backup">
-              <button class="button secondary" type="button" data-export-progress>Exportar progresso</button>
-              <label class="button secondary file-button">Importar<input type="file" accept="application/json,.json" data-import-progress></label>
+          <details class="mission-more-details ds-card">
+            <summary>Mais opções</summary>
+            <div class="mission-more-body">
+              <a class="mission-side-link" href="${sessionHref}">${sessionLabel}</a>
+              <a class="mission-side-link" href="${insights.dueMissionReviews > 0 ? "#review-mission" : "#review"}">
+                Revisões${insights.dueMissionReviews > 0 ? ` (${insights.dueMissionReviews})` : ""}
+              </a>
+              <a class="mission-side-link" href="#exam">Treino AP1</a>
+              <a class="mission-side-link" href="#course">Trilha completa</a>
+              <a class="mission-side-link" href="#docs-ai">Docs AI</a>
+              <div class="progress-backup">
+                <button class="button secondary" type="button" data-export-progress>Exportar progresso</button>
+                <label class="button secondary file-button">Importar<input type="file" accept="application/json,.json" data-import-progress></label>
+              </div>
             </div>
           </details>
         </aside>
@@ -77,13 +78,12 @@ function renderAlerts(ctx: AppContext, unfinishedMock: AppContext["state"]["mock
   const parts: string[] = [];
   if (!ctx.state.preferences.onboardingDone) {
     parts.push(`
-      <section class="ds-card ds-alert home-onboarding rise-in" aria-label="Primeiros passos">
-        <h2 class="ds-card-title">Como usar a jornada</h2>
-        <ol class="onboarding-steps ds-aux">
-          <li>Foque na missão atual e na próxima etapa.</li>
-          <li>Cada missão tem 5 etapas no leitor.</li>
-          <li>Marque Acertei/Errei para montar a revisão.</li>
-        </ol>
+      <section class="mission-onboarding rise-in" aria-label="Primeiros passos">
+        <div>
+          <p class="ds-caption">Bem-vindo</p>
+          <strong>Foque na missão e na próxima etapa.</strong>
+          <p class="ds-aux">5 passos no leitor · Acertei/Errei alimenta a revisão.</p>
+        </div>
         <button class="button secondary" type="button" data-dismiss-onboarding>Entendi</button>
       </section>
     `);

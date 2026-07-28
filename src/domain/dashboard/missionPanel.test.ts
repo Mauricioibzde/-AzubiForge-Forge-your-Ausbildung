@@ -104,6 +104,9 @@ describe("buildMissionPanelModel", () => {
     expect(model.estimatedMinutes).toBeGreaterThan(0);
     expect(model.rewards.xp).toBeGreaterThan(0);
     expect(model.currentStepIndex).toBe(2);
+    expect(model.doneCount).toBe(1);
+    expect(model.celebration.show).toBe(true);
+    expect(model.celebration.title).toBe("Etapa concluída");
     expect(model.importanceLabel.toLowerCase()).toContain("import");
   });
 });

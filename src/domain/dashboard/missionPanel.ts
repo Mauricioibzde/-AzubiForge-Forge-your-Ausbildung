@@ -5,9 +5,11 @@ import { getNormalizedCourseData } from "../../data/normalizedCourse";
 import {
   READER_STEPS,
   getActiveModule,
+  getChapterIndex,
   getChapterReadiness,
   getEstimatedSessionMinutes,
   getSessionProgress,
+  getStudyStreak,
   getTodayChapter,
   getVisitedSteps,
   isCompleted,
@@ -28,6 +30,12 @@ export interface MissionStepView {
   xp: number;
 }
 
+export interface MissionCelebration {
+  show: boolean;
+  title: string;
+  detail: string;
+}
+
 export interface MissionPanelModel {
   chapter: Chapter;
   module: Module;
@@ -43,9 +51,13 @@ export interface MissionPanelModel {
   currentStepIndex: number;
   stepsTotal: number;
   remainingMinutes: number;
+  doneCount: number;
+  studyStreak: number;
   steps: MissionStepView[];
   currentStep: MissionStepView;
   upcomingSteps: MissionStepView[];
+  celebration: MissionCelebration;
+  nextMission: { title: string; href: string } | null;
   rewards: {
     xp: number;
     competencyLabel: string;
@@ -142,6 +154,7 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
   const stepMinutes = Math.max(8, Math.round(estimatedMinutes / READER_STEPS.length));
   const xpTotal = mission?.rewards.xp || 80 + Math.max(0, ctx.data.chapters.findIndex((item) => item.id === chapter.id)) * 10;
   const stepXp = Math.max(20, Math.round(xpTotal / READER_STEPS.length));
+  const studyStreak = getStudyStreak(ctx.state);
 
   const steps: MissionStepView[] = READER_STEPS.map((step) => {
     const display = STEP_DISPLAY[step.id];
@@ -189,8 +202,16 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
 
   const currentStep = steps.find((step) => step.state === "current") || steps[steps.length - 1];
   const upcomingSteps = steps.filter((step) => step.state === "upcoming");
-  const remainingSteps = Math.max(1, steps.filter((step) => step.state !== "done").length);
+  const doneSteps = steps.filter((step) => step.state === "done");
+  const remainingSteps = Math.max(completed ? 0 : 1, steps.filter((step) => step.state !== "done").length);
   const remainingMinutes = completed ? 0 : remainingSteps * stepMinutes;
+  const lastDone = doneSteps[doneSteps.length - 1] || null;
+
+  const chapterIndex = getChapterIndex(ctx.data, chapter.id);
+  const nextChapter = ctx.data.chapters[chapterIndex + 1] || null;
+  const nextMission = nextChapter
+    ? { title: nextChapter.title, href: `#reader/${nextChapter.id}/explain` }
+    : null;
 
   const description =
     chapter.fullContent?.introduction?.[0] ||
@@ -212,6 +233,20 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       ? formatDay(lastStudiedKey)
       : "Ainda não iniciada";
 
+  const celebration: MissionCelebration = completed
+    ? {
+        show: true,
+        title: "Missão concluída",
+        detail: `+${xpTotal} XP · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
+      }
+    : lastDone
+      ? {
+          show: true,
+          title: "Etapa concluída",
+          detail: `✓ ${lastDone.shortLabel} · +${lastDone.xp} XP · Próxima: ${currentStep.shortLabel}`
+        }
+      : { show: false, title: "", detail: "" };
+
   return {
     chapter,
     module,
@@ -221,24 +256,34 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     estimatedMinutes,
     difficultyLabel: DIFFICULTY_LABELS[difficulty] || "Intermediário",
     importanceLabel: IMPORTANCE_LABELS[importance],
-    continueHref: completed ? "#course" : `#reader/${chapter.id}/${currentStep.id}`,
-    continueLabel: completed ? "Abrir trilha" : session.completed > 0 ? "Continuar missão" : "Começar missão",
+    continueHref: completed
+      ? (nextMission?.href || "#course")
+      : `#reader/${chapter.id}/${currentStep.id}`,
+    continueLabel: completed
+      ? (nextMission ? "Próxima missão" : "Abrir trilha")
+      : session.completed > 0
+        ? "Continuar missão"
+        : "Começar missão",
     sessionPercent: session.percent,
     currentStepIndex: steps.findIndex((step) => step.id === currentStep.id) + 1,
     stepsTotal: steps.length,
     remainingMinutes,
+    doneCount: doneSteps.length,
+    studyStreak,
     steps,
     currentStep,
     upcomingSteps,
+    celebration,
+    nextMission,
     rewards: {
       xp: xpTotal,
       competencyLabel: "1 competência",
       reviewLabel: "Revisão em 3 dias",
-      nextMissionLabel: "Próxima missão liberada"
+      nextMissionLabel: nextMission ? nextMission.title : "Fim do módulo atual"
     },
     summary: {
       learningField: `${module.title} · ${module.subtitle}`,
-      situation: module.description.slice(0, 80) || module.subtitle,
+      situation: truncate(module.description || module.subtitle, 72),
       status: completed ? "Concluída" : session.completed > 0 ? "Em andamento" : "Disponível",
       startedLabel,
       lastActivityLabel: readiness.label
@@ -249,9 +294,18 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       { label: "Checklist AP1", href: `#reader/${chapter.id}/ap1`, kind: "checklist" },
       { label: "Glossário", href: "#glossary", kind: "glossary" }
     ],
-    tip: currentStep.hint || "Foque em uma etapa por vez. Marque Acertei/Errei para alimentar a revisão.",
+    tip: tipForStep(currentStep.id, currentStep.hint),
     completed
   };
+}
+
+function tipForStep(id: ReaderTab, hint: string): string {
+  if (id === "explain") return "Leia com calma e feche a etapa só quando conseguir explicar a ideia em 2 frases.";
+  if (id === "praxis") return "Conecte o conceito a um cenário real de suporte ou infraestrutura.";
+  if (id === "vocab") return "Treine recall: esconda a resposta e diga o termo em alemão antes de revelar.";
+  if (id === "practice") return "Marque Acertei/Errei com honestidade — isso monta sua fila de revisão.";
+  if (id === "ap1") return "Feche a evidência da sessão e anote o que ainda está frágil para a prova.";
+  return hint;
 }
 
 function parseDifficulty(raw?: string): number {

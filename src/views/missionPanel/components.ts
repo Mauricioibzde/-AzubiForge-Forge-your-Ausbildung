@@ -1,6 +1,16 @@
 import { escapeAttribute, escapeHtml } from "../../ui/html";
 import type { MissionPanelModel, MissionStepView } from "../../domain/dashboard/missionPanel";
 
+export function renderMissionCelebration(model: MissionPanelModel): string {
+  if (!model.celebration.show) return "";
+  return `
+    <div class="mission-celebration rise-in" role="status">
+      <strong>${escapeHtml(model.celebration.title)}</strong>
+      <span>${escapeHtml(model.celebration.detail)}</span>
+    </div>
+  `;
+}
+
 export function renderMissionHero(model: MissionPanelModel): string {
   return `
     <section class="mission-hero rise-in" aria-label="Missão atual">
@@ -12,6 +22,8 @@ export function renderMissionHero(model: MissionPanelModel): string {
           <span class="mission-meta-chip">${model.estimatedMinutes} min</span>
           <span class="mission-meta-chip">${escapeHtml(model.difficultyLabel)}</span>
           <span class="mission-meta-chip mission-meta-chip-accent">${escapeHtml(model.importanceLabel)}</span>
+          <span class="mission-meta-chip">Passo ${model.currentStepIndex}/${model.stepsTotal}</span>
+          ${model.studyStreak > 0 ? `<span class="mission-meta-chip">Streak ${model.studyStreak}d</span>` : ""}
         </div>
         <a class="button accent mission-hero-cta" href="${escapeAttribute(model.continueHref)}" data-dashboard-cta data-mission-focus>
           ${escapeHtml(model.continueLabel)}
@@ -58,14 +70,16 @@ export function renderNextStepCard(model: MissionPanelModel): string {
     return `
       <article class="mission-next-card is-complete rise-in" style="animation-delay:20ms" aria-label="Missão concluída">
         <div class="mission-next-copy">
-          <p class="ds-caption">Missão</p>
-          <h2 class="mission-next-title">Etapas concluídas</h2>
-          <p class="ds-aux">Você percorreu as 5 etapas desta missão. Avance na trilha ou revise pontos fracos.</p>
+          <p class="ds-caption">Missão concluída</p>
+          <h2 class="mission-next-title">${model.nextMission ? "Próxima missão pronta" : "Trilha avançada"}</h2>
+          <p class="ds-aux">${model.nextMission
+            ? `Você finalizou esta missão. Segue: ${escapeHtml(model.nextMission.title)}.`
+            : "Você percorreu as 5 etapas. Continue pela trilha ou revise pontos fracos."}</p>
           <div class="mission-next-meta">
-            <span>${model.stepsTotal} etapas</span>
+            <span>${model.stepsTotal}/${model.stepsTotal} etapas</span>
             <span class="mission-xp">+${model.rewards.xp} XP</span>
           </div>
-          <a class="button mission-next-cta" href="#course">Próxima na trilha</a>
+          <a class="button mission-next-cta" href="${escapeAttribute(model.continueHref)}">${escapeHtml(model.continueLabel)}</a>
         </div>
         <div class="mission-next-visual" aria-hidden="true">
           <div class="mission-next-clipboard"></div>
@@ -78,7 +92,7 @@ export function renderNextStepCard(model: MissionPanelModel): string {
   return `
     <article class="mission-next-card rise-in" style="animation-delay:20ms" aria-label="Próxima etapa">
       <div class="mission-next-copy">
-        <p class="ds-caption">Próxima etapa</p>
+        <p class="ds-caption">Próxima etapa · ${step.estimatedMinutes} min</p>
         <h2 class="mission-next-title">${escapeHtml(step.label)}</h2>
         <p class="ds-aux">${escapeHtml(step.hint)}</p>
         <p class="mission-next-learn-label">Você aprenderá:</p>
@@ -86,7 +100,7 @@ export function renderNextStepCard(model: MissionPanelModel): string {
           ${step.learnings.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
         </ul>
         <div class="mission-next-meta">
-          <span>${step.estimatedMinutes} min</span>
+          <span>~ ${model.remainingMinutes} min restantes na missão</span>
           <span class="mission-xp">+${step.xp} XP</span>
         </div>
         <a class="button mission-next-cta" href="${escapeAttribute(step.href)}" data-mission-focus>
@@ -105,7 +119,7 @@ export function renderAfterThisStep(model: MissionPanelModel): string {
     return `
       <section class="mission-after rise-in" style="animation-delay:28ms" aria-label="Depois desta etapa">
         <h3 class="mission-section-title">Depois desta etapa</h3>
-        <p class="ds-aux">Esta é a última etapa da missão. Conclua e avance na trilha.</p>
+        <p class="ds-aux">Última etapa da missão. Ao concluir, a próxima missão da trilha é liberada.</p>
       </section>
     `;
   }
@@ -119,7 +133,7 @@ export function renderAfterThisStep(model: MissionPanelModel): string {
             <span class="mission-after-icon" aria-hidden="true">○</span>
             <div class="mission-after-copy">
               <strong>${escapeHtml(step.label)}</strong>
-              <span class="ds-aux">${step.estimatedMinutes} min · ${escapeHtml(step.shortLabel)}</span>
+              <span class="ds-aux">${step.estimatedMinutes} min</span>
             </div>
             <span class="mission-after-state">Em breve</span>
           </li>
@@ -160,7 +174,7 @@ export function renderProgressIndicator(model: MissionPanelModel): string {
   const circumference = 2 * Math.PI * 42;
   const offset = circumference * (1 - model.sessionPercent / 100);
   return `
-    <section class="mission-progress-card ds-card" aria-label="Progresso da missão">
+    <section class="mission-progress-card ds-card" id="dashboard-progress" aria-label="Progresso da missão">
       <div class="mission-progress-ring-wrap">
         <svg class="mission-progress-ring" viewBox="0 0 100 100" aria-hidden="true">
           <circle class="mission-progress-ring-bg" cx="50" cy="50" r="42"></circle>
@@ -175,7 +189,8 @@ export function renderProgressIndicator(model: MissionPanelModel): string {
       </div>
       <div class="mission-progress-stats">
         <p><span class="ds-caption">Passo</span><strong>${model.currentStepIndex} de ${model.stepsTotal}</strong></p>
-        <p><span class="ds-caption">Restam</span><strong>~ ${model.remainingMinutes} min</strong></p>
+        <p><span class="ds-caption">Restam</span><strong>${model.remainingMinutes ? `~ ${model.remainingMinutes} min` : "0 min"}</strong></p>
+        <p><span class="ds-caption">Concluídas</span><strong>${model.doneCount}/${model.stepsTotal}</strong></p>
       </div>
     </section>
   `;
@@ -190,7 +205,7 @@ export function renderMissionSummary(model: MissionPanelModel): string {
         <div><dt>Lernfeld</dt><dd>${escapeHtml(summary.learningField)}</dd></div>
         <div><dt>Status</dt><dd>${escapeHtml(summary.status)}</dd></div>
         <div><dt>Situação</dt><dd>${escapeHtml(summary.situation)}</dd></div>
-        <div><dt>Atividade</dt><dd>${escapeHtml(summary.lastActivityLabel)}</dd></div>
+        <div><dt>Prontidão</dt><dd>${escapeHtml(summary.lastActivityLabel)}</dd></div>
         <div><dt>Registro</dt><dd>${escapeHtml(summary.startedLabel)}</dd></div>
       </dl>
     </section>
@@ -222,7 +237,7 @@ export function renderMissionMaterials(model: MissionPanelModel, collapsed = tru
 export function renderMissionTips(model: MissionPanelModel): string {
   return `
     <section class="mission-tips-card ds-card" aria-label="Dica">
-      <p class="ds-caption">Dica</p>
+      <p class="ds-caption">Dica da etapa</p>
       <p class="mission-tip-text">${escapeHtml(model.tip)}</p>
     </section>
   `;
@@ -233,9 +248,14 @@ export function renderMissionFocusBar(model: MissionPanelModel): string {
     <footer class="mission-focus-bar" aria-label="Foco de hoje">
       <p class="mission-focus-copy">
         <span class="ds-caption">Foco de hoje</span>
-        <strong>${escapeHtml(model.currentStep.label)}</strong>
+        <strong>${escapeHtml(model.completed ? model.title : model.currentStep.label)}</strong>
       </p>
-      <a class="button secondary mission-focus-exit" href="#course">Ver trilha</a>
+      <div class="mission-focus-actions">
+        <a class="button accent mission-focus-continue" href="${escapeAttribute(model.continueHref)}" data-mission-focus>
+          ${escapeHtml(model.completed ? model.continueLabel : "Continuar")}
+        </a>
+        <a class="button secondary mission-focus-exit" href="#course">Sair</a>
+      </div>
     </footer>
   `;
 }
