@@ -7,11 +7,15 @@ import {
   getChapterReadiness,
   getCourseProgress,
   getCourseReadiness,
+  getDueReviewItemCount,
   getModuleContinueChapter,
   getModuleProgress,
   getReviewQueue,
+  getReviewResolutionStreak,
   getResumeTab,
   getSuggestedChapter,
+  getStudyStreak,
+  getTodayResolvedReviewCount,
   isReviewDue,
   isCompleted
 } from "../domain/course";
@@ -29,6 +33,10 @@ export function renderCourseView(ctx: AppContext): string {
   const queue = getReviewQueue(ctx.data, ctx.state);
   const dueReviewChapter = queue.find((chapter) => isReviewDue(ctx.state, chapter.id));
   const afterChapter = queue.find((chapter) => chapter.id !== continueChapter.id) || next;
+  const dueItems = getDueReviewItemCount(ctx.state);
+  const reviewStreak = getReviewResolutionStreak(ctx.state);
+  const resolvedToday = getTodayResolvedReviewCount(ctx.state);
+  const studyStreak = getStudyStreak(ctx.state);
 
   return `
     <section class="course-shell">
@@ -47,6 +55,11 @@ export function renderCourseView(ctx: AppContext): string {
           <p class="small-note">${activeModule.subtitle}</p>
           <a class="button" href="#reader/${continueChapter.id}/${continueTab}">Retomar capitulo</a>
           <p class="small-note">Sugestao geral: ${next.title}</p>
+          <div class="course-meta-mini">
+            <span>Streak estudo: <strong>${studyStreak}</strong></span>
+            <span>Revisoes hoje: <strong>${resolvedToday}</strong></span>
+            <span>Pendentes: <strong>${dueItems}</strong></span>
+          </div>
         </div>
       </div>
 
@@ -75,6 +88,24 @@ export function renderCourseView(ctx: AppContext): string {
             <a class="text-link" href="${dueReviewChapter ? "#review" : "#exam/drill"}" ${dueReviewChapter ? "data-go-review-due" : ""}>${dueReviewChapter ? "Revisar agora" : "Treino AP1"} →</a>
           </article>
         </div>
+      </section>
+
+      <section class="track-kpi-board panel" aria-label="Painel de acompanhamento">
+        <article class="track-kpi-card">
+          <span class="card-label">Pendencia de revisao</span>
+          <h3>${dueItems}</h3>
+          <p class="small-note">${dueReviewChapter ? `${dueReviewChapter.title} em destaque` : "Sem urgencias abertas"}</p>
+        </article>
+        <article class="track-kpi-card">
+          <span class="card-label">Streak de revisao</span>
+          <h3>${reviewStreak} dia(s)</h3>
+          <p class="small-note">${resolvedToday} resolvida(s) hoje</p>
+        </article>
+        <article class="track-kpi-card">
+          <span class="card-label">Progresso da trilha</span>
+          <h3>${progress.percent}%</h3>
+          <p class="small-note">${progress.completed}/${progress.total} capitulos completos</p>
+        </article>
       </section>
 
       <div class="toolbar" aria-label="Filtros do curso">
@@ -130,26 +161,46 @@ function renderModules(ctx: AppContext, filtered: Chapter[], activeModuleId: str
   if (!filtered.length) return `<p class="empty-state">Nenhum capitulo encontrado.</p>`;
 
   const filteredIds = new Set(filtered.map((chapter) => chapter.id));
+  const visibleModules = ctx.data.modules
+    .map((module) => ({
+      module,
+      chapters: module.chapterIds
+        .map((id) => findChapter(ctx.data, id))
+        .filter((chapter): chapter is Chapter => Boolean(chapter && filteredIds.has(chapter.id)))
+    }))
+    .filter((item) => item.chapters.length > 0);
+
+  const preferredModule = visibleModules.find((item) => ctx.state.collapsedModules[item.module.id] === false);
+  const focused = preferredModule
+    || visibleModules.find((item) => item.module.id === activeModuleId)
+    || visibleModules[0];
+  const others = visibleModules.filter((item) => item.module.id !== focused.module.id);
 
   return `
-    <div class="module-list">
-      ${ctx.data.modules.map((module) => renderModule(ctx, module, filteredIds, activeModuleId)).join("")}
-    </div>
+    <section class="track-shell">
+      <div class="track-main">
+        ${renderFocusedModule(ctx, focused.module, focused.chapters, focused.module.id === activeModuleId)}
+      </div>
+      <aside class="track-side panel" aria-label="Catalogo de modulos">
+        <div class="track-side-head">
+          <span class="card-label">Catalogo</span>
+          <h3>Modulos da trilha</h3>
+          <p class="small-note">Visao compacta para evitar lista longa e manter foco.</p>
+        </div>
+        <div class="module-summary-grid">
+          ${others.map((item) => renderModuleSummary(ctx, item.module, item.chapters.length)).join("")}
+        </div>
+      </aside>
+    </section>
   `;
 }
 
-function renderModule(
+function renderFocusedModule(
   ctx: AppContext,
   module: Module,
-  filteredIds: Set<string>,
-  activeModuleId: string
+  visibleChapters: Chapter[],
+  isActive: boolean
 ): string {
-  const visibleChapters = module.chapterIds
-    .map((id) => findChapter(ctx.data, id))
-    .filter((chapter): chapter is Chapter => Boolean(chapter && filteredIds.has(chapter.id)));
-
-  if (!visibleChapters.length) return "";
-
   const visibleIds = new Set(visibleChapters.map((chapter) => chapter.id));
   const progress = getModuleProgress(ctx.data, ctx.state, module);
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
@@ -160,35 +211,49 @@ function renderModule(
     description: module.description,
     chapterIds: module.chapterIds
   }];
-  const isActive = module.id === activeModuleId;
-  const collapsed = Boolean(ctx.state.collapsedModules[module.id]) && !ctx.ui.courseQuery.trim() && !isActive;
-
   return `
-    <section class="module-section ${collapsed ? "collapsed" : ""} ${isActive ? "active-module" : ""}" id="${module.id}">
+    <section class="module-section active-module" id="course-focused-module">
       <div class="module-head">
         <div>
-          <span class="card-label">${module.title}${isActive ? " · Em andamento" : ""}</span>
+          <span class="card-label">${module.title}${isActive ? " · Em andamento" : " · Em foco"}</span>
           <h2>${module.subtitle}</h2>
           <p>${module.description}</p>
           ${inlineProgress(progress)}
         </div>
         <div class="module-head-actions">
-          <a class="button secondary" href="#reader/${continueChapter.id}/${continueTab}">Continuar</a>
-          <button class="module-toggle" type="button" data-toggle-module="${module.id}" aria-expanded="${!collapsed}">
+          <a class="button" href="#reader/${continueChapter.id}/${continueTab}">Continuar modulo</a>
+          <button class="module-toggle" type="button" data-focus-module="${module.id}" aria-expanded="true">
             <span class="module-count">${progress.completed} / ${progress.total}</span>
-            <span>${collapsed ? "Abrir" : "Recolher"}</span>
+            <span>Modulo em foco</span>
           </button>
         </div>
       </div>
-      ${collapsed ? "" : `
-        <div class="module-body">
-          <ol class="learning-path" aria-label="Trilha de ${module.subtitle}">
-            ${visibleChapters.map((chapter, index) => renderPathNode(ctx, module, chapter, index)).join("")}
-          </ol>
-          ${situations.map((situation) => renderSituation(ctx, situation, visibleIds)).join("")}
-        </div>
-      `}
+      <div class="module-body">
+        <ol class="learning-path" aria-label="Trilha de ${module.subtitle}">
+          ${visibleChapters.map((chapter, index) => renderPathNode(ctx, module, chapter, index)).join("")}
+        </ol>
+        ${situations.map((situation) => renderSituation(ctx, situation, visibleIds)).join("")}
+      </div>
     </section>
+  `;
+}
+
+function renderModuleSummary(ctx: AppContext, module: Module, visibleCount: number): string {
+  const progress = getModuleProgress(ctx.data, ctx.state, module);
+  const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
+  return `
+    <article class="module-summary-card">
+      <div>
+        <span class="card-label">${module.title}</span>
+        <h4>${module.subtitle}</h4>
+        <p class="small-note">${visibleCount} capitulo(s) no filtro atual</p>
+      </div>
+      ${inlineProgress(progress)}
+      <div class="module-summary-actions">
+        <button class="button secondary" type="button" data-focus-module="${module.id}">Focar modulo</button>
+        <a class="text-link" href="#reader/${continueChapter.id}/${getResumeTab(ctx.state, continueChapter.id)}">Retomar</a>
+      </div>
+    </article>
   `;
 }
 

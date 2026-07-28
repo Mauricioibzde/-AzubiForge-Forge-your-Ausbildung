@@ -2719,6 +2719,87 @@ a.session-step:hover {
   align-content: start;
 }
 
+.course-meta-mini {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.course-meta-mini strong {
+  color: var(--text);
+}
+
+.track-kpi-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.track-kpi-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  display: grid;
+  gap: 6px;
+}
+
+.track-kpi-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+}
+
+.track-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+  gap: 14px;
+}
+
+.track-main {
+  min-width: 0;
+}
+
+.track-side {
+  align-content: start;
+  gap: 10px;
+  display: grid;
+}
+
+.track-side-head h3 {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+}
+
+.module-summary-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.module-summary-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.module-summary-card h4 {
+  margin: 4px 0 2px;
+  font-size: 1rem;
+}
+
+.module-summary-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
 .module-section.active-module {
   border-color: rgba(15, 107, 95, 0.45);
   box-shadow: 0 0 0 1px rgba(15, 107, 95, 0.12), var(--shadow);
@@ -2916,6 +2997,8 @@ a.session-step:hover {
 
 @media (max-width: 900px) {
   .dashboard-command,
+  .track-shell,
+  .track-kpi-board,
   .course-flow-grid,
   .learning-plan-grid,
   .step-coach,
@@ -2946,6 +3029,11 @@ a.session-step:hover {
 
   .path-node .button {
     width: 100%;
+  }
+
+  .module-summary-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

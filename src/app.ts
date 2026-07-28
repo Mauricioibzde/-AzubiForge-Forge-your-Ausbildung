@@ -474,6 +474,22 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
     return;
   }
 
+  const focusModuleButton = target.closest<HTMLElement>("[data-focus-module]");
+  if (focusModuleButton?.dataset.focusModule) {
+    const moduleId = focusModuleButton.dataset.focusModule;
+    const nextCollapsed: Record<string, boolean> = {};
+    ctx.data.modules.forEach((module) => {
+      nextCollapsed[module.id] = module.id !== moduleId;
+    });
+    ctx.state.collapsedModules = nextCollapsed;
+    saveState(ctx.state);
+    renderRoute(app, ctx);
+    window.requestAnimationFrame(() => {
+      document.querySelector("#course-focused-module")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return;
+  }
+
   const confidenceButton = target.closest<HTMLElement>("[data-confidence]");
   if (confidenceButton?.dataset.confidenceChapter && confidenceButton.dataset.confidence) {
     setConfidence(ctx, confidenceButton.dataset.confidenceChapter, confidenceButton.dataset.confidence as Confidence);
