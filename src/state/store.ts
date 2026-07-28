@@ -92,7 +92,7 @@ function createFallbackState(data: AzubiForgeData): AppState {
     lastStudiedAt: {},
     studyDates: [],
     preferences: {
-      theme: "light",
+      theme: "dark",
       readingSize: "normal",
       onboardingDone: false,
       dailyGoalSessions: 1,

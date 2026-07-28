@@ -361,6 +361,39 @@ button {
   color: #7a4b0f;
 }
 
+.topbar-identity {
+  display: inline-grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 180px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(15, 107, 95, 0.08);
+  border: 1px solid rgba(15, 107, 95, 0.16);
+}
+
+.topbar-identity .brand-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  font-size: 0.72rem;
+}
+
+.topbar-identity-copy {
+  display: grid;
+  line-height: 1.15;
+}
+
+.topbar-identity-copy strong {
+  font-size: 0.8rem;
+}
+
+.topbar-identity-copy small {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
 :root[data-theme="dark"] .review-due-chip {
   border-color: rgba(224, 177, 91, 0.45);
   background: rgba(224, 177, 91, 0.16);
@@ -417,6 +450,25 @@ button {
   border: 1px solid rgba(15, 107, 95, 0.18);
   border-radius: 16px;
   background: rgba(15, 107, 95, 0.08);
+}
+
+.sidebar-promo {
+  margin-top: 6px;
+  padding: 12px;
+  border: 1px solid rgba(127, 209, 196, 0.2);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(127, 209, 196, 0.12), rgba(15, 107, 95, 0.05));
+}
+
+.sidebar-promo strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.sidebar-promo p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.74rem;
 }
 
 .sidebar-premium-icon {
@@ -3322,6 +3374,10 @@ a.session-step:hover {
   .review-due-chip {
     max-width: 136px;
     font-size: 0.74rem;
+  }
+
+  .topbar-identity {
+    display: none;
   }
 
   .topbar-theme {
