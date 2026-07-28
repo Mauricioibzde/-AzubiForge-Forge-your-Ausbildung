@@ -1,6 +1,7 @@
 import type { AppContext } from "../appContext";
 import { getNormalizedCourseData } from "../data/normalizedCourse";
 import { createCheckpointAttempt } from "../domain/checkpoint/checkpoints";
+import { resolveNextLearningAction } from "../domain/learning/nextLearningAction";
 import { createMissionReview } from "../domain/review/missionReviewSession";
 import type { MasteryTestStatus, SelfCheckAssessment } from "../types";
 import {
@@ -192,12 +193,23 @@ export function renderMissionReviewView(ctx: AppContext, missionId: string, retu
   }
 
   const mode = attempt.status === "finished" ? "results" : attempt.status === "grading" ? "grading" : "active";
+  let continueHref = returnToSession ? "#session" : "#home";
+  if (!returnToSession && attempt.status === "finished") {
+    try {
+      continueHref = resolveNextLearningAction({
+        course: getNormalizedCourseData(),
+        state: ctx.state
+      }).href;
+    } catch {
+      continueHref = "#home";
+    }
+  }
   return renderAssessmentFlow(attempt, {
     pageCaption: "Revisao de retencao",
     entityLabel: attempt.missionTitle,
     entityTitle: attempt.missionTitle,
     exitHref: returnToSession ? "#session" : "#home",
-    continueHref: returnToSession ? "#session" : undefined,
+    continueHref: returnToSession ? "#session" : (attempt.status === "finished" ? continueHref : undefined),
     directedReviewHref: `#reader/${escapeAttribute(missionId)}/explain`,
     passedMessage: "Retencao confirmada",
     failedMessage: "Revisao necessaria"
@@ -216,11 +228,23 @@ export function renderCheckpointView(ctx: AppContext, situationId: string): stri
   }
 
   const mode = attempt.status === "finished" ? "results" : attempt.status === "grading" ? "grading" : "active";
+  let continueHref: string | undefined;
+  if (attempt.status === "finished") {
+    try {
+      continueHref = resolveNextLearningAction({
+        course: getNormalizedCourseData(),
+        state: ctx.state
+      }).href;
+    } catch {
+      continueHref = "#course";
+    }
+  }
   return renderAssessmentFlow(attempt, {
     pageCaption: "Checkpoint integrado",
     entityLabel: attempt.situationTitle,
     entityTitle: attempt.situationTitle,
     exitHref: "#course",
+    continueHref,
     directedReviewHref: "#course",
     passedMessage: "Lernsituation validada",
     failedMessage: "Checkpoint nao aprovado"

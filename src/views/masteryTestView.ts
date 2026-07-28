@@ -1,6 +1,7 @@
 import type { AppContext } from "../appContext";
 import { getNormalizedCourseData } from "../data/normalizedCourse";
 import { findChapter } from "../domain/course";
+import { resolveNextLearningAction } from "../domain/learning/nextLearningAction";
 import { getDirectedReviewHref } from "../domain/mastery/applyMasteryResult";
 import {
   createMasteryTest,
@@ -138,6 +139,15 @@ function renderMasteryResults(ctx: AppContext, attempt: MasteryTestAttempt, retu
   const passed = score.percent >= attempt.passingScore;
   const wrong = getMasteryWrongQuestions(attempt);
   const history = ctx.state.masteryTestHistory.filter((entry) => entry.missionId === attempt.missionId).slice(0, 3);
+  let nextHref = "#home";
+  try {
+    nextHref = resolveNextLearningAction({
+      course: getNormalizedCourseData(),
+      state: ctx.state
+    }).href;
+  } catch {
+    nextHref = "#home";
+  }
 
   return `
     <section class="ds-page mastery-test-page">
@@ -173,7 +183,7 @@ function renderMasteryResults(ctx: AppContext, attempt: MasteryTestAttempt, retu
           ${passed && returnToSession
             ? `<a class="button accent" href="#session">Continuar sessao</a>`
             : passed
-              ? `<a class="button accent" href="#home">Voltar para Hoje</a>`
+              ? `<a class="button accent" href="${escapeAttribute(nextHref)}">Continuar</a>`
               : `<button class="button accent" type="button" data-mastery-retry>Nova tentativa</button>`}
           ${!passed ? `<a class="button secondary" href="${getDirectedReviewHref(attempt.missionId)}">Estudar erros</a>` : ""}
           <button class="button secondary" type="button" data-mastery-clear>Fechar</button>
