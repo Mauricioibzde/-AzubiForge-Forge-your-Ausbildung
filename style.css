@@ -11,9 +11,11 @@
   --line-strong: rgba(18, 40, 36, 0.26);
   --primary: #0c5c52;
   --primary-dark: #084740;
+  --primary-deep: #063f38;
   --on-primary: #ffffff;
   --accent: #b87a28;
   --accent-ink: #7a4e10;
+  --on-accent: #1a1208;
   --accent-soft: rgba(184, 122, 40, 0.14);
   --success: #1a6b45;
   --warning: #9a6418;
@@ -63,11 +65,13 @@
   --muted: #9eb0bb;
   --line: rgba(232, 240, 244, 0.14);
   --line-strong: rgba(232, 240, 244, 0.24);
-  --primary: #2ec9a6;
+  --primary: #1aa987;
   --primary-dark: #b6f0de;
-  --on-primary: #04140f;
+  --primary-deep: #0c5c52;
+  --on-primary: #ffffff;
   --accent: #e0b15b;
   --accent-ink: #f2d291;
+  --on-accent: #1a1208;
   --accent-soft: rgba(224, 177, 91, 0.16);
   --success: #5fd4a0;
   --warning: #e0b15b;
@@ -633,7 +637,7 @@ button {
   border-radius: var(--radius);
   background: var(--text);
   color: #fff;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
@@ -767,7 +771,7 @@ button {
   background: #dfeae5;
   color: var(--text);
   font-size: 0.84rem;
-  font-weight: 750;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -781,7 +785,7 @@ button {
 .context-eyebrow {
   color: var(--muted);
   font-size: 0.74rem;
-  font-weight: 750;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -867,6 +871,7 @@ h3 {
   margin-top: 28px;
 }
 
+/* Button system — solid fills first (no color-mix dependency for legibility) */
 .button {
   display: inline-flex;
   align-items: center;
@@ -875,9 +880,9 @@ h3 {
   min-height: var(--btn-height);
   padding: 0.65rem var(--btn-pad-x);
   border-radius: var(--btn-radius);
-  border: 1.5px solid color-mix(in srgb, var(--primary-dark) 55%, var(--primary));
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--primary) 88%, #fff) 0%, var(--primary) 48%, var(--primary-dark) 100%);
+  border: 1.5px solid var(--primary-deep);
+  background: var(--primary);
+  background-image: linear-gradient(180deg, var(--primary) 0%, var(--primary-deep) 100%);
   color: var(--on-primary);
   cursor: pointer;
   font-family: var(--font-ui);
@@ -889,6 +894,7 @@ h3 {
   box-shadow: var(--btn-shadow);
   transition:
     background 180ms ease,
+    background-image 180ms ease,
     border-color 180ms ease,
     color 180ms ease,
     box-shadow 180ms ease,
@@ -896,26 +902,35 @@ h3 {
     filter 180ms ease;
 }
 
-:root:not([data-theme="dark"]) .button {
+.button,
+a.button,
+button.button,
+label.button {
   color: var(--on-primary);
 }
 
-:root[data-theme="dark"] .button {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--primary) 92%, #fff) 0%, var(--primary) 55%, color-mix(in srgb, var(--primary) 70%, #000) 100%);
-  border-color: color-mix(in srgb, var(--primary) 65%, #000);
+:root[data-theme="dark"] .button:not(.secondary):not(.ghost):not(.accent):not(.soft-complete),
+:root[data-theme="dark"] a.button:not(.secondary):not(.ghost):not(.accent):not(.soft-complete),
+:root[data-theme="dark"] button.button:not(.secondary):not(.ghost):not(.accent):not(.soft-complete),
+:root[data-theme="dark"] label.button:not(.secondary):not(.ghost):not(.accent):not(.soft-complete) {
+  background: var(--primary-deep);
+  background-image: linear-gradient(180deg, #127a66 0%, var(--primary-deep) 100%);
+  border-color: #084740;
+  color: #ffffff;
 }
 
 .button:hover {
   transform: translateY(-1px);
-  filter: brightness(1.04);
+  filter: brightness(1.06);
   box-shadow: var(--btn-shadow-hover);
+  color: var(--on-primary);
 }
 
 .button:active {
   transform: translateY(1px);
-  filter: brightness(0.96);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  filter: brightness(0.94);
+  box-shadow: none;
+  color: var(--on-primary);
 }
 
 .button:focus-visible,
@@ -930,73 +945,108 @@ a.button:focus-visible,
 .button:disabled,
 .button[disabled],
 .button.is-disabled {
-  opacity: 0.48;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
-  filter: grayscale(0.2);
+  filter: grayscale(0.15);
   box-shadow: none;
 }
 
-.button.secondary {
+.button.secondary,
+a.button.secondary,
+button.button.secondary,
+label.button.secondary {
   background: var(--surface);
+  background-image: none;
   color: var(--text);
   border-color: var(--line-strong);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 4px 12px rgba(18, 40, 36, 0.05);
+  box-shadow: 0 4px 12px rgba(18, 40, 36, 0.06);
   font-weight: 600;
 }
 
-:root[data-theme="dark"] .button.secondary {
-  background: color-mix(in srgb, var(--surface) 88%, var(--surface-hover));
+:root[data-theme="dark"] .button.secondary,
+:root[data-theme="dark"] a.button.secondary,
+:root[data-theme="dark"] button.button.secondary,
+:root[data-theme="dark"] label.button.secondary {
+  background: var(--surface-hover);
+  background-image: none;
+  color: var(--text);
   border-color: var(--line-strong);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 6px 14px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
 }
 
-.button.secondary:hover {
+.button.secondary:hover,
+a.button.secondary:hover,
+button.button.secondary:hover,
+label.button.secondary:hover {
   background: var(--surface-hover);
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--line-strong));
+  background-image: none;
+  border-color: var(--primary);
   color: var(--text);
   box-shadow: var(--shadow);
   filter: none;
 }
 
-.button.secondary:active {
-  background: color-mix(in srgb, var(--surface-hover) 80%, var(--primary));
+.button.secondary:active,
+a.button.secondary:active,
+button.button.secondary:active {
+  background: var(--surface-soft);
+  background-image: none;
+  color: var(--text);
   filter: none;
 }
 
-.button.ghost {
+.button.ghost,
+a.button.ghost,
+button.button.ghost {
   background: transparent;
+  background-image: none;
   color: var(--text);
-  border-color: transparent;
+  border-color: var(--line-strong);
   box-shadow: none;
   font-weight: 600;
 }
 
-.button.ghost:hover {
+.button.ghost:hover,
+a.button.ghost:hover,
+button.button.ghost:hover {
   background: var(--surface-hover);
-  border-color: var(--line);
+  background-image: none;
+  border-color: var(--line-strong);
+  color: var(--text);
   box-shadow: none;
   transform: none;
   filter: none;
 }
 
 .button.ghost:active {
-  background: color-mix(in srgb, var(--surface-hover) 70%, var(--primary));
+  background: var(--surface-soft);
+  background-image: none;
+  color: var(--text);
   transform: none;
 }
 
-.button.accent {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, #fff) 0%, var(--accent) 45%, #8f5c14 100%);
-  color: #1a1208;
-  border-color: color-mix(in srgb, var(--accent) 55%, #5c3a08);
+.button.accent,
+a.button.accent,
+button.button.accent {
+  background: var(--accent);
+  background-image: linear-gradient(180deg, var(--accent) 0%, #8f5c14 100%);
+  color: var(--on-accent);
+  border-color: #8f5c14;
   font-weight: 700;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 8px 18px rgba(184, 122, 40, 0.22);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 8px 18px rgba(184, 122, 40, 0.22);
 }
 
-.button.accent:hover {
+.button.accent:hover,
+a.button.accent:hover,
+button.button.accent:hover {
   filter: brightness(1.05);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.28) inset, 0 12px 24px rgba(184, 122, 40, 0.28);
+  color: var(--on-accent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.24) inset, 0 12px 24px rgba(184, 122, 40, 0.28);
+}
+
+.button.accent:active {
+  color: var(--on-accent);
 }
 
 .button.large {
@@ -1006,11 +1056,13 @@ a.button:focus-visible,
   border-radius: calc(var(--btn-radius) + 2px);
 }
 
-.button.complete {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--success) 85%, #fff), var(--success));
-  border-color: color-mix(in srgb, var(--success) 60%, #000);
-  color: #fff;
+.button.complete,
+a.button.complete,
+button.button.complete {
+  background: var(--success);
+  background-image: linear-gradient(180deg, var(--success) 0%, #145536 100%);
+  border-color: #145536;
+  color: #ffffff;
 }
 
 .panel {
@@ -1455,7 +1507,7 @@ a.button:focus-visible,
   display: block;
   margin-bottom: 8px;
   color: var(--accent-ink);
-  font-weight: 750;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1494,7 +1546,7 @@ a.button:focus-visible,
   display: inline-flex;
   width: fit-content;
   color: var(--primary);
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .text-link:hover {
@@ -2912,7 +2964,7 @@ a.session-step:hover {
 
 .offline-tools-panel > summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   padding: 14px 0;
 }
 
@@ -2987,7 +3039,7 @@ a.session-step:hover {
 
 .tools-drawer > summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   padding: 14px 0;
 }
 
@@ -3255,7 +3307,7 @@ a.session-step:hover {
   background: rgba(15, 107, 95, 0.1);
   color: var(--primary-dark);
   font-size: 0.82rem;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .session-guide {
@@ -3452,18 +3504,40 @@ a.session-step:hover {
   gap: 8px;
 }
 
-.button.active-check {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--success) 82%, #fff), var(--success));
-  border-color: color-mix(in srgb, var(--success) 55%, #000);
-  color: #fff;
+.button.active-check,
+a.button.active-check,
+button.button.active-check {
+  background: var(--success);
+  background-image: linear-gradient(180deg, var(--success) 0%, #145536 100%);
+  border-color: #145536;
+  color: #ffffff;
 }
 
-.button.active-check.wrong {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--warning) 80%, #fff), var(--warning));
-  border-color: color-mix(in srgb, var(--warning) 50%, #5c3a08);
-  color: #1d1a12;
+.button.active-check.wrong,
+a.button.active-check.wrong,
+button.button.active-check.wrong {
+  background: var(--warning);
+  background-image: linear-gradient(180deg, var(--warning) 0%, #7a4e10 100%);
+  border-color: #7a4e10;
+  color: #1a1208;
+}
+
+:root[data-theme="dark"] .button.active-check,
+:root[data-theme="dark"] a.button.active-check,
+:root[data-theme="dark"] button.button.active-check {
+  background: #145536;
+  background-image: linear-gradient(180deg, #1a6b45 0%, #0f3f2a 100%);
+  border-color: #0f3f2a;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .button.complete,
+:root[data-theme="dark"] a.button.complete,
+:root[data-theme="dark"] button.button.complete {
+  background: #145536;
+  background-image: linear-gradient(180deg, #1a6b45 0%, #0f3f2a 100%);
+  border-color: #0f3f2a;
+  color: #ffffff;
 }
 
 .exercise.checked-correct {
@@ -3499,7 +3573,7 @@ a.session-step:hover {
 .chapter-mini-wrap > summary,
 .review-more > summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   padding: 8px 0;
 }
 
@@ -3561,7 +3635,7 @@ a.session-step:hover {
 
 .focus-reveal summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   color: var(--primary-dark);
 }
 
@@ -3793,7 +3867,7 @@ a.session-step:hover {
     color: var(--muted);
     font: inherit;
     font-size: 0.72rem;
-    font-weight: 750;
+    font-weight: 700;
     cursor: pointer;
   }
 
@@ -3948,7 +4022,7 @@ a.session-step:hover {
 
 .vocab-recall-card details summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   color: var(--primary-dark);
 }
 
@@ -3966,7 +4040,7 @@ a.session-step:hover {
 
 .vocab-table-details > summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   padding: 8px 0;
 }
 
@@ -3986,7 +4060,7 @@ a.session-step:hover {
   background: #dfeae5;
   color: var(--text);
   font-size: 0.8rem;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .mobile-dock-confidence .confidence-actions button.active {
@@ -4059,7 +4133,7 @@ a.session-step:hover {
   border-radius: 999px;
   background: var(--text);
   color: #fff;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .skip-link:focus {
@@ -4131,7 +4205,7 @@ a.session-step:hover {
 .evidence-grid span {
   color: var(--muted);
   font-size: 0.76rem;
-  font-weight: 750;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -4211,10 +4285,21 @@ a.session-step:hover {
   justify-content: flex-end;
 }
 
-.button.soft-complete {
+.button.soft-complete,
+a.button.soft-complete,
+button.button.soft-complete {
   background: transparent;
-  color: var(--primary-dark);
-  border: 1px dashed rgba(15, 107, 95, 0.45);
+  background-image: none;
+  color: var(--primary);
+  border: 1.5px dashed var(--primary);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .button.soft-complete,
+:root[data-theme="dark"] a.button.soft-complete,
+:root[data-theme="dark"] button.button.soft-complete {
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .exam-checklist-items {
@@ -4429,7 +4514,7 @@ a.session-step:hover {
 
 .path-note summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   color: var(--primary-dark);
 }
 
@@ -4507,7 +4592,7 @@ a.session-step:hover {
   border: 1px solid var(--line);
   background: var(--surface-soft);
   color: inherit;
-  font-weight: 750;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -5979,7 +6064,7 @@ a.session-step:hover {
 
 .course-about-details > summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   color: var(--muted);
   font-size: 0.88rem;
 }
@@ -6033,7 +6118,7 @@ a.session-step:hover {
 .course-queue-action {
   color: var(--primary);
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -6281,7 +6366,7 @@ a.session-step:hover {
 .home-priority-action {
   color: var(--primary);
   font-size: 0.78rem;
-  font-weight: 750;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -6299,7 +6384,7 @@ a.session-step:hover {
 
 .home-more-panel > summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   padding: 4px 0;
 }
 
@@ -6663,7 +6748,7 @@ a.session-step:hover {
 .mission-next-learn-label {
   margin: 4px 0 0;
   font-size: 0.82rem;
-  font-weight: 750;
+  font-weight: 700;
   color: var(--text);
 }
 
@@ -6801,7 +6886,7 @@ a.session-step:hover {
 .mission-after-state {
   color: var(--muted);
   font-size: 0.72rem;
-  font-weight: 750;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -6849,7 +6934,7 @@ a.session-step:hover {
 .mission-side-title {
   margin: 0;
   font-size: 0.95rem;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .mission-progress-ring-wrap {
@@ -7020,7 +7105,7 @@ a.session-step:hover {
 
 .mission-tools-details > summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
 }
 
 .mission-tools-details .progress-backup {
@@ -7222,7 +7307,7 @@ a.session-step:hover {
 
 .mission-more-details > summary {
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   list-style: none;
 }
 

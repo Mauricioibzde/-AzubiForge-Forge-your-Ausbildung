@@ -15,8 +15,8 @@
 
 - Body text (`--text`) and secondary text (`--muted`) target **WCAG AA** on `--surface` / `--surface-soft`.
 - Amber fill (`--accent`) is for chips/borders/fills. Text on surfaces uses **`--accent-ink`**.
-- Buttons on primary fills use **`--on-primary`** (not a hardcoded dark ink that fails in light mode).
-- Borders use `--line` / `--line-strong` (dark theme was ~5% white — nearly invisible; now ~14–24%).
+- Primary button text is always **white** on deep teal (`--primary-deep`).
+- Borders use `--line` / `--line-strong`.
 
 ## Tokens to prefer
 
@@ -24,17 +24,27 @@
 color: var(--text);          /* titles, primary copy */
 color: var(--muted);         /* captions, aux */
 color: var(--accent-ink);    /* amber labels on surfaces */
-color: var(--on-primary);    /* text on primary buttons */
-border-color: var(--line-strong); /* interactive outlines */
+color: var(--on-primary);    /* text on primary buttons — always white */
+color: var(--on-accent);     /* text on amber buttons — near black */
+border-color: var(--line-strong);
 ```
 
 ## Buttons
 
-- Radius: `--btn-radius` (14px) — not pill/full-round
-- Primary: gradient + inset highlight, `--on-primary` text
-- Secondary: surface + strong border; hover tints toward primary
-- Ghost: quiet until hover
-- Accent: amber gradient with dark ink (`#1a1208`) for contrast
-- States: `:hover` lift, `:active` press, `:focus-visible` ring, disabled muted
+| Variant | Fill | Text | Meaning |
+|---|---|---|---|
+| Primary (`.button`) | Deep teal (`--primary-deep`) | White | Main action |
+| Secondary | Surface | `--text` | Alternative |
+| Ghost | Transparent + border | `--text` | Low emphasis |
+| Accent | Amber | Near-black | Highlighted CTA |
+| Complete / Acertei | Deep green | White | Success |
 
-Prefer classes: `.button`, `.button.secondary`, `.button.ghost`, `.button.accent`, `.button.large`.
+Hard rules:
+- Never use `--primary-dark` (mint heading tint in dark mode) as a button fill.
+- Solid `background` first; gradient only as `background-image` enhancement.
+- No `color-mix` on critical button text/fill pairs.
+- Every variant sets `color` explicitly for `a.button` / `label.button` too.
+
+## Typography
+
+Source Sans 3 (UI/body) + Source Serif 4 (display).
