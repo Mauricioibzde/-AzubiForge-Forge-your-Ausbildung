@@ -5775,7 +5775,7 @@ a.session-step:hover {
   .ds-hero .button,
   .home-priority-item .button {
     width: 100%;
-    min-height: 44px;
+    min-height: var(--btn-height);
     justify-content: center;
   }
 
