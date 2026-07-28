@@ -106,7 +106,7 @@ export function renderHomeView(ctx: AppContext): string {
       <section class="dashboard-hero rise-in">
         <div class="dashboard-hero-main">
           <p class="eyebrow">Curso offline AP1 FIAE</p>
-          <h1>AzubiForge</h1>
+          <h1>AzubiForge – ${ctx.data.course.title}</h1>
           <p class="lead">Forge your Ausbildung. Sessao curta e guiada: leia, aplique, treine vocabulario e feche com AP1.</p>
           ${progressBlock(progress, "capitulos")}
           <div class="dashboard-search" aria-label="Busca offline">

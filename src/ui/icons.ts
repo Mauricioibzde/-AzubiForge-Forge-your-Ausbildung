@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   BadgeCheck,
   Bell,
   BookOpen,
@@ -25,6 +26,7 @@ import {
 } from "lucide";
 
 export const APP_ICONS = {
+  ArrowRight,
   BadgeCheck,
   Bell,
   BookOpen,
@@ -50,6 +52,7 @@ export const APP_ICONS = {
 };
 
 export type AppIconName =
+  | "arrow-right"
   | "layout-dashboard"
   | "calendar-check"
   | "route"

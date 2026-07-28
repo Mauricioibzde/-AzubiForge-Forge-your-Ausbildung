@@ -130,7 +130,7 @@ await mobile.screenshot({ path: `${screenshotsDir}/mobile-exam.png`, fullPage: t
 
 await mobile.goto(`${baseUrl}/#course`, { waitUntil: "networkidle" });
 const courseResume = await mobile.evaluate(() => {
-  const href = document.querySelector(".continue-panel a.button")?.getAttribute("href") || "";
+  const href = document.querySelector(".course-hero-actions a.button, .module-head-actions a.button, .path-node.current a.button")?.getAttribute("href") || "";
   const parts = href.replace(/^#/, "").split("/");
   return parts[0] === "reader" && parts.length >= 3;
 });

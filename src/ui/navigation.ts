@@ -17,6 +17,7 @@ export function syncChrome(ctx: AppContext, route: RouteName, chapterId?: string
   setActiveNav(route);
   updateContinueChip(ctx, route);
   updateReviewDueChip(ctx);
+  updateTopbarTitle(ctx, route, chapterId);
   updateContextBar(ctx, route, chapterId);
   updateDocumentTitle(ctx, route, chapterId);
   updateConnectivityBanner();
@@ -60,8 +61,31 @@ function updateReviewDueChip(ctx: AppContext): void {
   document.querySelectorAll<HTMLAnchorElement>("[data-go-review-due]").forEach((chip) => {
     chip.hidden = dueCount <= 0;
     const label = chip.querySelector<HTMLElement>("[data-review-due-label]");
-    if (label) label.textContent = `Revisar hoje (${dueCount})`;
+    if (label) label.textContent = dueCount > 0 ? `Revisar hoje (${dueCount})` : "Revisar hoje";
   });
+}
+
+function updateTopbarTitle(ctx: AppContext, route: RouteName, chapterId?: string): void {
+  const eyebrow = document.querySelector<HTMLElement>("[data-topbar-eyebrow]");
+  const title = document.querySelector<HTMLElement>("[data-topbar-title]");
+  if (!eyebrow || !title) return;
+
+  if (route === "course") {
+    eyebrow.textContent = "Trilha AP1";
+    title.textContent = ctx.data.course.title;
+    return;
+  }
+
+  if (route === "reader" && chapterId) {
+    const chapter = findChapter(ctx.data, chapterId);
+    const module = chapter ? getChapterModule(ctx.data, chapter.id) : null;
+    eyebrow.textContent = module ? `${module.title} · ${module.subtitle}` : "Capitulo";
+    title.textContent = chapter?.title || "Capitulo";
+    return;
+  }
+
+  eyebrow.textContent = "AzubiForge";
+  title.textContent = ROUTE_TITLES[route] || "AzubiForge";
 }
 
 export function scrollToHomeSection(sectionId: string): void {

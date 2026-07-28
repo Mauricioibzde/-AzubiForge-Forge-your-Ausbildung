@@ -8,19 +8,22 @@ import {
   getCourseProgress,
   getCourseReadiness,
   getDueReviewItemCount,
+  getEstimatedStudyMinutes,
   getModuleContinueChapter,
   getModuleProgress,
   getReviewQueue,
   getReviewResolutionStreak,
   getResumeTab,
-  getSuggestedChapter,
+  getStudyCalendarDays,
   getStudyStreak,
+  getSuggestedChapter,
   getTodayResolvedReviewCount,
   isReviewDue,
   isCompleted
 } from "../domain/course";
 import type { Chapter, LearningSituation, Module } from "../types";
-import { confidenceBadge, escapeAttribute, escapeHtml, inlineProgress, progressBlock, readinessBadge } from "../ui/html";
+import { confidenceBadge, donutProgress, escapeAttribute, escapeHtml, inlineProgress, readinessBadge } from "../ui/html";
+import { icon } from "../ui/icons";
 
 export function renderCourseView(ctx: AppContext): string {
   const progress = getCourseProgress(ctx.data, ctx.state);
@@ -37,94 +40,120 @@ export function renderCourseView(ctx: AppContext): string {
   const reviewStreak = getReviewResolutionStreak(ctx.state);
   const resolvedToday = getTodayResolvedReviewCount(ctx.state);
   const studyStreak = getStudyStreak(ctx.state);
+  const studyMinutes = getEstimatedStudyMinutes(ctx.data, ctx.state);
+  const calendar = getStudyCalendarDays(ctx.state, 7);
 
   return `
     <section class="course-shell">
-      <div class="section-head course-hero">
-        <div>
+      <div class="course-hero-grid rise-in">
+        <div class="course-hero-main">
           <p class="eyebrow">Trilha AP1</p>
           <h1>${ctx.data.course.title}</h1>
-          <p>${ctx.data.course.description}</p>
+          <p class="lead">${ctx.data.course.description}</p>
           ${renderCourseBasis(ctx)}
-        </div>
-        <div class="panel continue-panel">
-          ${progressBlock(progress, "concluidos")}
-          ${progressBlock(readiness, "quase prontos")}
-          <span class="card-label">Continuar daqui</span>
-          <h2>${continueChapter.title}</h2>
-          <p class="small-note">${activeModule.subtitle}</p>
-          <a class="button" href="#reader/${continueChapter.id}/${continueTab}">Retomar capitulo</a>
-          <p class="small-note">Sugestao geral: ${next.title}</p>
-          <div class="course-meta-mini">
-            <span>Streak estudo: <strong>${studyStreak}</strong></span>
-            <span>Revisoes hoje: <strong>${resolvedToday}</strong></span>
-            <span>Pendentes: <strong>${dueItems}</strong></span>
+          <div class="course-hero-actions">
+            <a class="button accent" href="#reader/${continueChapter.id}/${continueTab}">Continuar estudo</a>
+            <a class="button secondary" href="#review" data-go-review-due>Revisar hoje</a>
           </div>
         </div>
+        <aside class="course-stats-rail" aria-label="Painel de progresso">
+          <article class="stat-card panel">
+            <span class="card-label">Progresso da trilha</span>
+            ${donutProgress(progress, "Conclusao")}
+            <p class="small-note">${progress.completed} de ${progress.total} capitulos</p>
+          </article>
+          <article class="stat-card panel">
+            <span class="card-label">Sequencia de estudo</span>
+            <div class="stat-card-value">${studyStreak} <small>dia(s)</small></div>
+            <div class="streak-calendar compact" aria-label="Ultimos 7 dias">
+              ${calendar.map((day) => `
+                <span class="streak-day ${day.studied ? "studied" : ""} ${day.isToday ? "today" : ""}" title="${day.key}">${day.label}</span>
+              `).join("")}
+            </div>
+          </article>
+          <article class="stat-card panel">
+            <span class="card-label">Revisoes</span>
+            <div class="stat-card-value">${dueItems} <small>pendentes</small></div>
+            <p class="small-note">${resolvedToday} resolvida(s) hoje · streak ${reviewStreak} dia(s)</p>
+          </article>
+          <article class="stat-card panel">
+            <span class="card-label">Tempo estudado</span>
+            <div class="stat-card-value">${studyMinutes} <small>min</small></div>
+            <p class="small-note">${readiness.completed} quase prontos AP1</p>
+          </article>
+        </aside>
       </div>
 
-      <section class="course-flow-board panel" aria-label="Roteiro inteligente">
+      <section class="course-flow-board panel rise-in" style="animation-delay: 24ms" aria-label="Roteiro inteligente">
         <div class="course-flow-head">
           <span class="card-label">Roteiro inteligente</span>
-          <h2>Organize o estudo em sequencia de impacto</h2>
+          <h2>Agora · Depois · Reforco</h2>
         </div>
         <div class="course-flow-grid">
-          <article class="course-flow-card">
+          <article class="course-flow-card premium-card">
+            <span class="flow-card-icon" aria-hidden="true">${icon("play", "flow-icon", 18)}</span>
             <span class="status-pill open">Agora</span>
             <strong>${continueChapter.title}</strong>
             <p class="small-note">Etapa ativa em ${activeModule.subtitle}. Continue no ponto exato da sessao.</p>
-            <a class="text-link" href="#reader/${continueChapter.id}/${continueTab}">Retomar capitulo →</a>
+            <a class="button secondary" href="#reader/${continueChapter.id}/${continueTab}">Retomar capitulo</a>
           </article>
-          <article class="course-flow-card">
+          <article class="course-flow-card premium-card">
+            <span class="flow-card-icon" aria-hidden="true">${icon("arrow-right", "flow-icon", 18)}</span>
             <span class="status-pill open">Depois</span>
             <strong>${afterChapter.title}</strong>
             <p class="small-note">Proximo passo para manter ritmo sem trocar de contexto.</p>
-            <a class="text-link" href="#reader/${afterChapter.id}/${getResumeTab(ctx.state, afterChapter.id)}">Abrir proximo →</a>
+            <a class="button secondary" href="#reader/${afterChapter.id}/${getResumeTab(ctx.state, afterChapter.id)}">Abrir proximo</a>
           </article>
-          <article class="course-flow-card">
+          <article class="course-flow-card premium-card">
+            <span class="flow-card-icon" aria-hidden="true">${icon("refresh-cw", "flow-icon", 18)}</span>
             <span class="status-pill ${dueReviewChapter ? "due" : "open"}">Reforco</span>
             <strong>${dueReviewChapter?.title || "Sem vencidos urgentes"}</strong>
             <p class="small-note">${dueReviewChapter ? "Revisao em atraso com maior retorno pedagogico hoje." : "A fila de revisao esta sob controle; avance na trilha."}</p>
-            <a class="text-link" href="${dueReviewChapter ? "#review" : "#exam/drill"}" ${dueReviewChapter ? "data-go-review-due" : ""}>${dueReviewChapter ? "Revisar agora" : "Treino AP1"} →</a>
+            <a class="button secondary" href="${dueReviewChapter ? "#review" : "#exam/drill"}" ${dueReviewChapter ? "data-go-review-due" : ""}>${dueReviewChapter ? "Revisar agora" : "Treino AP1"}</a>
           </article>
         </div>
       </section>
 
-      <section class="track-kpi-board panel" aria-label="Painel de acompanhamento">
-        <article class="track-kpi-card">
-          <span class="card-label">Pendencia de revisao</span>
+      <section class="track-kpi-board rise-in" style="animation-delay: 40ms" aria-label="Metricas da trilha">
+        <article class="track-kpi-card premium-card">
+          <span class="card-label">Pendencias</span>
           <h3>${dueItems}</h3>
-          <p class="small-note">${dueReviewChapter ? `${dueReviewChapter.title} em destaque` : "Sem urgencias abertas"}</p>
+          <p class="small-note">${dueReviewChapter ? dueReviewChapter.title : "Sem urgencias abertas"}</p>
         </article>
-        <article class="track-kpi-card">
-          <span class="card-label">Streak de revisao</span>
-          <h3>${reviewStreak} dia(s)</h3>
-          <p class="small-note">${resolvedToday} resolvida(s) hoje</p>
+        <article class="track-kpi-card premium-card">
+          <span class="card-label">Streak</span>
+          <h3>${studyStreak} dia(s)</h3>
+          <p class="small-note">Revisao: ${reviewStreak} dia(s)</p>
         </article>
-        <article class="track-kpi-card">
-          <span class="card-label">Progresso da trilha</span>
+        <article class="track-kpi-card premium-card">
+          <span class="card-label">Progresso</span>
           <h3>${progress.percent}%</h3>
-          <p class="small-note">${progress.completed}/${progress.total} capitulos completos</p>
+          <p class="small-note">${progress.completed}/${progress.total} capitulos</p>
+        </article>
+        <article class="track-kpi-card premium-card">
+          <span class="card-label">Tempo estudado</span>
+          <h3>${studyMinutes} min</h3>
+          <p class="small-note">${resolvedToday} revisoes hoje</p>
         </article>
       </section>
 
-      <div class="toolbar" aria-label="Filtros do curso">
+      <div class="toolbar premium-toolbar rise-in" style="animation-delay: 56ms" aria-label="Filtros do curso">
         <input
-          class="search-input"
+          class="search-input premium-search"
           type="search"
-          placeholder="Pesquisar capitulo"
+          placeholder="Pesquisar capitulo, modulo ou termo..."
           aria-label="Pesquisar capitulo"
           data-course-search
           value="${escapeAttribute(ctx.ui.courseQuery)}"
         >
-        <div class="segmented-control" aria-label="Filtrar capitulos">
+        <div class="segmented-control filter-chips" aria-label="Filtrar capitulos">
           ${segment("all", "Todos", ctx.ui.courseFilter)}
           ${segment("open", "Em estudo", ctx.ui.courseFilter)}
           ${segment("done", "Concluidos", ctx.ui.courseFilter)}
-          ${segment("notes", "Com notas", ctx.ui.courseFilter)}
           ${segment("hard", "Dificeis", ctx.ui.courseFilter)}
+          ${segment("notes", "Notas", ctx.ui.courseFilter)}
         </div>
-        <p class="small-note">${filtered.length} de ${ctx.data.chapters.length} capitulos exibidos</p>
+        <p class="small-note toolbar-meta">${filtered.length} de ${ctx.data.chapters.length} capitulos exibidos</p>
       </div>
 
       ${renderModules(ctx, filtered, activeModule.id)}
@@ -136,7 +165,7 @@ function renderCourseBasis(ctx: AppContext): string {
   if (!ctx.data.course.basis?.length) return "";
 
   return `
-    <div class="source-list">
+    <div class="source-list course-checklist">
       <span class="card-label">Base curricular</span>
       <ul>
         ${ctx.data.course.basis.map((item) => `<li>${item}</li>`).join("")}
@@ -177,7 +206,7 @@ function renderModules(ctx: AppContext, filtered: Chapter[], activeModuleId: str
   const others = visibleModules.filter((item) => item.module.id !== focused.module.id);
 
   return `
-    <section class="track-shell">
+    <section class="track-shell rise-in" style="animation-delay: 72ms">
       <div class="track-main">
         ${renderFocusedModule(ctx, focused.module, focused.chapters, focused.module.id === activeModuleId)}
       </div>
@@ -185,7 +214,7 @@ function renderModules(ctx: AppContext, filtered: Chapter[], activeModuleId: str
         <div class="track-side-head">
           <span class="card-label">Catalogo</span>
           <h3>Modulos da trilha</h3>
-          <p class="small-note">Visao compacta para evitar lista longa e manter foco.</p>
+          <p class="small-note">Visao compacta para manter foco no modulo ativo.</p>
         </div>
         <div class="module-summary-grid">
           ${others.map((item) => renderModuleSummary(ctx, item.module, item.chapters.length)).join("")}
@@ -212,7 +241,7 @@ function renderFocusedModule(
     chapterIds: module.chapterIds
   }];
   return `
-    <section class="module-section active-module" id="course-focused-module">
+    <section class="module-section active-module panel" id="course-focused-module">
       <div class="module-head">
         <div>
           <span class="card-label">${module.title}${isActive ? " · Em andamento" : " · Em foco"}</span>
@@ -221,16 +250,16 @@ function renderFocusedModule(
           ${inlineProgress(progress)}
         </div>
         <div class="module-head-actions">
-          <a class="button" href="#reader/${continueChapter.id}/${continueTab}">Continuar modulo</a>
-          <button class="module-toggle" type="button" data-focus-module="${module.id}" aria-expanded="true">
+          <a class="button accent" href="#reader/${continueChapter.id}/${continueTab}">Continuar</a>
+          <button class="module-toggle button ghost" type="button" data-focus-module="${module.id}" aria-expanded="true">
             <span class="module-count">${progress.completed} / ${progress.total}</span>
             <span>Modulo em foco</span>
           </button>
         </div>
       </div>
       <div class="module-body">
-        <ol class="learning-path" aria-label="Trilha de ${module.subtitle}">
-          ${visibleChapters.map((chapter, index) => renderPathNode(ctx, module, chapter, index)).join("")}
+        <ol class="learning-path timeline-path" aria-label="Trilha de ${module.subtitle}">
+          ${visibleChapters.map((chapter) => renderPathNode(ctx, module, chapter)).join("")}
         </ol>
         ${situations.map((situation) => renderSituation(ctx, situation, visibleIds)).join("")}
       </div>
@@ -242,22 +271,22 @@ function renderModuleSummary(ctx: AppContext, module: Module, visibleCount: numb
   const progress = getModuleProgress(ctx.data, ctx.state, module);
   const continueChapter = getModuleContinueChapter(ctx.data, ctx.state, module);
   return `
-    <article class="module-summary-card">
+    <article class="module-summary-card premium-card">
       <div>
         <span class="card-label">${module.title}</span>
         <h4>${module.subtitle}</h4>
-        <p class="small-note">${visibleCount} capitulo(s) no filtro atual</p>
+        <p class="small-note">${visibleCount} capitulo(s) no filtro</p>
       </div>
       ${inlineProgress(progress)}
       <div class="module-summary-actions">
-        <button class="button secondary" type="button" data-focus-module="${module.id}">Focar modulo</button>
-        <a class="text-link" href="#reader/${continueChapter.id}/${getResumeTab(ctx.state, continueChapter.id)}">Retomar</a>
+        <button class="button secondary" type="button" data-focus-module="${module.id}">Focar</button>
+        <a class="button ghost" href="#reader/${continueChapter.id}/${getResumeTab(ctx.state, continueChapter.id)}">Retomar</a>
       </div>
     </article>
   `;
 }
 
-function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter, index: number): string {
+function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter): string {
   const status = getChapterPathStatus(ctx.data, ctx.state, chapter.id, module);
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const labels = { done: "Concluido", current: "Agora", open: "A seguir" };
@@ -265,11 +294,11 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter, index
 
   return `
     <li class="path-node ${status}">
-      <div class="path-marker" aria-hidden="true">${status === "done" ? "OK" : index + 1}</div>
+      <div class="path-marker" aria-hidden="true">${status === "done" ? "✓" : "○"}</div>
       <div class="path-copy">
         <div class="path-topline">
-          <h3>${chapter.title}</h3>
           <span class="path-status">${labels[status]}</span>
+          <h3>${chapter.title}</h3>
           ${readinessBadge(readiness)}
         </div>
         <p>${chapter.description}</p>
@@ -289,7 +318,7 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter, index
           ${confidenceBadge(ctx.state, chapter.id)}
         </div>
       </div>
-      <a class="button ${status === "current" ? "" : "secondary"}" href="#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}">${action}</a>
+      <a class="button ${status === "current" ? "accent" : "secondary"}" href="#reader/${chapter.id}/${getResumeTab(ctx.state, chapter.id)}">${action}</a>
     </li>
   `;
 }
