@@ -5,11 +5,11 @@ import {
   getSessionProgress,
   getSuggestedChapter,
   getTodayChapter,
-  getVisitedSteps,
   isCompleted,
   READER_STEPS
 } from "./course";
 import { getNormalizedCourseData } from "../data/normalizedCourse";
+import { hasStepLearningEvidence } from "./learning/didacticTasks";
 import { resolveNextLearningAction } from "./learning/nextLearningAction";
 
 export type JourneyNodeKind = "module" | "chapter" | "session-step" | "review-gate" | "exam-gate";
@@ -70,10 +70,9 @@ export function getJourneyNodes(data: AzubiForgeData, state: AppState): JourneyN
       });
 
       if (isFocus && !isCompleted(state, chapter.id)) {
-        const visited = getVisitedSteps(state, chapter.id);
         const session = getSessionProgress(state, chapter.id);
         READER_STEPS.forEach((step, index) => {
-          const done = visited.includes(step.id);
+          const done = hasStepLearningEvidence(state, chapter.id, step.id, null);
           const current = !done && index === session.completed;
           nodes.push({
             id: `step-${chapter.id}-${step.id}`,

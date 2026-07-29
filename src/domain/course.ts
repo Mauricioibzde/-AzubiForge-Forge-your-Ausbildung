@@ -523,12 +523,15 @@ export function getDailyGoalProgress(state: AppState): Progress {
   };
 }
 
-/** Counts chapters studied today with a meaningful session (3+ steps visited). */
+/** Counts chapters studied today with meaningful evidence (3+ didactic steps). */
 export function getTodayQualitySessionCount(state: AppState): number {
   const today = todayKey();
   return Object.entries(state.lastStudiedAt).filter(([chapterId, stamp]) => {
     if (stampToLocalDayKey(stamp) !== today) return false;
-    return getVisitedSteps(state, chapterId).length >= 3;
+    const evidenced = READER_STEPS.filter((step) =>
+      hasStepLearningEvidence(state, chapterId, step.id, null)
+    ).length;
+    return evidenced >= 3;
   }).length;
 }
 
@@ -542,7 +545,10 @@ export function getDaysSinceStudied(state: AppState, chapterId: string): number 
 
 export function isReviewDue(state: AppState, chapterId: string): boolean {
   if (hasDueReviewCheck(state, chapterId)) return true;
-  if (!isCompleted(state, chapterId) && !getVisitedSteps(state, chapterId).length) return false;
+  const hasEvidence = READER_STEPS.some((step) =>
+    hasStepLearningEvidence(state, chapterId, step.id, null)
+  );
+  if (!isCompleted(state, chapterId) && !hasEvidence) return false;
   const confidence = state.confidence[chapterId];
   if (confidence === "ready") return getDaysSinceStudied(state, chapterId) >= 7;
   if (confidence === "hard") return getDaysSinceStudied(state, chapterId) >= 1;

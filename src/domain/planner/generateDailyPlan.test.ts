@@ -133,6 +133,7 @@ describe("generateDailyPlan", () => {
   it("respects 30 minute budget with multiple tasks", () => {
     const state = emptyState();
     state.sessionSteps = { m1: ["explain", "praxis"] };
+    state.stepArtifactSubmitted = { "explain:m1": true, "praxis:m1": true };
     const plan = planForMinutes(30, missions, state);
     expect(plan.availableMinutes).toBe(30);
     expect(plan.totalEstimatedMinutes).toBeLessThanOrEqual(30);
@@ -142,6 +143,7 @@ describe("generateDailyPlan", () => {
   it("respects 45 minute budget", () => {
     const state = emptyState();
     state.sessionSteps = { m1: ["explain"] };
+    state.stepArtifactSubmitted = { "explain:m1": true };
     state.reviewSchedule = { m2: "2026-07-27" };
     const plan = planForMinutes(45, missions, state);
     expect(plan.totalEstimatedMinutes).toBeLessThanOrEqual(45);
@@ -151,6 +153,8 @@ describe("generateDailyPlan", () => {
   it("respects 60 minute budget", () => {
     const state = emptyState();
     state.sessionSteps = { m1: ["explain", "vocab"] };
+    state.stepArtifactSubmitted = { "explain:m1": true };
+    state.vocabChecks = { "vocab:m1:0": "correct" };
     state.reviewSchedule = { m2: "2026-07-27" };
     const plan = planForMinutes(60, missions, state);
     expect(plan.totalEstimatedMinutes).toBeLessThanOrEqual(60);

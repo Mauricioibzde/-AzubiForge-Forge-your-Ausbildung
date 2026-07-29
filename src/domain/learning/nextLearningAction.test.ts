@@ -163,6 +163,7 @@ describe("resolveNextLearningAction", () => {
   it("prioritizes overdue review over continue-study", () => {
     const state = baseState({
       sessionSteps: { m2: ["explain", "praxis"] },
+      stepArtifactSubmitted: { "explain:m2": true, "praxis:m2": true },
       reviewSchedule: { m1: new Date(now - 60_000).toISOString() }
     });
     const action = resolveNextLearningAction({ course, state, now });
@@ -194,6 +195,11 @@ describe("resolveNextLearningAction", () => {
   it("maps ready-for-test to start-mastery", () => {
     const state = baseState({
       sessionSteps: { m1: ["explain", "praxis", "vocab"] },
+      stepArtifactSubmitted: {
+        "explain:m1": true,
+        "praxis:m1": true
+      },
+      vocabChecks: { "vocab:m1:0": "correct" },
       exerciseChecks: {
         "m1:0": "correct",
         "m1:1": "correct",
@@ -264,7 +270,8 @@ describe("resolveNextLearningAction", () => {
 
   it("maps study-completed to start-practice", () => {
     const state = baseState({
-      sessionSteps: { m1: ["explain"] }
+      sessionSteps: { m1: ["explain"] },
+      stepArtifactSubmitted: { "explain:m1": true }
     });
     const action = resolveNextLearningAction({ course, state, now });
     expect(action.type).toBe("start-practice");

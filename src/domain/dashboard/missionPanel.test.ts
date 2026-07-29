@@ -118,9 +118,7 @@ describe("buildMissionPanelModel", () => {
     expect(model.evidencePercent).toBe(20);
     expect(model.masteryPassed).toBe(false);
     expect(model.hierarchyCrumb).toMatch(/Introdução|Lernfeld/);
-    expect(model.celebration.show).toBe(true);
-    expect(model.celebration.title).toBe("Evidência da etapa ok");
-    expect(model.celebration.detail).not.toMatch(/\+\d+\s*XP/);
+    expect(model.celebration.show).toBe(false);
     expect(model.importanceLabel.toLowerCase()).toContain("import");
   });
 

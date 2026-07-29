@@ -23,11 +23,12 @@ Curso
 
 Em cada missão a UI mostra:
 
-- etapas feitas
+- etapas com evidência (não só abas abertas)
 - score de prática
 - se o domínio foi aprovado
 - o próximo requisito do gate (prática / apply / teste)
 
+Status da missão (`in-progress` / `study-completed` / `practice-required`) também deriva de evidência.
 Checkpoint da Lernsituation só libera quando **todas** as missões da situação têm domínio.
 
 ## Sessão focada

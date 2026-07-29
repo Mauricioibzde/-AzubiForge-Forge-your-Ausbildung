@@ -15,7 +15,6 @@ import {
   getStudyStreak,
   getSuggestedChapter,
   getTodayResolvedReviewCount,
-  getVisitedSteps,
   isReviewDue,
   isCompleted,
   READER_STEPS
@@ -41,7 +40,13 @@ import {
   readinessBadge
 } from "../ui/html";
 import { getCourseLearningEvidence, getMissionLearningEvidence } from "../domain/learning/learningEvidence";
-import { getCourseDualProgress, getModuleDualProgress, makeProgress } from "../domain/learning/courseProgress";
+import {
+  countStudyProgress,
+  getCourseDualProgress,
+  getModuleDualProgress,
+  makeProgress
+} from "../domain/learning/courseProgress";
+import { hasStepLearningEvidence } from "../domain/learning/didacticTasks";
 import { evaluateMasteryGate, hasMasteryEvidence } from "../domain/learning/masteryGate";
 
 export function renderCourseView(ctx: AppContext): string {
@@ -334,10 +339,7 @@ function renderSituationBlock(
   checkpoint: CheckpointDefinition | null
 ): string {
   if (!chapters.length) return "";
-  const study = makeProgress(
-    chapters.filter((chapter) => getVisitedSteps(ctx.state, chapter.id).length > 0 || isCompleted(ctx.state, chapter.id)).length,
-    chapters.length
-  );
+  const study = countStudyProgress(ctx.state, chapters.map((chapter) => chapter.id));
   const mastery = makeProgress(
     chapters.filter((chapter) => hasMasteryEvidence(ctx.state, chapter.id)).length,
     chapters.length
@@ -383,8 +385,12 @@ function renderSituationBlock(
 function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter): string {
   const status = getChapterPathStatus(ctx.data, ctx.state, chapter.id, module);
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
-  const labels = { done: "Concluído", current: "Agora", open: "A seguir" };
   const mastered = hasMasteryEvidence(ctx.state, chapter.id);
+  const labels = {
+    done: mastered ? "Concluído" : "Estudo marcado",
+    current: "Agora",
+    open: "A seguir"
+  };
   const action = mastered
     ? "Revisar"
     : status === "current"
@@ -414,7 +420,9 @@ function renderPathNode(ctx: AppContext, module: Module, chapter: Chapter): stri
       }
     }
   } catch {
-    const steps = getVisitedSteps(ctx.state, chapter.id).length;
+    const steps = READER_STEPS.filter((step) =>
+      hasStepLearningEvidence(ctx.state, chapter.id, step.id, null)
+    ).length;
     evidenceHtml = `
       <div class="path-evidence tone-${mastered ? "strong" : steps ? "partial" : "empty"}">
         <span>Etapas ${steps}/${READER_STEPS.length}</span>

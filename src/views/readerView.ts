@@ -231,7 +231,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
                 <button class="button secondary" type="button" data-reset-session="${chapter.id}">
                   Reiniciar sessao guiada
                 </button>
-                <p class="small-note">Limpa as etapas visitadas para refazer o fluxo de 5 passos.</p>
+                <p class="small-note">Limpa visitas do fluxo (a evidência de produção permanece).</p>
               ` : ""}
             </div>
           </details>

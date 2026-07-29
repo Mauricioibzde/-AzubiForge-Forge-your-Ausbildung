@@ -237,7 +237,6 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     : evidenceComplete
       ? Math.max(12, stepMinutes)
       : Math.max(1, remainingOpenSteps) * stepMinutes;
-  const lastDone = doneSteps[doneSteps.length - 1] || null;
 
   const chapterIndex = getChapterIndex(ctx.data, chapter.id);
   const nextChapter = ctx.data.chapters[chapterIndex + 1] || null;
@@ -281,13 +280,7 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
           title: "Percurso com evidência",
           detail: "Todas as etapas têm produção. Próximo: prove o domínio no teste."
         }
-      : lastDone
-        ? {
-            show: true,
-            title: "Evidência da etapa ok",
-            detail: `✓ ${lastDone.shortLabel} · Próxima: ${currentStep.shortLabel}`
-          }
-        : { show: false, title: "", detail: "" };
+      : { show: false, title: "", detail: "" };
 
   const hierarchyCrumb = `${module.title} › ${chapter.title}`;
   const fallbackHref = mastered

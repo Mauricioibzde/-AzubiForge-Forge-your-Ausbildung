@@ -227,7 +227,7 @@ export function renderProgressIndicator(model: MissionPanelModel): string {
         </svg>
         <div class="mission-progress-ring-label">
           <strong>${model.evidencePercent}%</strong>
-          <span>percurso</span>
+          <span>evidência</span>
         </div>
       </div>
       <div class="mission-progress-stats">

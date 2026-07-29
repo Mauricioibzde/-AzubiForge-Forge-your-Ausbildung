@@ -88,8 +88,8 @@ function renderAlerts(ctx: AppContext, unfinishedMock: AppContext["state"]["mock
       <section class="mission-onboarding rise-in" aria-label="Primeiros passos">
         <div>
           <p class="ds-caption">Bem-vindo</p>
-          <strong>Foque na missão e na próxima etapa.</strong>
-          <p class="ds-aux">5 passos no leitor · Acertei/Errei alimenta a revisão.</p>
+          <strong>Foque na missão e na próxima evidência.</strong>
+          <p class="ds-aux">Produza em cada etapa · Acertei/Errei alimenta a revisão · Domínio no teste.</p>
         </div>
         <button class="button secondary" type="button" data-dismiss-onboarding>Entendi</button>
       </section>
