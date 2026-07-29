@@ -1,5 +1,6 @@
 import type { AppContext } from "../../appContext";
 import type { DailyPlan } from "../../schemas/userLearningState";
+import type { Mission } from "../../schemas/mission";
 import type {
   AppState,
   Progress,
@@ -7,7 +8,9 @@ import type {
   StudySessionActivity,
   StudySessionSummary
 } from "../../types";
-import { getResumeTab, getVisitedSteps, READER_STEPS } from "../course";
+import { getResumeTab, READER_STEPS } from "../course";
+import { hasStepLearningEvidence, stepEvidenceLabel } from "../learning/didacticTasks";
+import { hasMasteryEvidence } from "../learning/masteryGate";
 
 export function buildSessionActivities(plan: DailyPlan, ctx: AppContext): StudySessionActivity[] {
   const activities: StudySessionActivity[] = [];
@@ -40,10 +43,12 @@ export function buildSessionActivities(plan: DailyPlan, ctx: AppContext): StudyS
       return;
     }
 
-    const visited = new Set(getVisitedSteps(ctx.state, task.missionId));
-    const steps = task.type === "new-mission"
-      ? READER_STEPS
-      : READER_STEPS.filter((step) => !visited.has(step.id));
+    const openSteps = READER_STEPS.filter(
+      (step) => !hasStepLearningEvidence(ctx.state, task.missionId, step.id, null)
+    );
+    // Focused chunk: fit the planner block (~8–20 min) instead of dumping all 5 steps.
+    const maxSteps = Math.max(1, Math.min(openSteps.length, Math.round(task.estimatedMinutes / 7) || 1));
+    const steps = openSteps.slice(0, maxSteps);
 
     if (!steps.length) {
       activities.push({
@@ -61,12 +66,22 @@ export function buildSessionActivities(plan: DailyPlan, ctx: AppContext): StudyS
 
     const minutesEach = Math.max(3, Math.round(task.estimatedMinutes / steps.length));
     steps.forEach((step) => {
+      const instruction =
+        step.id === "explain"
+          ? "Leia e depois escreva 2 frases de memória (recuperação ativa)."
+          : step.id === "praxis"
+            ? "No caso JIKU: registre a decisão que você tomaria e por quê."
+            : step.id === "vocab"
+              ? "Digite o significado DE→PT antes de ver a resposta."
+              : step.id === "practice"
+                ? "Escreva a resposta, confira o gabarito e marque Acertei/Errei."
+                : "Resolva o desafio aplicado por escrito; só então marque os critérios.";
       activities.push({
         id: `activity-${task.missionId}-${step.id}`,
         kind: "reader-step",
         missionId: task.missionId,
         title: `${task.title} · ${step.label}`,
-        instruction: step.hint,
+        instruction,
         estimatedMinutes: minutesEach,
         readerTab: step.id,
         planTaskId: task.id
@@ -122,12 +137,44 @@ export function resumeStudySession(session: StudySession): StudySession {
   };
 }
 
+/** Whether the current session activity may be marked complete with real evidence. */
+export function canCompleteSessionActivity(
+  state: AppState,
+  activity: StudySessionActivity,
+  mission?: Mission | null
+): { allowed: boolean; reason: string } {
+  if (activity.kind === "mastery-test") {
+    if (hasMasteryEvidence(state, activity.missionId)) {
+      return { allowed: true, reason: "Domínio comprovado nesta missão." };
+    }
+    return { allowed: false, reason: "Conclua o teste de domínio antes de marcar esta atividade." };
+  }
+
+  if (activity.kind === "review") {
+    const review = state.missionReviews[activity.missionId];
+    if (review?.status === "completed") {
+      return { allowed: true, reason: "Revisão concluída." };
+    }
+    return { allowed: false, reason: "Conclua a revisão de retenção antes de marcar esta atividade." };
+  }
+
+  const tab = activity.readerTab || "explain";
+  if (hasStepLearningEvidence(state, activity.missionId, tab, mission)) {
+    return { allowed: true, reason: "Evidência da etapa registrada." };
+  }
+  return { allowed: false, reason: stepEvidenceLabel(tab) };
+}
+
 export function completeCurrentActivity(
   session: StudySession,
-  state: AppState
+  state: AppState,
+  mission?: Mission | null
 ): StudySession {
   const current = getCurrentActivity(session);
   if (!current) return session;
+
+  const gate = canCompleteSessionActivity(state, current, mission);
+  if (!gate.allowed) return session;
 
   const completedIds = session.completedActivityIds.includes(current.id)
     ? session.completedActivityIds
@@ -151,6 +198,32 @@ export function completeCurrentActivity(
     status: isDone ? "completed" : session.status,
     endedAt: isDone ? new Date().toISOString() : session.endedAt
   };
+}
+
+/**
+ * Auto-advance session activities that already have evidence
+ * (e.g. student returns from reader after producing work).
+ */
+export function syncSessionFromEvidence(
+  session: StudySession,
+  state: AppState,
+  resolveMission?: (missionId: string) => Mission | null | undefined
+): StudySession {
+  if (session.status === "completed" || session.status === "paused") return session;
+
+  let current = session;
+  for (let guard = 0; guard < session.activities.length + 1; guard += 1) {
+    const activity = getCurrentActivity(current);
+    if (!activity) break;
+    const mission = resolveMission?.(activity.missionId) ?? null;
+    const gate = canCompleteSessionActivity(state, activity, mission);
+    if (!gate.allowed) break;
+    const next = completeCurrentActivity(current, state, mission);
+    if (next.completedActivityIds.length === current.completedActivityIds.length) break;
+    current = next;
+    if (current.status === "completed") break;
+  }
+  return current;
 }
 
 export function finishStudySession(session: StudySession): {

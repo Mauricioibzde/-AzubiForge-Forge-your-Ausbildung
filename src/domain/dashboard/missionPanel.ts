@@ -4,17 +4,25 @@ import type { Mission } from "../../schemas/mission";
 import { getNormalizedCourseData } from "../../data/normalizedCourse";
 import {
   READER_STEPS,
+  findChapter,
   getActiveModule,
   getChapterIndex,
+  getChapterModule,
   getChapterReadiness,
   getEstimatedSessionMinutes,
   getSessionProgress,
   getStudyStreak,
   getTodayChapter,
-  getVisitedSteps,
-  isCompleted,
   stampToLocalDayKey
 } from "../course";
+import {
+  labelForLearningAction,
+  resolveNextLearningAction,
+  type NextLearningAction
+} from "../learning/nextLearningAction";
+import { getMissionLearningEvidence, type MissionLearningEvidence } from "../learning/learningEvidence";
+import { hasStepLearningEvidence } from "../learning/didacticTasks";
+import { hasMasteryEvidence } from "../learning/masteryGate";
 
 export type MissionStepState = "done" | "current" | "upcoming";
 
@@ -27,7 +35,6 @@ export interface MissionStepView {
   estimatedMinutes: number;
   href: string;
   learnings: string[];
-  xp: number;
 }
 
 export interface MissionCelebration {
@@ -48,6 +55,9 @@ export interface MissionPanelModel {
   continueHref: string;
   continueLabel: string;
   sessionPercent: number;
+  evidencePercent: number;
+  masteryPassed: boolean;
+  hierarchyCrumb: string;
   currentStepIndex: number;
   stepsTotal: number;
   remainingMinutes: number;
@@ -59,11 +69,17 @@ export interface MissionPanelModel {
   celebration: MissionCelebration;
   nextMission: { title: string; href: string } | null;
   rewards: {
-    xp: number;
+    potentialXp: number;
+    earnedXp: number;
+    xpLabel: string;
     competencyLabel: string;
     reviewLabel: string;
+    practiceLabel: string;
+    masteryLabel: string;
     nextMissionLabel: string;
+    evidenceSummary: string;
   };
+  evidence: MissionLearningEvidence | null;
   summary: {
     learningField: string;
     situation: string;
@@ -74,6 +90,7 @@ export interface MissionPanelModel {
   materials: Array<{ label: string; href: string; kind: string }>;
   tip: string;
   completed: boolean;
+  nextAction: NextLearningAction | null;
 }
 
 const STEP_DISPLAY: Record<ReaderTab, { label: string; shortLabel: string; learnings: string[] }> = {
@@ -114,8 +131,8 @@ const STEP_DISPLAY: Record<ReaderTab, { label: string; shortLabel: string; learn
     ]
   },
   ap1: {
-    label: "Check AP1",
-    shortLabel: "Conclusão",
+    label: "Aplicar no caso",
+    shortLabel: "Aplicar",
     learnings: [
       "Fechar evidência da sessão",
       "Priorizar pontos fracos",
@@ -139,8 +156,21 @@ const IMPORTANCE_LABELS = {
 } as const;
 
 export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
-  const chapter = getTodayChapter(ctx.data, ctx.state);
-  const module = getActiveModule(ctx.data, ctx.state);
+  let nextAction: NextLearningAction | null = null;
+  try {
+    nextAction = resolveNextLearningAction({
+      course: getNormalizedCourseData(),
+      state: ctx.state
+    });
+  } catch {
+    nextAction = null;
+  }
+
+  const focusId = nextAction?.missionId || nextAction?.chapterId;
+  const chapter =
+    (focusId && findChapter(ctx.data, focusId)) ||
+    getTodayChapter(ctx.data, ctx.state);
+  const module = getChapterModule(ctx.data, chapter.id) || getActiveModule(ctx.data, ctx.state);
   let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
   try {
     mission = getNormalizedCourseData().missionsById[chapter.id] || null;
@@ -148,12 +178,10 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     mission = null;
   }
   const session = getSessionProgress(ctx.state, chapter.id);
-  const visited = new Set(getVisitedSteps(ctx.state, chapter.id));
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const estimatedMinutes = mission?.estimatedMinutes || getEstimatedSessionMinutes(chapter);
   const stepMinutes = Math.max(8, Math.round(estimatedMinutes / READER_STEPS.length));
-  const xpTotal = mission?.rewards.xp || 80 + Math.max(0, ctx.data.chapters.findIndex((item) => item.id === chapter.id)) * 10;
-  const stepXp = Math.max(20, Math.round(xpTotal / READER_STEPS.length));
+  const evidence = mission ? getMissionLearningEvidence(mission, ctx.state) : null;
   const studyStreak = getStudyStreak(ctx.state);
 
   const steps: MissionStepView[] = READER_STEPS.map((step) => {
@@ -168,18 +196,16 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       state: "upcoming" as MissionStepState,
       estimatedMinutes: stepMinutes,
       href: `#reader/${chapter.id}/${step.id}`,
-      learnings: objectives.length ? objectives.slice(0, 3) : display.learnings,
-      xp: stepXp
+      learnings: objectives.length ? objectives.slice(0, 3) : display.learnings
     };
   });
 
-  const chapterDone = isCompleted(ctx.state, chapter.id);
-  const allStepsVisited = session.percent === 100;
-  const completed = chapterDone || allStepsVisited;
+  const mastered = hasMasteryEvidence(ctx.state, chapter.id);
+  const completed = mastered;
 
   let assignedCurrent = false;
   for (const step of steps) {
-    if (visited.has(step.id)) {
+    if (hasStepLearningEvidence(ctx.state, chapter.id, step.id, mission)) {
       step.state = "done";
       continue;
     }
@@ -203,9 +229,14 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
   const currentStep = steps.find((step) => step.state === "current") || steps[steps.length - 1];
   const upcomingSteps = steps.filter((step) => step.state === "upcoming");
   const doneSteps = steps.filter((step) => step.state === "done");
-  const remainingSteps = Math.max(completed ? 0 : 1, steps.filter((step) => step.state !== "done").length);
-  const remainingMinutes = completed ? 0 : remainingSteps * stepMinutes;
-  const lastDone = doneSteps[doneSteps.length - 1] || null;
+  const evidenceDoneCount = doneSteps.length;
+  const evidenceComplete = evidenceDoneCount === steps.length;
+  const remainingOpenSteps = steps.filter((step) => step.state !== "done").length;
+  const remainingMinutes = mastered
+    ? 0
+    : evidenceComplete
+      ? Math.max(12, stepMinutes)
+      : Math.max(1, remainingOpenSteps) * stepMinutes;
 
   const chapterIndex = getChapterIndex(ctx.data, chapter.id);
   const nextChapter = ctx.data.chapters[chapterIndex + 1] || null;
@@ -233,19 +264,37 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
       ? formatDay(lastStudiedKey)
       : "Ainda não iniciada";
 
-  const celebration: MissionCelebration = completed
+  const evidencePercent = Math.round((evidenceDoneCount / Math.max(steps.length, 1)) * 100);
+
+  const celebration: MissionCelebration = mastered
     ? {
         show: true,
-        title: "Missão concluída",
-        detail: `+${xpTotal} XP · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
+        title: "Domínio comprovado",
+        detail: evidence
+          ? `${evidence.summaryLabel} · ${nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada"}`
+          : (nextMission ? `Próxima: ${nextMission.title}` : "Trilha liberada")
       }
-    : lastDone
+    : evidenceComplete
       ? {
           show: true,
-          title: "Etapa concluída",
-          detail: `✓ ${lastDone.shortLabel} · +${lastDone.xp} XP · Próxima: ${currentStep.shortLabel}`
+          title: "Percurso com evidência",
+          detail: "Todas as etapas têm produção. Próximo: prove o domínio no teste."
         }
       : { show: false, title: "", detail: "" };
+
+  const hierarchyCrumb = `${module.title} › ${chapter.title}`;
+  const fallbackHref = mastered
+    ? (nextMission?.href || "#course")
+    : evidenceComplete
+      ? `#mastery/${chapter.id}`
+      : `#reader/${chapter.id}/${currentStep.id}`;
+  const fallbackLabel = mastered
+    ? (nextMission ? "Próxima missão" : "Abrir trilha")
+    : evidenceComplete
+      ? "Provar domínio"
+      : evidenceDoneCount > 0
+        ? "Continuar missão"
+        : "Começar missão";
 
   return {
     chapter,
@@ -256,19 +305,16 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     estimatedMinutes,
     difficultyLabel: DIFFICULTY_LABELS[difficulty] || "Intermediário",
     importanceLabel: IMPORTANCE_LABELS[importance],
-    continueHref: completed
-      ? (nextMission?.href || "#course")
-      : `#reader/${chapter.id}/${currentStep.id}`,
-    continueLabel: completed
-      ? (nextMission ? "Próxima missão" : "Abrir trilha")
-      : session.completed > 0
-        ? "Continuar missão"
-        : "Começar missão",
-    sessionPercent: session.percent,
+    continueHref: nextAction?.href || fallbackHref,
+    continueLabel: nextAction ? labelForLearningAction(nextAction) : fallbackLabel,
+    sessionPercent: evidencePercent,
+    evidencePercent,
+    masteryPassed: mastered,
+    hierarchyCrumb,
     currentStepIndex: steps.findIndex((step) => step.id === currentStep.id) + 1,
     stepsTotal: steps.length,
     remainingMinutes,
-    doneCount: doneSteps.length,
+    doneCount: evidenceDoneCount,
     studyStreak,
     steps,
     currentStep,
@@ -276,35 +322,54 @@ export function buildMissionPanelModel(ctx: AppContext): MissionPanelModel {
     celebration,
     nextMission,
     rewards: {
-      xp: xpTotal,
-      competencyLabel: "1 competência",
-      reviewLabel: "Revisão em 3 dias",
-      nextMissionLabel: nextMission ? nextMission.title : "Fim do módulo atual"
+      potentialXp: evidence?.potentialXp || 0,
+      earnedXp: evidence?.earnedXp || 0,
+      xpLabel: evidence?.rewardXpLabel || "XP só após domínio comprovado",
+      competencyLabel: evidence?.competencyLabel || "Competências do capítulo",
+      reviewLabel: evidence?.reviewLabel || "Após o domínio",
+      practiceLabel: evidence?.practiceLabel || "Sem exercícios marcados",
+      masteryLabel: evidence?.masteryLabel || "Teste ainda não feito",
+      nextMissionLabel: nextMission ? nextMission.title : "Fim do módulo atual",
+      evidenceSummary: evidence?.summaryLabel || "Ainda sem evidência registrada"
     },
+    evidence,
     summary: {
       learningField: `${module.title} · ${module.subtitle}`,
-      situation: truncate(module.description || module.subtitle, 72),
-      status: completed ? "Concluída" : session.completed > 0 ? "Em andamento" : "Disponível",
+      situation: mission
+        ? truncate(`${module.title} › ${chapter.title}`, 72)
+        : truncate(module.description || module.subtitle, 72),
+      status: evidence
+        ? evidence.summaryLabel
+        : mastered
+          ? "Domínio comprovado"
+          : evidenceComplete
+            ? "Pronto para domínio"
+            : session.completed > 0
+              ? "Em andamento"
+              : "Disponível",
       startedLabel,
       lastActivityLabel: readiness.label
     },
     materials: [
       { label: "Guia da missão", href: `#reader/${chapter.id}/explain`, kind: "guide" },
       { label: "Caso prático", href: `#reader/${chapter.id}/praxis`, kind: "map" },
-      { label: "Checklist AP1", href: `#reader/${chapter.id}/ap1`, kind: "checklist" },
+      { label: "Desafio aplicado", href: `#reader/${chapter.id}/ap1`, kind: "checklist" },
       { label: "Glossário", href: "#glossary", kind: "glossary" }
     ],
-    tip: tipForStep(currentStep.id, currentStep.hint),
-    completed
+    tip: evidenceComplete && !mastered
+      ? "Percurso com evidência completo. Faça o teste de domínio para comprovar que aprendeu."
+      : tipForStep(currentStep.id, currentStep.hint),
+    completed,
+    nextAction
   };
 }
 
 function tipForStep(id: ReaderTab, hint: string): string {
   if (id === "explain") return "Leia com calma e feche a etapa só quando conseguir explicar a ideia em 2 frases.";
   if (id === "praxis") return "Conecte o conceito a um cenário real de suporte ou infraestrutura.";
-  if (id === "vocab") return "Treine recall: esconda a resposta e diga o termo em alemão antes de revelar.";
-  if (id === "practice") return "Marque Acertei/Errei com honestidade — isso monta sua fila de revisão.";
-  if (id === "ap1") return "Feche a evidência da sessão e anote o que ainda está frágil para a prova.";
+  if (id === "vocab") return "Produza antes de ver: digite o significado em PT e só então confira.";
+  if (id === "practice") return "Escreva a resposta, confira o gabarito e marque Acertei/Errei com honestidade.";
+  if (id === "ap1") return "Resolva um caso por escrito e marque os critérios com honestidade — isso libera o domínio.";
   return hint;
 }
 

@@ -1,6 +1,8 @@
 import type { AppState } from "../../types";
 import type { CompletionRules, MissionPhaseId, MissionProgress, MissionStatus, MasteryLevel } from "../../schemas/mission";
 import { DEFAULT_COMPLETION_RULES } from "../../schemas/mission";
+import { READER_STEPS } from "../course";
+import { hasStepLearningEvidence } from "../learning/didacticTasks";
 import { getLatestMasteryTestForMission } from "../mastery/masteryTest";
 
 export type MissionEvent =
@@ -161,29 +163,56 @@ export function missionProgressFromLegacyState(
   totalStudyBlocks: number
 ): MissionProgress {
   const progress = createInitialMissionProgress("available");
-  const visited = state.sessionSteps[missionId] || [];
+  const markedComplete = state.completed.includes(missionId);
+  const evidencedSteps = READER_STEPS.filter((step) =>
+    hasStepLearningEvidence(state, missionId, step.id, null)
+  );
+  const evidenceCount = evidencedSteps.length;
+  const hasLearnEvidence = evidencedSteps.some((step) =>
+    step.id === "explain" || step.id === "praxis" || step.id === "vocab"
+  );
+  const hasPracticeStepEvidence = evidencedSteps.some((step) =>
+    step.id === "practice" || step.id === "ap1"
+  );
 
-  if (state.completed.includes(missionId)) {
-    progress.status = "provisionally-mastered";
-    progress.masteryLevel = 5;
-    progress.completedAt = state.lastStudiedAt[missionId] || null;
-  } else if (visited.length > 0) {
+  if (evidenceCount > 0 || markedComplete) {
     progress.status = "in-progress";
-    progress.currentPhase = visited.includes("practice") ? "practice" : "learn";
+    progress.currentPhase = hasPracticeStepEvidence ? "practice" : "learn";
     progress.startedAt = state.lastStudiedAt[missionId] || null;
   }
 
-  if (visited.includes("explain")) progress.completedBlockIds.push(`${missionId}-intro-0`);
-  if (visited.length >= 3) progress.completedBlockIds = [`${missionId}-partial`];
+  // Study blocks track didactic evidence, not tab opens.
+  if (hasLearnEvidence || evidencedSteps.some((step) => step.id === "explain")) {
+    progress.completedBlockIds.push(`${missionId}-intro-0`);
+  }
+  if (evidenceCount >= 3) {
+    const blockTotal = Math.max(1, totalStudyBlocks);
+    progress.completedBlockIds = Array.from({ length: Math.min(evidenceCount, blockTotal) }, (_, index) =>
+      `${missionId}-evidence-${index}`
+    );
+  }
 
   const exerciseKeys = Object.keys(state.exerciseChecks).filter((key) => key.startsWith(`${missionId}:`));
   if (exerciseKeys.length) {
     const correct = exerciseKeys.filter((key) => state.exerciseChecks[key] === "correct").length;
     const score = Math.round((correct / exerciseKeys.length) * 100);
     progress.practiceScore = score;
-    if (score >= DEFAULT_COMPLETION_RULES.minimumPracticeScore) {
-      progress.status = progress.status === "in-progress" ? "ready-for-test" : progress.status;
+    progress.currentPhase = "practice";
+    if (exerciseKeys.length >= 3 && score >= DEFAULT_COMPLETION_RULES.minimumPracticeScore) {
+      progress.status = "ready-for-test";
+      progress.currentPhase = "test";
+    } else {
+      progress.status = "practice-required";
     }
+  } else if (markedComplete || hasPracticeStepEvidence) {
+    progress.status = "practice-required";
+    progress.currentPhase = "practice";
+  }
+
+  const applyKeys = Object.keys(state.applyCriteriaChecks || {}).filter((key) => key.startsWith(`${missionId}:`));
+  if (applyKeys.length) {
+    const checked = applyKeys.filter((key) => state.applyCriteriaChecks[key]).length;
+    progress.applyScore = Math.round((checked / Math.max(applyKeys.length, 1)) * 100);
   }
 
   const lastMasteryTest = getLatestMasteryTestForMission(state.masteryTestHistory || [], missionId);

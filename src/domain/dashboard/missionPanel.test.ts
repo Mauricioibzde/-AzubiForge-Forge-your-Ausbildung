@@ -80,6 +80,12 @@ function baseState(overrides: Partial<AppState> = {}): AppState {
     missionReviewHistory: [],
     activeCheckpoint: null,
     checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
     ...overrides
   };
 }
@@ -88,7 +94,9 @@ describe("buildMissionPanelModel", () => {
   it("surfaces one current mission step and clear next action", () => {
     const ctx = {
       data: sampleData,
-      state: baseState({ sessionSteps: { ch1: ["explain"] } }),
+      state: baseState({
+        stepArtifactSubmitted: { "explain:ch1": true }
+      }),
       ui: {} as AppContext["ui"]
     } as AppContext;
 
@@ -102,11 +110,38 @@ describe("buildMissionPanelModel", () => {
     expect(model.continueHref).toBe("#reader/ch1/praxis");
     expect(model.continueLabel).toBe("Continuar missão");
     expect(model.estimatedMinutes).toBeGreaterThan(0);
-    expect(model.rewards.xp).toBeGreaterThan(0);
+    expect(model.rewards.potentialXp).toBeGreaterThanOrEqual(0);
+    expect(model.rewards.competencyLabel.toLowerCase()).not.toBe("1 competência");
+    expect(model.rewards.xpLabel.toLowerCase()).toMatch(/xp|domínio|dominio/);
     expect(model.currentStepIndex).toBe(2);
     expect(model.doneCount).toBe(1);
-    expect(model.celebration.show).toBe(true);
-    expect(model.celebration.title).toBe("Etapa concluída");
+    expect(model.evidencePercent).toBe(20);
+    expect(model.masteryPassed).toBe(false);
+    expect(model.hierarchyCrumb).toMatch(/Introdução|Lernfeld/);
+    expect(model.celebration.show).toBe(false);
     expect(model.importanceLabel.toLowerCase()).toContain("import");
+  });
+
+  it("points next action to mastery when all steps have evidence", () => {
+    const ctx = {
+      data: sampleData,
+      state: baseState({
+        stepArtifactSubmitted: {
+          "explain:ch1": true,
+          "praxis:ch1": true,
+          "apply:ch1-apply-fallback": true
+        },
+        vocabChecks: { "vocab:ch1:0": "correct" },
+        exerciseChecks: { "ch1:0": "correct" }
+      }),
+      ui: {} as AppContext["ui"]
+    } as AppContext;
+
+    const model = buildMissionPanelModel(ctx);
+    expect(model.doneCount).toBe(5);
+    expect(model.masteryPassed).toBe(false);
+    expect(model.continueHref).toBe("#mastery/ch1");
+    expect(model.continueLabel.toLowerCase()).toMatch(/dom[ií]nio/);
+    expect(model.celebration.title).toBe("Percurso com evidência");
   });
 });

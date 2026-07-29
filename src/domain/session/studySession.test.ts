@@ -8,7 +8,8 @@ import {
   finishStudySession,
   getSessionActivityProgress,
   pauseStudySession,
-  resumeStudySession
+  resumeStudySession,
+  syncSessionFromEvidence
 } from "./studySession";
 
 function mockCtx(stateOverrides: Partial<AppContext["state"]> = {}): AppContext {
@@ -61,6 +62,12 @@ function mockCtx(stateOverrides: Partial<AppContext["state"]> = {}): AppContext 
       missionReviewHistory: [],
       activeCheckpoint: null,
       checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
       ...stateOverrides
     },
     ui: {} as AppContext["ui"]
@@ -87,7 +94,8 @@ const samplePlan: DailyPlan = {
 describe("studySession", () => {
   it("builds reader-step activities for a new mission", () => {
     const activities = buildSessionActivities(samplePlan, mockCtx());
-    expect(activities.length).toBe(5);
+    expect(activities.length).toBeGreaterThanOrEqual(1);
+    expect(activities.length).toBeLessThanOrEqual(5);
     expect(activities[0].kind).toBe("reader-step");
     expect(activities[0].readerTab).toBe("explain");
   });
@@ -96,11 +104,11 @@ describe("studySession", () => {
     const ctx = mockCtx();
     const session = createStudySessionFromPlan(samplePlan, ctx);
     expect(session.status).toBe("active");
-    expect(session.activities.length).toBe(5);
+    expect(session.activities.length).toBeGreaterThanOrEqual(1);
 
     const progress = getSessionActivityProgress(session);
     expect(progress.completed).toBe(0);
-    expect(progress.total).toBe(5);
+    expect(progress.total).toBe(session.activities.length);
   });
 
   it("pauses and resumes", () => {
@@ -114,22 +122,73 @@ describe("studySession", () => {
     expect(resumed.pausedAt).toBeNull();
   });
 
-  it("completes activities and marks reader steps", () => {
+  it("blocks completion without learning evidence", () => {
     const ctx = mockCtx();
     let session = createStudySessionFromPlan(samplePlan, ctx);
+    session = completeCurrentActivity(session, ctx.state);
+    expect(session.completedActivityIds.length).toBe(0);
+    expect(ctx.state.sessionSteps.m1).toBeUndefined();
+  });
+
+  it("completes activities only after evidence and marks reader steps", () => {
+    const ctx = mockCtx();
+    let session = createStudySessionFromPlan(samplePlan, ctx);
+    ctx.state.stepArtifactSubmitted["explain:m1"] = true;
     session = completeCurrentActivity(session, ctx.state);
     expect(session.completedActivityIds.length).toBe(1);
     expect(ctx.state.sessionSteps.m1).toContain("explain");
   });
 
-  it("finishes with summary", () => {
+  it("builds only unevidenced steps in a focused chunk", () => {
+    const ctx = mockCtx({
+      stepArtifactSubmitted: {
+        "explain:m1": true,
+        "praxis:m1": true
+      }
+    });
+    const activities = buildSessionActivities(samplePlan, ctx);
+    expect(activities.every((activity) => activity.readerTab !== "explain")).toBe(true);
+    expect(activities.every((activity) => activity.readerTab !== "praxis")).toBe(true);
+    expect(activities.length).toBeGreaterThanOrEqual(1);
+    expect(activities.length).toBeLessThanOrEqual(4);
+  });
+
+  it("auto-advances when returning with evidence already recorded", () => {
     const ctx = mockCtx();
     let session = createStudySessionFromPlan(samplePlan, ctx);
-    session.activities.forEach(() => {
+    expect(session.activities[0]?.readerTab).toBe("explain");
+    expect(session.completedActivityIds.length).toBe(0);
+    ctx.state.stepArtifactSubmitted["explain:m1"] = true;
+    session = syncSessionFromEvidence(session, ctx.state);
+    expect(session.completedActivityIds.length).toBe(1);
+    expect(session.currentIndex).toBe(1);
+  });
+
+  it("finishes with summary when each step has evidence", () => {
+    const ctx = mockCtx();
+    let session = createStudySessionFromPlan(samplePlan, ctx);
+    const total = session.activities.length;
+    for (let i = 0; i < total; i += 1) {
+      const activity = session.activities[session.currentIndex];
+      if (activity?.readerTab === "explain") {
+        ctx.state.stepArtifactSubmitted["explain:m1"] = true;
+      }
+      if (activity?.readerTab === "praxis") {
+        ctx.state.stepArtifactSubmitted["praxis:m1"] = true;
+      }
+      if (activity?.readerTab === "vocab") {
+        ctx.state.vocabChecks["vocab:m1:0"] = "correct";
+      }
+      if (activity?.readerTab === "practice") {
+        ctx.state.exerciseChecks["m1:0"] = "correct";
+      }
+      if (activity?.readerTab === "ap1") {
+        ctx.state.stepArtifactSubmitted["apply:m1-apply-fallback"] = true;
+      }
       session = completeCurrentActivity(session, ctx.state);
-    });
+    }
     const { summary } = finishStudySession(session);
-    expect(summary.activitiesCompleted).toBe(5);
+    expect(summary.activitiesCompleted).toBe(total);
     expect(summary.missionIds).toEqual(["m1"]);
   });
 });

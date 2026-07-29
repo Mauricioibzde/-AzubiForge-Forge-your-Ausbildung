@@ -52,7 +52,8 @@ import {
   handleSessionPause,
   handleSessionResume,
   renderStudySessionView,
-  startStudySessionFromPlan
+  startStudySessionFromPlan,
+  syncActiveStudySession
 } from "./views/studySessionView";
 import {
   finishMasteryTest,
@@ -60,6 +61,8 @@ import {
   startMasteryTest,
   submitMasteryTestForGrading
 } from "./views/masteryTestView";
+import { answersMatch } from "./domain/learning/productionCheck";
+import { hasStepLearningEvidence, stepEvidenceLabel } from "./domain/learning/didacticTasks";
 import { applyMasteryTestResult } from "./domain/mastery/applyMasteryResult";
 import {
   setMasteryTestResponse,
@@ -209,6 +212,13 @@ function renderRoute(app: HTMLElement, ctx: AppContext): void {
       setSessionHash("active");
       sessionMode = "active";
     }
+    if (syncActiveStudySession(ctx)) {
+      saveState(ctx.state);
+      if (ctx.state.activeStudySession?.status === "completed") {
+        sessionMode = "summary";
+        setSessionHash("summary");
+      }
+    }
     app.innerHTML = renderStudySessionView(ctx, sessionMode);
   } else if (route === "mastery") {
     const missionId = id || ctx.state.lastChapterId || ctx.data.chapters[0]?.id || "";
@@ -321,9 +331,24 @@ function expireActiveMockIfNeeded(ctx: AppContext): boolean {
 function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void {
   const target = event.target as Element;
 
+  if (target.closest("[data-session-evidence-needed]")) {
+    event.preventDefault();
+    const session = ctx.state.activeStudySession;
+    const current = session ? session.activities[session.currentIndex] : null;
+    window.alert(current?.instruction || "Faça a tarefa no leitor antes de concluir.");
+    if (current?.readerTab) {
+      window.location.hash = `#reader/${current.missionId}/${current.readerTab}`;
+    }
+    return;
+  }
+
   if (target.closest("[data-session-complete]")) {
     event.preventDefault();
-    handleSessionComplete(ctx);
+    const result = handleSessionComplete(ctx);
+    if (!result.ok) {
+      window.alert(result.reason);
+      return;
+    }
     saveState(ctx.state);
     if (ctx.state.activeStudySession?.status === "completed") {
       window.location.hash = "#session/summary";
@@ -580,8 +605,48 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
   if (nextButton?.dataset.nextTab) {
     const nextTab = nextButton.dataset.nextTab as ReaderTab;
     const chapterId = nextButton.dataset.sessionNext || ctx.ui.readerChapterId || ctx.state.lastChapterId;
+    if (chapterId) {
+      let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
+      try {
+        mission = getNormalizedCourseData().missionsById[chapterId] || null;
+      } catch {
+        mission = null;
+      }
+      if (!hasStepLearningEvidence(ctx.state, chapterId, ctx.ui.readerTab, mission)) {
+        window.alert(stepEvidenceLabel(ctx.ui.readerTab));
+        return;
+      }
+    }
     ctx.ui.readerTab = nextTab;
     if (chapterId) setReaderHash(chapterId, nextTab);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const evidenceNeeded = target.closest<HTMLElement>("[data-step-evidence-needed]");
+  if (evidenceNeeded) {
+    const tab = (evidenceNeeded.dataset.stepTab || ctx.ui.readerTab) as ReaderTab;
+    window.alert(stepEvidenceLabel(tab));
+    const card = app.querySelector(".didactic-task-card, .production-attempt");
+    card?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+
+  const artifactSubmit = target.closest<HTMLElement>("[data-step-artifact-submit]");
+  if (artifactSubmit?.dataset.stepArtifactSubmit) {
+    const key = artifactSubmit.dataset.stepArtifactSubmit;
+    const field = app.querySelector<HTMLTextAreaElement>(`[data-step-artifact="${CSS.escape(key)}"]`);
+    const draft = (field?.value || ctx.state.stepArtifacts[key] || "").trim();
+    if (draft.length < 12) {
+      window.alert("Escreva uma resposta completa (pelo menos 2 frases curtas) antes de enviar.");
+      field?.focus();
+      return;
+    }
+    ctx.state.stepArtifacts[key] = draft;
+    ctx.state.stepArtifactSubmitted[key] = true;
+    const chapterId = artifactSubmit.dataset.checkChapter || "";
+    if (chapterId && findChapter(ctx.data, chapterId)) touchStudied(ctx.state, chapterId);
+    saveState(ctx.state);
     renderRoute(app, ctx);
     return;
   }
@@ -631,6 +696,50 @@ function handleClick(event: MouseEvent, app: HTMLElement, ctx: AppContext): void
   const examStep = target.closest<HTMLElement>("[data-exam-step]");
   if (examStep?.dataset.examStep) {
     ctx.ui.examFocusIndex += Number(examStep.dataset.examStep);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const vocabSubmit = target.closest<HTMLElement>("[data-vocab-submit]");
+  if (vocabSubmit?.dataset.vocabSubmit) {
+    const key = vocabSubmit.dataset.vocabSubmit;
+    const expected = vocabSubmit.dataset.vocabExpected || "";
+    const field = app.querySelector<HTMLTextAreaElement>(`[data-vocab-attempt="${CSS.escape(key)}"]`);
+    const draft = (field?.value || ctx.state.vocabAttempts[key] || "").trim();
+    if (!draft) {
+      window.alert("Escreva o significado antes de conferir.");
+      field?.focus();
+      return;
+    }
+    ctx.state.vocabAttempts[key] = draft;
+    const matched = answersMatch(expected, draft);
+    setVocabCheck(
+      ctx,
+      key,
+      matched ? "correct" : "wrong",
+      vocabSubmit.dataset.checkChapter || ""
+    );
+    maybeAutoAdvance(ctx, vocabSubmit.dataset.autoAdvance);
+    renderRoute(app, ctx);
+    return;
+  }
+
+  const practiceSubmit = target.closest<HTMLElement>("[data-practice-submit]");
+  if (practiceSubmit?.dataset.practiceSubmit) {
+    const key = practiceSubmit.dataset.practiceSubmit;
+    const field = app.querySelector<HTMLTextAreaElement>(`[data-practice-attempt="${CSS.escape(key)}"]`);
+    const draft = (field?.value || ctx.state.practiceAttempts[key] || "").trim();
+    if (!draft) {
+      window.alert("Escreva sua resposta antes de ver o gabarito.");
+      field?.focus();
+      return;
+    }
+    ctx.state.practiceAttempts[key] = draft;
+    ctx.state.practiceRevealed[key] = true;
+    const chapterId = practiceSubmit.dataset.checkChapter || "";
+    if (chapterId && findChapter(ctx.data, chapterId)) touchStudied(ctx.state, chapterId);
+    saveState(ctx.state);
+    maybeAutoAdvance(ctx, practiceSubmit.dataset.autoAdvance);
     renderRoute(app, ctx);
     return;
   }
@@ -790,6 +899,33 @@ function handleInput(event: Event, app: HTMLElement, ctx: AppContext): void {
     saveState(ctx.state);
   }
 
+  if (target.matches("[data-vocab-attempt]")) {
+    const key = target.dataset.vocabAttempt || "";
+    if (key) {
+      ctx.state.vocabAttempts[key] = target.value;
+      saveState(ctx.state);
+    }
+    return;
+  }
+
+  if (target.matches("[data-practice-attempt]")) {
+    const key = target.dataset.practiceAttempt || "";
+    if (key) {
+      ctx.state.practiceAttempts[key] = target.value;
+      saveState(ctx.state);
+    }
+    return;
+  }
+
+  if (target.matches("[data-step-artifact]")) {
+    const key = target.dataset.stepArtifact || "";
+    if (key && !ctx.state.stepArtifactSubmitted[key]) {
+      ctx.state.stepArtifacts[key] = target.value;
+      saveState(ctx.state);
+    }
+    return;
+  }
+
   if (target.matches("[data-mock-notes]") && ctx.state.mockExam) {
     const questionId = target.dataset.mockNotes || "";
     const answered = Boolean(target.value.trim()) || Boolean(ctx.state.mockExam.responses[questionId]?.answered);
@@ -867,6 +1003,18 @@ function syncMockAnsweredUi(
 
 async function handleChange(event: Event, app: HTMLElement, ctx: AppContext): Promise<void> {
   const target = event.target as HTMLInputElement | HTMLSelectElement;
+
+  if (target.matches("[data-apply-criteria]")) {
+    const key = target.dataset.applyCriteria || "";
+    if (key) {
+      ctx.state.applyCriteriaChecks[key] = Boolean((target as HTMLInputElement).checked);
+      const chapterId = key.split(":")[0] || "";
+      if (chapterId && findChapter(ctx.data, chapterId)) touchStudied(ctx.state, chapterId);
+      saveState(ctx.state);
+      renderRoute(app, ctx);
+    }
+    return;
+  }
 
   if (target.matches("[data-docs-ai-chapter]")) {
     ctx.ui.docsAiChapterId = target.value;

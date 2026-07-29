@@ -34,15 +34,52 @@ export function progressBlock(progress: Progress, label = "capitulos"): string {
   `;
 }
 
-export function inlineProgress(progress: Progress): string {
+export function inlineProgress(progress: Progress, label = "Progresso"): string {
   return `
-    <div class="inline-progress">
+    <div class="inline-progress" role="group" aria-label="${escapeAttribute(label)}">
       <div>
         <span>${progress.completed} de ${progress.total}</span>
         <strong>${progress.percent}%</strong>
       </div>
-      <div class="progress-track">
+      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress.percent}" aria-label="${escapeAttribute(label)}">
         <div class="progress-fill" style="width: ${progress.percent}%"></div>
+      </div>
+    </div>
+  `;
+}
+
+export interface DualProgressInput {
+  study: Progress;
+  mastery: Progress;
+  studyLabel?: string;
+  masteryLabel?: string;
+}
+
+/** Two honest bars: visited/study path vs proven mastery. */
+export function dualProgressBars(input: DualProgressInput): string {
+  const studyLabel = input.studyLabel || "Percurso";
+  const masteryLabel = input.masteryLabel || "Domínio";
+  return `
+    <div class="dual-progress course-dual-progress" role="group" aria-label="Progresso de estudo e domínio">
+      <div class="dual-progress-row">
+        <div class="dual-progress-meta">
+          <span class="dual-progress-label">${escapeHtml(studyLabel)}</span>
+          <strong>${input.study.completed}/${input.study.total} · ${input.study.percent}%</strong>
+        </div>
+        <div class="progress-track dual-progress-track study" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${input.study.percent}" aria-label="${escapeAttribute(studyLabel)}">
+          <div class="progress-fill" style="width: ${input.study.percent}%"></div>
+        </div>
+        <p class="dual-progress-hint">Capítulos com evidência de estudo (produção/prática)</p>
+      </div>
+      <div class="dual-progress-row">
+        <div class="dual-progress-meta">
+          <span class="dual-progress-label">${escapeHtml(masteryLabel)}</span>
+          <strong>${input.mastery.completed}/${input.mastery.total} · ${input.mastery.percent}%</strong>
+        </div>
+        <div class="progress-track dual-progress-track mastery" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${input.mastery.percent}" aria-label="${escapeAttribute(masteryLabel)}">
+          <div class="progress-fill" style="width: ${input.mastery.percent}%"></div>
+        </div>
+        <p class="dual-progress-hint">Só conta após teste de domínio aprovado</p>
       </div>
     </div>
   `;
@@ -151,38 +188,53 @@ export function confidenceControls(
 export function vocabularyRecallCards(
   rows: VocabularyRow[],
   chapterId: string,
-  checks: Record<string, ExerciseCheck>
+  checks: Record<string, ExerciseCheck>,
+  attempts: Record<string, string> = {}
 ): string {
   return `
     <div class="vocab-recall-grid">
       ${rows.map((row, index) => {
         const key = `vocab:${chapterId}:${index}`;
         const check = checks[key];
+        const attempt = attempts[key] || "";
+        const revealed = Boolean(check);
         return `
           <article class="vocab-recall-card ${check ? `checked-${check}` : ""}">
-            <strong>${row.de}</strong>
-            <details>
-              <summary>Revelar significado</summary>
-              <p><strong>${row.pt}</strong></p>
-              <p>${row.explanation}</p>
-              <p class="small-note">${row.example}</p>
-              <div class="self-check-actions">
-                <button
-                  class="button secondary ${check === "correct" ? "active-check" : ""}"
-                  type="button"
-                  data-vocab-check="correct"
-                  data-check-key="${key}"
-                  data-check-chapter="${chapterId}"
-                >Acertei</button>
-                <button
-                  class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
-                  type="button"
-                  data-vocab-check="wrong"
-                  data-check-key="${key}"
-                  data-check-chapter="${chapterId}"
-                >Errei</button>
-              </div>
-            </details>
+            <strong>${escapeHtml(row.de)}</strong>
+            <textarea
+              class="note-area production-attempt"
+              rows="2"
+              placeholder="Digite o significado em PT"
+              data-vocab-attempt="${escapeAttribute(key)}"
+              data-vocab-expected="${escapeAttribute(row.pt)}"
+              ${check ? "readonly" : ""}
+            >${escapeHtml(attempt)}</textarea>
+            ${!revealed ? `
+              <button class="button accent" type="button" data-vocab-submit="${escapeAttribute(key)}" data-vocab-expected="${escapeAttribute(row.pt)}" data-check-chapter="${escapeAttribute(chapterId)}">Conferir</button>
+            ` : `
+              <details open>
+                <summary>Significado</summary>
+                <p><strong>${escapeHtml(row.pt)}</strong></p>
+                <p>${escapeHtml(row.explanation)}</p>
+                <p class="small-note">${escapeHtml(row.example)}</p>
+                <div class="self-check-actions">
+                  <button
+                    class="button secondary ${check === "correct" ? "active-check" : ""}"
+                    type="button"
+                    data-vocab-check="correct"
+                    data-check-key="${escapeAttribute(key)}"
+                    data-check-chapter="${escapeAttribute(chapterId)}"
+                  >Manter acerto</button>
+                  <button
+                    class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
+                    type="button"
+                    data-vocab-check="wrong"
+                    data-check-key="${escapeAttribute(key)}"
+                    data-check-chapter="${escapeAttribute(chapterId)}"
+                  >Marcar para revisar</button>
+                </div>
+              </details>
+            `}
           </article>
         `;
       }).join("")}

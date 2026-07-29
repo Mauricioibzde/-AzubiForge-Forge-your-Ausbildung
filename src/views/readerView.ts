@@ -24,6 +24,7 @@ import { getJourneyProgress, getNextJourneyHref } from "../domain/journey";
 import type { Chapter, ChapterFullContent, ContentBlock, Diagram, ReaderTab } from "../types";
 import {
   confidenceControls,
+  escapeAttribute,
   escapeHtml,
   list,
   paragraphs,
@@ -32,6 +33,16 @@ import {
   vocabularyTable
 } from "../ui/html";
 import { exerciseCard } from "../ui/components";
+import { hasMasteryEvidence, evaluateMasteryGate } from "../domain/learning/masteryGate";
+import {
+  buildExplainRetrievalTask,
+  buildPraxisDecisionTask,
+  buildApplyProductionTasks,
+  hasStepLearningEvidence,
+  stepEvidenceLabel,
+  type DidacticTask
+} from "../domain/learning/didacticTasks";
+import { getNormalizedCourseData } from "../data/normalizedCourse";
 
 export function renderReaderView(ctx: AppContext, chapterId: string): string {
   const chapter = findChapter(ctx.data, chapterId) || ctx.data.chapters[0];
@@ -44,6 +55,13 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
   const session = getSessionProgress(ctx.state, chapter.id);
   const nextTab = getNextSessionTab(ctx.state, chapter.id, ctx.ui.readerTab);
   const currentStep = READER_STEPS.find((step) => step.id === ctx.ui.readerTab) || READER_STEPS[0];
+  let currentMission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
+  try {
+    currentMission = getNormalizedCourseData().missionsById[chapter.id] || null;
+  } catch {
+    currentMission = null;
+  }
+  const stepEvidenceReady = hasStepLearningEvidence(ctx.state, chapter.id, ctx.ui.readerTab, currentMission);
   const minutes = getEstimatedSessionMinutes(chapter);
   const readiness = getChapterReadiness(ctx.data, ctx.state, chapter);
   const vocabRows = getChapterVocabulary(ctx.data, chapter);
@@ -61,29 +79,30 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
       <article class="article">
         <div class="reader-kicker">
           <p class="eyebrow">${module?.subtitle || ctx.data.course.title}</p>
-          <span class="reader-session-pill">${session.completed}/${session.total} etapas · ${minutes} min</span>
+          <span class="reader-session-pill">${session.completed}/${session.total} evidência · ${minutes} min</span>
         </div>
         <h1>${chapter.title}</h1>
         <div class="reader-meta">
           <span>${chapter.studyTime || `${getReadingMinutes(chapter)} min leitura`}</span>
           <span>${index + 1} de ${ctx.data.chapters.length}</span>
-          <span>${done ? "Concluido" : "Em estudo"}</span>
+          <span>${hasMasteryEvidence(ctx.state, chapter.id) ? "Domínio ok" : done ? "Estudo marcado" : "Em estudo"}</span>
           ${readinessBadge(readiness)}
         </div>
 
         <section class="session-guide" aria-label="Fluxo da sessao" data-swipe-tabs>
           <div class="session-guide-copy">
-            <span class="card-label">Fluxo guiado · ${session.completed}/${session.total}</span>
+            <span class="card-label">Fluxo guiado · ${session.completed}/${session.total} evidência</span>
             <strong>${currentStep.label}</strong>
             <p>${stepCoach.goal}</p>
           </div>
           <div class="session-guide-track" role="list">
             ${READER_STEPS.map((step) => {
               const visited = getVisitedSteps(ctx.state, chapter.id).includes(step.id);
+              const evidenced = hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission);
               const active = step.id === ctx.ui.readerTab;
               return `
                 <button
-                  class="session-guide-step ${visited ? "done" : ""} ${active ? "active" : ""}"
+                  class="session-guide-step ${evidenced ? "done" : visited ? "visited" : ""} ${active ? "active" : ""}"
                   type="button"
                   role="listitem"
                   data-reader-tab="${step.id}"
@@ -94,9 +113,24 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
               `;
             }).join("")}
           </div>
-          <div class="session-progress-line" aria-hidden="true">
-            <div style="width: ${session.percent}%"></div>
-          </div>
+          ${(() => {
+            const evidencedCount = READER_STEPS.filter((step) =>
+              hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission)
+            ).length;
+            const evidencePercent = Math.round((evidencedCount / READER_STEPS.length) * 100);
+            return `
+              <ul class="reader-proof-checklist" aria-label="Comprovação das etapas">
+                ${READER_STEPS.map((step) => {
+                  const evidenced = hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission);
+                  return `<li class="${evidenced ? "is-done" : ""}">${evidenced ? "✓" : "○"} ${step.label}</li>`;
+                }).join("")}
+              </ul>
+              <div class="session-progress-line" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${evidencePercent}" aria-label="Percurso com evidência">
+                <div style="width: ${evidencePercent}%"></div>
+              </div>
+              <p class="ds-aux reader-proof-caption">${evidencedCount}/${READER_STEPS.length} etapas com evidência · ${hasMasteryEvidence(ctx.state, chapter.id) ? "domínio ok" : "domínio pendente"}</p>
+            `;
+          })()}
         </section>
 
         <section class="journey-reader-bar panel" aria-label="Posicao na jornada">
@@ -119,7 +153,9 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           </div>
           <div class="step-coach-actions">
             ${nextTab
-              ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Concluir e ir para ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proxima etapa"}</button>`
+              ? (stepEvidenceReady
+                ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Concluir e ir para ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proxima etapa"}</button>`
+                : `<button class="button soft-complete" type="button" data-step-evidence-needed="${chapter.id}" data-step-tab="${ctx.ui.readerTab}">${stepEvidenceLabel(ctx.ui.readerTab)}</button>`)
               : `<a class="button" href="#review">Fechar e revisar erros</a>`
             }
             <a class="button secondary" href="#reader/${chapter.id}/${currentStep.id}">Focar nesta etapa</a>
@@ -137,9 +173,10 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
                 <span class="card-label">Proximo passo</span>
                 <p>${READER_STEPS.find((step) => step.id === nextTab)?.label || "Continuar"}</p>
               </div>
-              <button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">
-                Avancar na sessao
-              </button>
+              ${stepEvidenceReady
+                ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Avancar na sessao</button>`
+                : `<button class="button soft-complete" type="button" data-step-evidence-needed="${chapter.id}" data-step-tab="${ctx.ui.readerTab}">${stepEvidenceLabel(ctx.ui.readerTab)}</button>`
+              }
             ` : `
               <div>
                 <span class="card-label">Fechar sessao</span>
@@ -194,7 +231,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
                 <button class="button secondary" type="button" data-reset-session="${chapter.id}">
                   Reiniciar sessao guiada
                 </button>
-                <p class="small-note">Limpa as etapas visitadas para refazer o fluxo de 5 passos.</p>
+                <p class="small-note">Limpa visitas do fluxo (a evidência de produção permanece).</p>
               ` : ""}
             </div>
           </details>
@@ -205,7 +242,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
           <nav class="chapter-mini-list" aria-label="Capitulos">
             ${ctx.data.chapters.slice(Math.max(0, index - 6), index + 7).map((item) => `
               <a class="${item.id === chapter.id ? "active" : ""}" href="#reader/${item.id}">
-                ${isCompleted(ctx.state, item.id) ? "OK " : ""}${item.title}
+                ${hasMasteryEvidence(ctx.state, item.id) ? "★ " : isCompleted(ctx.state, item.id) ? "· " : ""}${item.title}
               </a>
             `).join("")}
           </nav>
@@ -215,22 +252,24 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
       <div class="mobile-study-dock" aria-label="Acoes da sessao">
         <div class="mobile-dock-tabs" data-swipe-tabs aria-label="Etapas da sessao">
           ${READER_STEPS.map((step) => {
-            const visited = getVisitedSteps(ctx.state, chapter.id).includes(step.id);
+            const evidenced = hasStepLearningEvidence(ctx.state, chapter.id, step.id, currentMission);
             const active = step.id === ctx.ui.readerTab;
             return `
               <button
-                class="mobile-dock-tab ${visited ? "visited" : ""} ${active ? "active" : ""}"
+                class="mobile-dock-tab ${evidenced ? "done" : ""} ${active ? "active" : ""}"
                 type="button"
                 data-reader-tab="${step.id}"
                 data-reader-chapter="${chapter.id}"
+                aria-label="${step.label}${evidenced ? " com evidência" : ""}"
               >${step.label}</button>
             `;
           }).join("")}
         </div>
         ${nextTab ? `
-          <button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">
-            Avancar: ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proximo"}
-          </button>
+          ${stepEvidenceReady
+            ? `<button class="button" type="button" data-session-next="${chapter.id}" data-next-tab="${nextTab}">Avancar: ${READER_STEPS.find((step) => step.id === nextTab)?.label || "proximo"}</button>`
+            : `<button class="button soft-complete" type="button" data-step-evidence-needed="${chapter.id}" data-step-tab="${ctx.ui.readerTab}">Fazer tarefa da etapa</button>`
+          }
         ` : `
           <div class="mobile-dock-confidence">
             ${confidenceControls(ctx.state, chapter, confidenceGateOptions(ctx, chapter.id))}
@@ -242,7 +281,7 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
             : `<a class="button secondary" href="#exam/drill">Treino AP1</a>`}
         `}
         <div class="mobile-study-meta">
-          <span>${session.completed}/${session.total} · ${readiness.label}</span>
+          <span>${session.completed}/${session.total} evidência · ${readiness.label}</span>
           ${exerciseStats.wrong ? `<button class="text-link" type="button" data-show-wrong-practice="${chapter.id}">Ver erros (${exerciseStats.wrong})</button>` : `<a class="text-link" href="#course">Trilha</a>`}
         </div>
       </div>
@@ -253,31 +292,31 @@ export function renderReaderView(ctx: AppContext, chapterId: string): string {
 function getStepCoach(tab: ReaderTab): { goal: string; done: string } {
   if (tab === "explain") {
     return {
-      goal: "Entender o conceito central e identificar onde ele aparece na prova AP1.",
-      done: "você consegue explicar a ideia em 2 frases, sem consultar o texto"
+      goal: "Entender o conceito e recuperar de memória — não só reler.",
+      done: "você escreveu 2 frases próprias (o que é + por que importa)"
     };
   }
   if (tab === "praxis") {
     return {
-      goal: "Conectar a teoria a um cenário real de trabalho de infraestrutura/suporte.",
-      done: "você consegue descrever um caso real e a decisão técnica tomada"
+      goal: "Transferir teoria para uma decisão no caso de suporte/JIKU.",
+      done: "você registrou a ação que tomaria e a justificativa"
     };
   }
   if (tab === "vocab") {
     return {
-      goal: "Fixar termos DE/PT críticos para perguntas curtas e interpretação de enunciado.",
-      done: "você acerta os principais termos sem abrir a resposta"
+      goal: "Fixar termos DE/PT críticos com produção antes do gabarito.",
+      done: "você digitou e conferiu pelo menos 1 termo"
     };
   }
   if (tab === "practice") {
     return {
-      goal: "Treinar aplicação ativa e reduzir erros recorrentes antes do AP1-check.",
+      goal: "Treinar aplicação ativa com resposta própria + autoavaliação honesta.",
       done: "você respondeu e marcou Acertei/Errei em pelo menos 1 exercício"
     };
   }
   return {
-    goal: "Consolidar a evidência da sessão e preparar revisão de pontos fracos.",
-    done: "você identifica o que já domina e o que precisa voltar na revisão"
+    goal: "Resolver o desafio aplicado por escrito — evidência que libera o domínio.",
+    done: "você enviou a produção do caso e marcou os critérios com honestidade"
   };
 }
 
@@ -288,22 +327,38 @@ function renderCompleteButton(
   session: { completed: number; total: number; percent: number },
   exerciseStats: { answered: number }
 ): string {
+  const mastered = hasMasteryEvidence(ctx.state, chapterId);
+  if (mastered) {
+    return `<a class="button complete" href="#mastery/${escapeAttribute(chapterId)}">Domínio comprovado</a>`;
+  }
+
+  let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
+  try {
+    mission = getNormalizedCourseData().missionsById[chapterId] || null;
+  } catch {
+    mission = null;
+  }
+  const gate = evaluateMasteryGate(ctx.state, chapterId, mission);
+  if (gate.allowed) {
+    return `<a class="button accent" href="#mastery/${escapeAttribute(chapterId)}">Provar domínio agora</a>`;
+  }
+
   const gated = ctx.ui.completeGateChapterId === chapterId;
   if (done) {
-    return `<button class="button complete" type="button" data-complete="${chapterId}">Concluido</button>`;
+    return `<button class="button secondary" type="button" data-complete="${chapterId}">Estudo marcado (sem domínio)</button>`;
   }
   if (gated) {
     return `
-      <button class="button" type="button" data-complete="${chapterId}" data-complete-confirm="true">
-        Confirmar conclusao
+      <button class="button secondary" type="button" data-complete="${chapterId}" data-complete-confirm="true">
+        Só marcar estudo (sem domínio)
       </button>
       <button class="button secondary" type="button" data-complete-cancel="${chapterId}">Cancelar</button>
     `;
   }
-  const soft = session.percent < 100 || exerciseStats.answered === 0;
+  const soft = session.percent < 100 || exerciseStats.answered < 3;
   return `
-    <button class="button ${soft ? "soft-complete" : ""}" type="button" data-complete="${chapterId}">
-      ${soft ? "Fechar (sessao incompleta)" : "Marcar como concluido"}
+    <button class="button ${soft ? "soft-complete" : "secondary"}" type="button" data-complete="${chapterId}">
+      ${soft ? "Marcar estudo incompleto" : "Marcar estudo (sem domínio)"}
     </button>
   `;
 }
@@ -317,14 +372,17 @@ function renderCompleteGateNote(
   if (ctx.ui.completeGateChapterId !== chapterId) return "";
   const reasons: string[] = [];
   if (session.percent < 100) {
-    reasons.push(`Voce visitou ${session.completed} de ${session.total} etapas da sessao.`);
+    reasons.push(`Você visitou ${session.completed} de ${session.total} etapas.`);
   }
-  if (exerciseStats.answered === 0) {
-    reasons.push("Ainda nao marcou exercicios como Acertei/Errei.");
+  if (exerciseStats.answered < 3) {
+    reasons.push("Ainda há pouca prática marcada (Acertei/Errei).");
+  }
+  if (!hasMasteryEvidence(ctx.state, chapterId)) {
+    reasons.push("Isso só marca estudo — domínio exige o teste.");
   }
   return `
     <p class="session-gate-note" role="status">
-      ${reasons.join(" ")} Confirme se quiser concluir mesmo assim.
+      ${reasons.join(" ")} Confirme se quiser marcar o estudo mesmo assim.
     </p>
   `;
 }
@@ -334,11 +392,75 @@ function tabContent(ctx: AppContext, chapter: Chapter, tab: ReaderTab): string {
   if (tab === "vocab") return vocabTab(ctx, chapter);
   if (tab === "practice") return practiceTab(ctx, chapter);
   if (tab === "ap1") return ap1Tab(ctx, chapter);
-  return explainTab(chapter);
+  return explainTab(ctx, chapter);
 }
 
-function explainTab(chapter: Chapter): string {
+function renderDidacticTaskCard(
+  ctx: AppContext,
+  chapterId: string,
+  task: DidacticTask,
+  options: { criteriaInteractive?: boolean } = {}
+): string {
+  const draft = ctx.state.stepArtifacts?.[task.id] || "";
+  const submitted = Boolean(ctx.state.stepArtifactSubmitted?.[task.id]);
+  const criteriaInteractive = Boolean(options.criteriaInteractive) && submitted;
+
+  return `
+    <section class="chapter-section didactic-task-card" aria-label="${escapeAttribute(task.title)}">
+      <span class="card-label">Tarefa didática</span>
+      <h2>${escapeHtml(task.title)}</h2>
+      <p class="ds-aux">${escapeHtml(task.whyItMatters)}</p>
+      ${task.context ? `
+        <div class="didactic-task-context">
+          <p class="ds-caption">Caso / foco</p>
+          <p>${escapeHtml(task.context)}</p>
+        </div>
+      ` : ""}
+      <p><strong>${escapeHtml(task.prompt)}</strong></p>
+      <label class="sr-only" for="artifact-${escapeAttribute(task.id)}">Sua resposta</label>
+      <textarea
+        id="artifact-${escapeAttribute(task.id)}"
+        class="note-area production-attempt"
+        rows="4"
+        placeholder="${escapeAttribute(task.placeholder)}"
+        data-step-artifact="${escapeAttribute(task.id)}"
+        ${submitted ? "readonly" : ""}
+      >${escapeHtml(draft)}</textarea>
+      ${!submitted ? `
+        <button
+          class="button accent"
+          type="button"
+          data-step-artifact-submit="${escapeAttribute(task.id)}"
+          data-check-chapter="${escapeAttribute(chapterId)}"
+        >Enviar produção</button>
+      ` : `
+        <div class="production-feedback" role="status">
+          <p><strong>Modelo de qualidade (compare, não copie):</strong></p>
+          <p>${escapeHtml(task.modelAnswer)}</p>
+        </div>
+        <div class="apply-criteria-list" aria-label="Critérios de qualidade">
+          ${task.successCriteria.map((criterion, index) => {
+            const key = `${task.id}:c${index}`;
+            const checked = Boolean(ctx.state.applyCriteriaChecks?.[key]);
+            if (!criteriaInteractive) {
+              return `<p class="ds-aux">□ ${escapeHtml(criterion)}</p>`;
+            }
+            return `
+              <label class="check-row apply-criteria-row">
+                <input type="checkbox" data-apply-criteria="${escapeAttribute(key)}" ${checked ? "checked" : ""}>
+                <span>${escapeHtml(criterion)}</span>
+              </label>
+            `;
+          }).join("")}
+        </div>
+      `}
+    </section>
+  `;
+}
+
+function explainTab(ctx: AppContext, chapter: Chapter): string {
   const content = chapter.fullContent;
+  const task = buildExplainRetrievalTask(chapter);
   if (!content) {
     return `
       <section class="chapter-section">
@@ -349,6 +471,7 @@ function explainTab(chapter: Chapter): string {
         <h2>Resumo</h2>
         <p>${chapter.summary}</p>
       </section>
+      ${renderDidacticTaskCard(ctx, chapter.id, task)}
     `;
   }
 
@@ -380,6 +503,7 @@ function explainTab(chapter: Chapter): string {
       <h2>Erklaerung</h2>
       ${content.explanation.map(contentBlock).join("")}
     </section>
+    ${renderDidacticTaskCard(ctx, chapter.id, task)}
   `;
 }
 
@@ -387,18 +511,13 @@ function praxisTab(ctx: AppContext, chapter: Chapter): string {
   const content = chapter.fullContent;
   const situation = getChapterLearningSituation(ctx.data, chapter.id);
   const module = getChapterModule(ctx.data, chapter.id);
+  const task = buildPraxisDecisionTask(chapter);
 
   return `
     <section class="praxisfall">
       <span class="card-label">JIKU Praxisfall</span>
       <h2>${situation?.title || module?.subtitle || "Berufliche Situation"}</h2>
       <p>Bei JIKU IT-Solutions taucht dieses Thema nicht als isolierte Definition auf, sondern als Aufgabe im Kunden- oder Betriebsprozess.</p>
-      <ul>
-        <li>Welche Information braucht der Kunde oder das Team?</li>
-        <li>Welche Fachwoerter muss ich im Auftrag erkennen?</li>
-        <li>Welche Entscheidung oder Kontrolle gehoert zu diesem Kapitel?</li>
-        <li>Wie begruende ich die Antwort kurz und pruefungstauglich?</li>
-      </ul>
     </section>
     <section class="chapter-section">
       <h2>Beispiel</h2>
@@ -418,6 +537,7 @@ function praxisTab(ctx: AppContext, chapter: Chapter): string {
         ${content.diagrams.map(diagram).join("")}
       </section>
     ` : ""}
+    ${renderDidacticTaskCard(ctx, chapter.id, task)}
   `;
 }
 
@@ -433,6 +553,8 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
   const current = rows[index];
   const key = current ? vocabCheckKey(chapter.id, current.index) : "";
   const check = key ? ctx.state.vocabChecks[key] : undefined;
+  const attempt = key ? (ctx.state.vocabAttempts?.[key] || "") : "";
+  const revealed = Boolean(check);
   const row = current?.row;
 
   return `
@@ -444,38 +566,40 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
           <button class="${mode === "grid" ? "active" : ""}" type="button" data-filter-group="reader-vocab-mode" data-filter-value="grid">Grade</button>
         </div>
       </div>
-      <p>Veja o termo em alemao, explique em voz alta e so depois revele o significado. Espaco / 1 / 2 no teclado.</p>
+      <p>Escreva o significado (DE→PT) <strong>antes</strong> de ver a resposta. Isso gera evidência real de aprendizagem.</p>
       ${mode === "flash" && row ? `
         <section class="review-focus" aria-label="Flash Wortschatz">
           <div class="focus-stage" data-swipe-deck="reader-vocab">
             <article class="focus-card-big ${check ? `checked-${check}` : ""}">
               <span class="card-label">Termo ${index + 1}/${total}</span>
               <h2>${row.de}</h2>
-              <p class="focus-prompt">Explique antes de revelar.</p>
-              <details class="focus-reveal">
-                <summary>Revelar significado</summary>
-                <p><strong>${row.pt}</strong></p>
-                <p>${row.explanation}</p>
-                <p class="small-note">${row.example}</p>
-                <div class="self-check-actions">
-                  <button
-                    class="button secondary ${check === "correct" ? "active-check" : ""}"
-                    type="button"
-                    data-vocab-check="correct"
-                    data-check-key="${key}"
-                    data-check-chapter="${chapter.id}"
-                    data-auto-advance="reader-vocab"
-                  >Acertei</button>
-                  <button
-                    class="button secondary ${check === "wrong" ? "active-check wrong" : ""}"
-                    type="button"
-                    data-vocab-check="wrong"
-                    data-check-key="${key}"
-                    data-check-chapter="${chapter.id}"
-                    data-auto-advance="reader-vocab"
-                  >Errei</button>
+              <p class="focus-prompt">Digite o significado em português:</p>
+              <label class="sr-only" for="vocab-attempt-input">Sua resposta</label>
+              <textarea
+                id="vocab-attempt-input"
+                class="note-area production-attempt"
+                rows="2"
+                placeholder="Ex.: direitos e deveres do aprendiz"
+                data-vocab-attempt="${escapeAttribute(key)}"
+                data-vocab-expected="${escapeAttribute(row.pt)}"
+                ${check ? "readonly" : ""}
+              >${escapeHtml(attempt)}</textarea>
+              ${!revealed ? `
+                <button class="button accent" type="button" data-vocab-submit="${escapeAttribute(key)}" data-vocab-expected="${escapeAttribute(row.pt)}" data-check-chapter="${chapter.id}" data-auto-advance="reader-vocab">
+                  Conferir resposta
+                </button>
+              ` : `
+                <div class="production-feedback ${check === "correct" ? "is-correct" : "is-wrong"}" role="status">
+                  <p><strong>${check === "correct" ? "Produção correta" : "Revise este termo"}</strong></p>
+                  <p><strong>Esperado:</strong> ${escapeHtml(row.pt)}</p>
+                  <p>${escapeHtml(row.explanation)}</p>
+                  <p class="small-note">${escapeHtml(row.example)}</p>
                 </div>
-              </details>
+                <div class="self-check-actions">
+                  <button class="button secondary ${check === "correct" ? "active-check" : ""}" type="button" data-vocab-check="correct" data-check-key="${key}" data-check-chapter="${chapter.id}" data-auto-advance="reader-vocab">Manter acerto</button>
+                  <button class="button secondary ${check === "wrong" ? "active-check wrong" : ""}" type="button" data-vocab-check="wrong" data-check-key="${key}" data-check-chapter="${chapter.id}" data-auto-advance="reader-vocab">Marcar para revisar</button>
+                </div>
+              `}
             </article>
           </div>
           <div class="focus-controls">
@@ -484,7 +608,7 @@ function vocabTab(ctx: AppContext, chapter: Chapter): string {
             <button class="button" type="button" data-reader-vocab-step="1">Proximo</button>
           </div>
         </section>
-      ` : vocabularyRecallCards(rawRows, chapter.id, ctx.state.vocabChecks)}
+      ` : vocabularyRecallCards(rawRows, chapter.id, ctx.state.vocabChecks, ctx.state.vocabAttempts || {})}
     </section>
     <details class="vocab-table-details">
       <summary>Ver tabela completa</summary>
@@ -530,7 +654,7 @@ function practiceTab(ctx: AppContext, chapter: Chapter): string {
           <button class="${filter === "wrong" ? "active" : ""}" type="button" data-filter-group="practice-filter" data-filter-value="wrong">So erros (${stats.wrong})</button>
         </div>
       </div>
-      <p>Responda mentalmente, abra a solucao e marque se acertou. Erros entram na revisao.</p>
+      <p>Escreva sua resposta <strong>antes</strong> de ver o gabarito. Sem produção, não há evidência.</p>
       ${!total ? `<p class="empty-state">${filter === "wrong" ? "Nenhum erro marcado neste capitulo." : "Nenhum exercicio neste capitulo."}</p>` : ""}
       ${total && mode === "flash" && current ? `
         <section class="review-focus" aria-label="Flash Uebungen">
@@ -563,15 +687,36 @@ function renderPracticeFlash(
 ): string {
   const checkKey = exerciseCheckKey(chapterId, exerciseIndex);
   const check = ctx.state.exerciseChecks[checkKey];
+  const attempt = ctx.state.practiceAttempts?.[checkKey] || "";
+  const revealed = Boolean(check) || Boolean(ctx.state.practiceRevealed?.[checkKey]);
   return `
     <article class="focus-card-big ${check ? `checked-${check}` : ""}">
       <span class="card-label">Uebung ${displayIndex + 1}/${total}</span>
       <h2>Aufgabe</h2>
       <p class="focus-question">${exercise.question}</p>
-      <details class="focus-reveal">
-        <summary>Revelar resposta</summary>
-        <p><strong>Antwort:</strong> ${exercise.answer}</p>
-        ${exercise.explanation ? `<p><strong>Erklaerung:</strong> ${exercise.explanation}</p>` : ""}
+      <label class="sr-only" for="practice-attempt-input">Sua resposta</label>
+      <textarea
+        id="practice-attempt-input"
+        class="note-area production-attempt"
+        rows="3"
+        placeholder="Escreva sua resposta aqui antes de conferir"
+        data-practice-attempt="${escapeAttribute(checkKey)}"
+        ${check ? "readonly" : ""}
+      >${escapeHtml(attempt)}</textarea>
+      ${!revealed ? `
+        <button
+          class="button accent"
+          type="button"
+          data-practice-submit="${escapeAttribute(checkKey)}"
+          data-check-chapter="${escapeAttribute(chapterId)}"
+          data-auto-advance="reader-practice"
+        >Conferir com gabarito</button>
+      ` : `
+        <div class="production-feedback" role="status">
+          <p><strong>Gabarito:</strong> ${escapeHtml(exercise.answer)}</p>
+          ${exercise.explanation ? `<p><strong>Erklaerung:</strong> ${escapeHtml(exercise.explanation)}</p>` : ""}
+          <p class="ds-aux">Compare com o que você escreveu e marque com honestidade.</p>
+        </div>
         <div class="self-check-actions">
           <button
             class="button secondary ${check === "correct" ? "active-check" : ""}"
@@ -590,13 +735,78 @@ function renderPracticeFlash(
             data-auto-advance="reader-practice"
           >Errei / revisar</button>
         </div>
-      </details>
+      `}
     </article>
   `;
 }
 
 function ap1Tab(ctx: AppContext, chapter: Chapter): string {
   const content = chapter.fullContent;
+  let mission = null as ReturnType<typeof getNormalizedCourseData>["missionsById"][string] | null;
+  try {
+    mission = getNormalizedCourseData().missionsById[chapter.id] || null;
+  } catch {
+    mission = null;
+  }
+  const gate = evaluateMasteryGate(ctx.state, chapter.id, mission);
+  const applyTasks = buildApplyProductionTasks(chapter, mission);
+  let criteriaIndex = 0;
+  const applyBlock = `
+    <section class="chapter-section apply-task-card" aria-label="Desafios aplicados">
+      <h2>Desafio aplicado (produção)</h2>
+      <p class="ds-aux">Escreva a resposta do caso <strong>antes</strong> de marcar critérios. Checkbox sem produção não conta como aprendizagem.</p>
+      ${applyTasks.map((task) => {
+        const draft = ctx.state.stepArtifacts?.[task.id] || "";
+        const submitted = Boolean(ctx.state.stepArtifactSubmitted?.[task.id]);
+        const criteriaStart = criteriaIndex;
+        criteriaIndex += task.successCriteria.length;
+        const criteriaHtml = task.successCriteria.map((criterion, localIndex) => {
+          const index = criteriaStart + localIndex;
+          const key = `${chapter.id}:${index}`;
+          const checked = Boolean(ctx.state.applyCriteriaChecks?.[key]);
+          if (!submitted) {
+            return `<p class="ds-aux locked-criterion">□ ${escapeHtml(criterion)} <em>(liberado após enviar)</em></p>`;
+          }
+          return `
+            <label class="check-row apply-criteria-row">
+              <input type="checkbox" data-apply-criteria="${escapeAttribute(key)}" ${checked ? "checked" : ""}>
+              <span>${escapeHtml(criterion)}</span>
+            </label>
+          `;
+        }).join("");
+        return `
+          <article class="didactic-task-card apply-activity">
+            <span class="card-label">Apply</span>
+            <h3 class="ds-card-title">${escapeHtml(task.title)}</h3>
+            <p class="ds-aux">${escapeHtml(task.whyItMatters)}</p>
+            ${task.context ? `<div class="didactic-task-context"><p>${escapeHtml(task.context)}</p></div>` : ""}
+            <p><strong>${escapeHtml(task.prompt)}</strong></p>
+            <textarea
+              class="note-area production-attempt"
+              rows="4"
+              placeholder="${escapeAttribute(task.placeholder)}"
+              data-step-artifact="${escapeAttribute(task.id)}"
+              ${submitted ? "readonly" : ""}
+            >${escapeHtml(draft)}</textarea>
+            ${!submitted ? `
+              <button class="button accent" type="button" data-step-artifact-submit="${escapeAttribute(task.id)}" data-check-chapter="${escapeAttribute(chapter.id)}">
+                Enviar produção do caso
+              </button>
+              <div class="apply-criteria-list">${criteriaHtml}</div>
+            ` : `
+              ${task.modelAnswer ? `
+                <div class="production-feedback" role="status">
+                  <p><strong>Modelo de qualidade:</strong> ${escapeHtml(task.modelAnswer)}</p>
+                </div>
+              ` : ""}
+              <div class="apply-criteria-list">${criteriaHtml}</div>
+            `}
+          </article>
+        `;
+      }).join("")}
+      <p class="ds-aux">${gate.applyDone ? "Produção + critérios suficientes." : "Ainda falta produção ou critérios para liberar o domínio."}</p>
+    </section>
+  `;
 
   return `
     <section class="info-box ihk">
@@ -611,6 +821,7 @@ function ap1Tab(ctx: AppContext, chapter: Chapter): string {
         "Eine technische Antwort geben, aber keine kurze Begruendung liefern."
       ])}
     </section>
+    ${applyBlock}
     <section class="info-box summary">
       <h2>Zusammenfassung</h2>
       ${content ? paragraphs(content.summary) : `<p>${chapter.summary}</p>`}
@@ -630,6 +841,14 @@ function ap1Tab(ctx: AppContext, chapter: Chapter): string {
         "Ich kann eine kurze AP1-Antwort formulieren."
       ])}
       ${confidenceControls(ctx.state, chapter, confidenceGateOptions(ctx, chapter.id))}
+    </section>
+    <section class="chapter-section mastery-gate-card" aria-label="Teste de domínio">
+      <h2>Provar domínio</h2>
+      <p class="ds-aux">${escapeHtml(gate.reason)}</p>
+      <p class="ds-aux">Prática: ${gate.practiceAnswered} respostas · ${gate.practiceScore ?? 0}% acertos${gate.applyRequired ? ` · Apply: ${gate.applyDone ? "ok" : "pendente"}` : ""}</p>
+      ${gate.allowed
+        ? `<a class="button accent" href="#mastery/${escapeAttribute(chapter.id)}">Iniciar teste de domínio</a>`
+        : `<a class="button secondary" href="#reader/${escapeAttribute(chapter.id)}/practice">Voltar à prática</a>`}
     </section>
   `;
 }

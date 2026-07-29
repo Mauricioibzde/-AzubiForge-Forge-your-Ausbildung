@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyMissionEvent, createInitialMissionProgress, isMissionUnlocked, missionProgressFromLegacyState } from "./engine";
 import { DEFAULT_COMPLETION_RULES } from "../../schemas/mission";
+import type { AppState, ReaderTab } from "../../types";
 
 describe("mission state engine", () => {
   it("unlocks from locked to available", () => {
@@ -113,11 +114,111 @@ describe("legacy mastery bridge", () => {
       activeMissionReview: null,
       missionReviewHistory: [],
       activeCheckpoint: null,
-      checkpointHistory: []
+      checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
     };
 
     const progress = missionProgressFromLegacyState("m1", state, 2);
     expect(progress.status).toBe("test-failed");
     expect(progress.masteryTestScore).toBe(55);
+  });
+
+  it("does not treat mere tab visits as in-progress", () => {
+    const visited: ReaderTab[] = ["explain", "praxis", "vocab"];
+    const state = {
+      completed: [],
+      lastChapterId: "m1",
+      notes: {},
+      confidence: {},
+      collapsedModules: {},
+      sessionSteps: { m1: visited },
+      exerciseChecks: {},
+      vocabChecks: {},
+      reviewSchedule: {},
+      reviewDailyResolved: {},
+      reviewResolvedKeyDay: {},
+      examChecklist: {},
+      mockExam: null,
+      mockExamHistory: [],
+      lastStudiedAt: {},
+      studyDates: [],
+      preferences: {
+        theme: "dark" as const,
+        readingSize: "normal" as const,
+        onboardingDone: true,
+        dailyGoalSessions: 1,
+        studyGoal: "Test"
+      },
+      activeStudySession: null,
+      studySessionHistory: [],
+      missionReviews: {},
+      activeMasteryTest: null,
+      masteryTestHistory: [],
+      activeMissionReview: null,
+      missionReviewHistory: [],
+      activeCheckpoint: null,
+      checkpointHistory: [],
+      vocabAttempts: {},
+      practiceAttempts: {},
+      practiceRevealed: {},
+      applyCriteriaChecks: {},
+      stepArtifacts: {},
+      stepArtifactSubmitted: {}
+    } as AppState;
+
+    const progress = missionProgressFromLegacyState("m1", state, 2);
+    expect(progress.status).toBe("available");
+  });
+
+  it("marks study-completed from didactic evidence", () => {
+    const state = {
+      completed: [],
+      lastChapterId: "m1",
+      notes: {},
+      confidence: {},
+      collapsedModules: {},
+      sessionSteps: {},
+      exerciseChecks: {},
+      vocabChecks: {},
+      reviewSchedule: {},
+      reviewDailyResolved: {},
+      reviewResolvedKeyDay: {},
+      examChecklist: {},
+      mockExam: null,
+      mockExamHistory: [],
+      lastStudiedAt: { m1: new Date().toISOString() },
+      studyDates: [],
+      preferences: {
+        theme: "dark" as const,
+        readingSize: "normal" as const,
+        onboardingDone: true,
+        dailyGoalSessions: 1,
+        studyGoal: "Test"
+      },
+      activeStudySession: null,
+      studySessionHistory: [],
+      missionReviews: {},
+      activeMasteryTest: null,
+      masteryTestHistory: [],
+      activeMissionReview: null,
+      missionReviewHistory: [],
+      activeCheckpoint: null,
+      checkpointHistory: [],
+      vocabAttempts: {},
+      practiceAttempts: {},
+      practiceRevealed: {},
+      applyCriteriaChecks: {},
+      stepArtifacts: {},
+      stepArtifactSubmitted: { "explain:m1": true }
+    } as AppState;
+
+    const progress = missionProgressFromLegacyState("m1", state, 1);
+    expect(progress.status).toBe("study-completed");
+    expect(progress.completedBlockIds.length).toBeGreaterThan(0);
   });
 });

@@ -22,8 +22,15 @@ export function renderHomeView(ctx: AppContext): string {
   const model = buildMissionPanelModel(ctx);
   const unfinishedMock = ctx.state.mockExam && ctx.state.mockExam.status !== "finished" ? ctx.state.mockExam : null;
   const insights = getHomeTodayInsights(getNormalizedCourseData(), ctx.state);
-  const sessionHref = hasResumableSession(ctx.state) ? "#session" : "#session/start";
-  const sessionLabel = hasResumableSession(ctx.state) ? "Retomar sessão focada" : "Iniciar sessão focada";
+  const sessionHref = model.nextAction?.type === "resume-session"
+    ? model.nextAction.href
+    : hasResumableSession(ctx.state) ? "#session" : "#session/start";
+  const sessionLabel = model.nextAction?.type === "resume-session"
+    ? "Retomar sessão focada"
+    : hasResumableSession(ctx.state) ? "Retomar sessão focada" : "Iniciar sessão focada";
+  const reviewHref = model.nextAction?.type === "start-review"
+    ? model.nextAction.href
+    : insights.dueMissionReviews > 0 ? "#review-mission" : "#review";
 
   return `
     <section class="ds-page mission-panel" data-mission-panel>
@@ -54,7 +61,7 @@ export function renderHomeView(ctx: AppContext): string {
             <summary>Mais opções</summary>
             <div class="mission-more-body">
               <a class="mission-side-link" href="${sessionHref}">${sessionLabel}</a>
-              <a class="mission-side-link" href="${insights.dueMissionReviews > 0 ? "#review-mission" : "#review"}">
+              <a class="mission-side-link" href="${reviewHref}">
                 Revisões${insights.dueMissionReviews > 0 ? ` (${insights.dueMissionReviews})` : ""}
               </a>
               <a class="mission-side-link" href="#exam">Treino AP1</a>
@@ -81,8 +88,8 @@ function renderAlerts(ctx: AppContext, unfinishedMock: AppContext["state"]["mock
       <section class="mission-onboarding rise-in" aria-label="Primeiros passos">
         <div>
           <p class="ds-caption">Bem-vindo</p>
-          <strong>Foque na missão e na próxima etapa.</strong>
-          <p class="ds-aux">5 passos no leitor · Acertei/Errei alimenta a revisão.</p>
+          <strong>Foque na missão e na próxima evidência.</strong>
+          <p class="ds-aux">Produza em cada etapa · Acertei/Errei alimenta a revisão · Domínio no teste.</p>
         </div>
         <button class="button secondary" type="button" data-dismiss-onboarding>Entendi</button>
       </section>

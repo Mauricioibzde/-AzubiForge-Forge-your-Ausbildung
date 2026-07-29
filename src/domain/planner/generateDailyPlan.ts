@@ -3,6 +3,7 @@ import type { DailyPlan, DailyPlanTask, UserLearningState } from "../../schemas/
 import type { MissionProgress } from "../../schemas/mission";
 import { createInitialMissionProgress, missionProgressFromLegacyState } from "../mission/engine";
 import type { AppState } from "../../types";
+import { resolveNextLearningAction } from "../learning/nextLearningAction";
 
 export interface DailyPlanInput {
   course: NormalizedCourse;
@@ -30,9 +31,17 @@ function buildProgressMap(course: NormalizedCourse, state: AppState): Record<str
   return map;
 }
 
+function taskMatchesNextAction(task: DailyPlanTask, nextHref: string, nextMissionId?: string): boolean {
+  if (nextMissionId && task.missionId === nextMissionId) return true;
+  if (nextHref.includes(task.missionId)) return true;
+  return false;
+}
+
 /**
- * Deterministic local planner (Phase 3). Priorities:
- * 1 reviews due → 2 pending tests → 3 in-progress → 4 weak → 5 next in sequence
+ * Deterministic local planner (Phase 3). Priorities align with resolveNextLearningAction:
+ * session is handled outside the plan list; within the plan:
+ * reviews due → pending tests → in-progress → next in sequence
+ * The primary task is reordered to match the global next action when possible.
  */
 export function generateDailyPlan(input: DailyPlanInput): DailyPlan {
   const now = input.currentDate || new Date();
@@ -110,13 +119,52 @@ export function generateDailyPlan(input: DailyPlanInput): DailyPlan {
 
   candidates.sort((a, b) => a.priority - b.priority);
 
+  try {
+    const nextAction = resolveNextLearningAction({
+      course: input.course,
+      state: input.state,
+      now: now.getTime()
+    });
+    if (nextAction.type !== "resume-session" && nextAction.type !== "course-complete" && nextAction.type !== "start-exam") {
+      const matchIndex = candidates.findIndex((task) =>
+        taskMatchesNextAction(task, nextAction.href, nextAction.missionId)
+      );
+      if (matchIndex > 0) {
+        const [matched] = candidates.splice(matchIndex, 1);
+        candidates.unshift(matched);
+      }
+    }
+  } catch {
+    // keep candidate order
+  }
+
   const tasks: DailyPlanTask[] = [];
   let usedMinutes = 0;
 
   for (const task of candidates) {
-    if (usedMinutes + task.estimatedMinutes > availableMinutes) break;
-    tasks.push(task);
-    usedMinutes += task.estimatedMinutes;
+    const remaining = availableMinutes - usedMinutes;
+    if (remaining < 5) break;
+
+    let minutes = task.estimatedMinutes;
+    // Whole missions are often 45–50 min; pack a focused chunk that still fits.
+    if (task.type === "continue-mission" || task.type === "new-mission") {
+      minutes = Math.min(minutes, Math.max(8, Math.min(20, remaining)));
+    } else if (task.type === "test") {
+      minutes = Math.min(minutes, Math.max(8, remaining));
+    } else if (task.type === "review") {
+      minutes = Math.min(minutes, Math.max(6, remaining));
+    }
+
+    if (minutes > remaining) continue;
+
+    tasks.push({
+      ...task,
+      estimatedMinutes: minutes,
+      reason: minutes < task.estimatedMinutes
+        ? `${task.reason} Bloco focado de ${minutes} min (próxima evidência).`
+        : task.reason
+    });
+    usedMinutes += minutes;
   }
 
   return {

@@ -14,13 +14,14 @@ import type {
   SessionStep,
   VocabularyRow
 } from "../types";
+import { hasStepLearningEvidence } from "./learning/didacticTasks";
 
 export const READER_STEPS: SessionStep[] = [
   { id: "explain", label: "Erklaeren", hint: "Entenda a ideia principal." },
   { id: "praxis", label: "Praxisfall", hint: "Ligue o tema ao trabalho." },
   { id: "vocab", label: "Wortschatz", hint: "Fixe os termos em alemao." },
   { id: "practice", label: "Uebungen", hint: "Treine com exercicios." },
-  { id: "ap1", label: "AP1-Check", hint: "Feche com foco de prova." }
+  { id: "ap1", label: "Anwenden", hint: "Resolva o caso e prove aplicação." }
 ];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -252,9 +253,11 @@ export function markVisitedStep(state: AppState, chapterId: string, tab: ReaderT
   return true;
 }
 
+/** Percurso da missão: etapas com evidência de aprendizagem (não só visitas). */
 export function getSessionProgress(state: AppState, chapterId: string): Progress {
-  const visited = new Set(getVisitedSteps(state, chapterId));
-  const completed = READER_STEPS.filter((step) => visited.has(step.id)).length;
+  const completed = READER_STEPS.filter((step) =>
+    hasStepLearningEvidence(state, chapterId, step.id, null)
+  ).length;
 
   return {
     completed,
@@ -264,19 +267,18 @@ export function getSessionProgress(state: AppState, chapterId: string): Progress
 }
 
 export function getResumeTab(state: AppState, chapterId: string): ReaderTab {
-  const visited = new Set(getVisitedSteps(state, chapterId));
-  const next = READER_STEPS.find((step) => !visited.has(step.id));
+  const next = READER_STEPS.find((step) => !hasStepLearningEvidence(state, chapterId, step.id, null));
   return next?.id || "ap1";
 }
 
 export function getNextSessionTab(state: AppState, chapterId: string, current: ReaderTab): ReaderTab | null {
   const currentIndex = READER_STEPS.findIndex((step) => step.id === current);
-  if (currentIndex >= 0 && currentIndex < READER_STEPS.length - 1) {
-    return READER_STEPS[currentIndex + 1].id;
-  }
-
-  const visited = new Set(getVisitedSteps(state, chapterId));
-  return READER_STEPS.find((step) => !visited.has(step.id))?.id || null;
+  const afterCurrent = currentIndex >= 0 ? READER_STEPS.slice(currentIndex + 1) : READER_STEPS;
+  const nextUnevidenced = afterCurrent.find((step) =>
+    !hasStepLearningEvidence(state, chapterId, step.id, null)
+  );
+  if (nextUnevidenced) return nextUnevidenced.id;
+  return READER_STEPS.find((step) => !hasStepLearningEvidence(state, chapterId, step.id, null))?.id || null;
 }
 
 export function getPrevSessionTab(current: ReaderTab): ReaderTab | null {
@@ -521,12 +523,15 @@ export function getDailyGoalProgress(state: AppState): Progress {
   };
 }
 
-/** Counts chapters studied today with a meaningful session (3+ steps visited). */
+/** Counts chapters studied today with meaningful evidence (3+ didactic steps). */
 export function getTodayQualitySessionCount(state: AppState): number {
   const today = todayKey();
   return Object.entries(state.lastStudiedAt).filter(([chapterId, stamp]) => {
     if (stampToLocalDayKey(stamp) !== today) return false;
-    return getVisitedSteps(state, chapterId).length >= 3;
+    const evidenced = READER_STEPS.filter((step) =>
+      hasStepLearningEvidence(state, chapterId, step.id, null)
+    ).length;
+    return evidenced >= 3;
   }).length;
 }
 
@@ -540,7 +545,10 @@ export function getDaysSinceStudied(state: AppState, chapterId: string): number 
 
 export function isReviewDue(state: AppState, chapterId: string): boolean {
   if (hasDueReviewCheck(state, chapterId)) return true;
-  if (!isCompleted(state, chapterId) && !getVisitedSteps(state, chapterId).length) return false;
+  const hasEvidence = READER_STEPS.some((step) =>
+    hasStepLearningEvidence(state, chapterId, step.id, null)
+  );
+  if (!isCompleted(state, chapterId) && !hasEvidence) return false;
   const confidence = state.confidence[chapterId];
   if (confidence === "ready") return getDaysSinceStudied(state, chapterId) >= 7;
   if (confidence === "hard") return getDaysSinceStudied(state, chapterId) >= 1;

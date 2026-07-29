@@ -157,7 +157,11 @@ function exercisesToActivities(
     answer: exercise.answer,
     explanation: exercise.explanation || exercise.answer,
     criteria: tier === "apply"
-      ? ["Ich habe die Kernidee genannt", "Ich habe ein Beispiel gegeben", "Ich habe Fachbegriffe verwendet"]
+      ? [
+          "Nennt eine konkrete Prüfung oder Entscheidung",
+          "Begründet mit Bezug zur Situation",
+          "Verwendet passende Fachbegriffe"
+        ]
       : undefined,
     modelAnswer: exercise.answer,
     minimumCriteria: tier === "apply" ? 2 : undefined
@@ -170,7 +174,7 @@ function buildApplyActivities(chapter: Chapter, competencyIds: string[]): Missio
     id: `${chapter.id}-apply-example-${index}`,
     type: "scenario-choice" as const,
     title: example.title,
-    instruction: `Wende das Gelernte an: ${example.title}`,
+    instruction: `Fall lösen: Was prüfen oder entscheiden Sie zuerst — und warum?`,
     difficulty: 2 as const,
     estimatedMinutes: 5,
     points: 10,
@@ -179,16 +183,19 @@ function buildApplyActivities(chapter: Chapter, competencyIds: string[]): Missio
     answer: (example.steps || []).join(" → "),
     explanation: chapter.example,
     criteria: [
-      "Situation verstanden",
-      "Schritte in sinnvoller Reihenfolge",
-      "Fachbegriffe genutzt"
+      "Nennt eine konkrete Prüfung oder Entscheidung",
+      "Begründet mit Bezug zur Situation",
+      "Verwendet passende Fachbegriffe"
     ],
     modelAnswer: (example.steps || []).join("\n"),
     minimumCriteria: 2
   }));
 
-  const fromIntermediate = exercisesToActivities(chapter, competencyIds, "apply", "intermediate").slice(0, 2);
-  return [...fromExamples, ...fromIntermediate];
+  // One strong required apply case — extras stay in practice, not as checkbox spam.
+  const primary = fromExamples[0]
+    || exercisesToActivities(chapter, competencyIds, "apply", "intermediate")[0]
+    || null;
+  return primary ? [primary] : [];
 }
 
 function buildPhases(chapter: Chapter, competencyIds: string[], estimatedMinutes: number): MissionPhases {

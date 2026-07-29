@@ -84,7 +84,13 @@ function baseState(): AppState {
     activeMissionReview: null,
     missionReviewHistory: [],
     activeCheckpoint: null,
-    checkpointHistory: []
+    checkpointHistory: [],
+    vocabAttempts: {},
+    practiceAttempts: {},
+    practiceRevealed: {},
+    applyCriteriaChecks: {},
+    stepArtifacts: {},
+    stepArtifactSubmitted: {},
   };
 }
 
@@ -92,6 +98,7 @@ describe("getHomeTodayInsights", () => {
   it("computes due reviews and in-progress mission", () => {
     const state = baseState();
     state.sessionSteps.m2 = ["explain"];
+    state.stepArtifactSubmitted["explain:m2"] = true;
     state.reviewSchedule.m1 = new Date(Date.now() - 60_000).toISOString();
     const insights = getHomeTodayInsights(sampleCourse(), state);
     expect(insights.dueMissionReviews).toBe(1);
